@@ -1,0 +1,12 @@
+%module main:ExamplesziStringConcatenation
+  main:ExamplesziStringConcatenation.main :: (ghczmprim:GHCziTypes.IO
+                                              ghczmprim:GHCziTuple.Z0T) =
+    base:GHCziBase.zd
+    @ ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+    @ ((ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T))
+    base:SystemziIO.putStrLn
+    (base:GHCziBase.zpzp @ ghczmprim:GHCziTypes.Char
+     (ghczmprim:GHCziCString.unpackCStringzh
+      ("hello"::ghczmprim:GHCziPrim.Addrzh))
+     (ghczmprim:GHCziCString.unpackCStringzh
+      ("world"::ghczmprim:GHCziPrim.Addrzh)));
