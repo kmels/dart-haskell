@@ -2,6 +2,9 @@ This program reads a program in Haskell External Core syntax and evaluates its m
 
 > module Main where
 
+> import GHC.LexCore
+> import GHC.ParserCoreUtils
+
 > import System.Environment
 
 Let's parse the input file and convert it to External Core
@@ -13,5 +16,11 @@ Let's parse the input file and convert it to External Core
 >     [f] -> do
 >       putStrLn $ "Reading " ++ f ++ " .."
 >       contents <- readFile f
+>       let
+>         token = case lexer returnP contents 0 of
+>           OkP a -> a
+>           FailP msg -> error msg
+>         --parseCore
+>       (putStrLn) $ []
 >     _ -> putStrLn "Wrong usage"
 

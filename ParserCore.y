@@ -7,7 +7,7 @@
 --     http://hackage.haskell.org/trac/ghc/wiki/Commentary/CodingStyle#Warnings
 -- for details
 
-module ParserCore ( parseCore ) where
+module GHC.ParserCore ( parseCore ) where
 
 import IfaceSyn
 import ForeignCall
@@ -34,8 +34,6 @@ import FastString
 import Outputable
 import Data.Char
 import Unique
-
-#include "../HsVersions.h"
 
 }
 
