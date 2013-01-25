@@ -1,6 +1,6 @@
 Description
 ------
-Automated Testing for typed-programs as powerful as in [http://hackage.haskell.org/trac/ghc/wiki/Commentary/Compiler/FC](System FC)
+Automated Testing for typed-programs as powerful as in [System FC](http://hackage.haskell.org/trac/ghc/wiki/Commentary/Compiler/FC)
 
 We take a module expressed in Haskell's External Core (EC) language and through the following steps, simulate the program against likely runs to test it:
  - parse EC syntax [Doing]
@@ -14,19 +14,21 @@ It reports
 
 TODO
 ----
- [#A] Parse 3 examples, print AST.
- [#C] Write a lexer for External Core and target ASCII only.
-
 [#A] is vital
 [#B] is relevant
 [#C] is luxury
 
+ - [#A] Parse 3 examples, print AST.
+ - [#C] Write a lexer for External Core and target ASCII only.
+
 Questions
 ----
- - Working on HEAD, ok?
- - How updated is wiki/ExternalCore? last change was 5 years ago http://hackage.haskell.org/trac/ghc/wiki/ExternalCore?action=history
- - External core or ICore?
-
+ - PT. Working with packdep ghc-7.4.1, ok?
+ - PT. External core or ICore data structure?
+ - GHC How updated is wiki/ExternalCore? last change was 5 years ago http://hackage.haskell.org/trac/ghc/wiki/ExternalCore?action=history
+ - GHC Where's [utils/ext-core/Language/Core](http://www.haskell.org/pipermail/cvs-ghc/2009-January/047129.html)? Don't know trac nor git enough.
+ - GHC testsuite/ still exists? [1](http://hackage.haskell.org/trac/ghc/wiki/Building/RunningTests/Running). Where to find ["attached test"](http://hackage.haskell.org/trac/ghc/ticket/7239#comment:4)?
+ 
 Remarks
 ----
  - API change. FastString in ghc-7.4.1 is different from the one in HEAD.
@@ -38,3 +40,7 @@ To report/update in GHC
 External Core bugs in GHC
 ----
  - Integer literals fail to parse [#5844, Panic on generating Core code](http://hackage.haskell.org/trac/ghc/ticket/5844)
+
+To read
+----
+[HsSyn](http://permalink.gmane.org/gmane.comp.lang.haskell.cvs.ghc/17611) from [Get EC to work with readline](http://www.mail-archive.com/cvs-all@haskell.org/msg28422.html)
