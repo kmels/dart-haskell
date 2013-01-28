@@ -1,12 +1,68 @@
 %module main:ExamplesziStringConcatenation
+  main:ExamplesziStringConcatenation.myString :: (ghczmprim:GHCziTypes.ZMZN
+                                                  ghczmprim:GHCziTypes.Char)
+                                                 ->
+                                                 (ghczmprim:GHCziTypes.ZMZN
+                                                  ghczmprim:GHCziTypes.Char) =
+    \ (waac::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) ->
+        %case ((ghczmprim:GHCziTypes.ZMZN
+                ghczmprim:GHCziTypes.Char)) (ghczmprim:GHCziClasses.zgze
+                                             @ ghczmprim:GHCziTypes.Int
+                                             ghczmprim:GHCziClasses.zdfOrdInt
+                                             (base:GHCziList.length @ ghczmprim:GHCziTypes.Char
+                                              waac)
+                                             (ghczmprim:GHCziTypes.Izh
+                                              (2::ghczmprim:GHCziPrim.Intzh)))
+        %of (wildX4::ghczmprim:GHCziTypes.Bool)
+          {ghczmprim:GHCziTypes.False ->
+             base:GHCziErr.error
+             @ ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+             (ghczmprim:GHCziCString.unpackCStringzh
+              ("word can\x27t be of length less than 2"::ghczmprim:GHCziPrim.Addrzh));
+           ghczmprim:GHCziTypes.True ->
+             base:GHCziBase.zpzp @ ghczmprim:GHCziTypes.Char
+             (ghczmprim:GHCziCString.unpackCStringzh
+              ("hello"::ghczmprim:GHCziPrim.Addrzh))
+             waac};
   main:ExamplesziStringConcatenation.main :: (ghczmprim:GHCziTypes.IO
                                               ghczmprim:GHCziTuple.Z0T) =
-    base:GHCziBase.zd
-    @ ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
-    @ ((ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T))
-    base:SystemziIO.putStrLn
-    (base:GHCziBase.zpzp @ ghczmprim:GHCziTypes.Char
-     (ghczmprim:GHCziCString.unpackCStringzh
-      ("hello"::ghczmprim:GHCziPrim.Addrzh))
-     (ghczmprim:GHCziCString.unpackCStringzh
-      ("world"::ghczmprim:GHCziPrim.Addrzh)));
+    base:GHCziBase.zgzgze @ ghczmprim:GHCziTypes.IO
+    base:GHCziBase.zdfMonadIO
+    @ ((ghczmprim:GHCziTypes.ZMZN
+        ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))))
+    @ ghczmprim:GHCziTuple.Z0T base:SystemziEnvironment.getArgs
+    (\ (dsdn0::(ghczmprim:GHCziTypes.ZMZN
+                ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)))) ->
+         %let faildn2 :: (ghczmprim:GHCziPrim.Statezh
+                          ghczmprim:GHCziPrim.RealWorld)
+                         -> (ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T) =
+                \ (ds1dn3::(ghczmprim:GHCziPrim.Statezh
+                            ghczmprim:GHCziPrim.RealWorld)) ->
+                    base:GHCziBase.fail @ ghczmprim:GHCziTypes.IO
+                    base:GHCziBase.zdfMonadIO @ ghczmprim:GHCziTuple.Z0T
+                    (ghczmprim:GHCziCString.unpackCStringzh
+                     ("Pattern match failure in do expression at string-concatenation.hs:6:3-7"::ghczmprim:GHCziPrim.Addrzh))
+         %in %case ((ghczmprim:GHCziTypes.IO
+                     ghczmprim:GHCziTuple.Z0T)) dsdn0
+             %of (wildX7::(ghczmprim:GHCziTypes.ZMZN
+                           ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))))
+               {ghczmprim:GHCziTypes.ZMZN ->
+                  faildn2 ghczmprim:GHCziPrim.realWorldzh;
+                ghczmprim:GHCziTypes.ZC
+                (argaab::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+                (ds1dn1::(ghczmprim:GHCziTypes.ZMZN
+                          ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)))) ->
+                  %case ((ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T)) ds1dn1
+                  %of (wild1Xj::(ghczmprim:GHCziTypes.ZMZN
+                                 ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))))
+                    {ghczmprim:GHCziTypes.ZMZN ->
+                       base:GHCziBase.zd
+                       @ ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+                       @ ((ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T))
+                       base:SystemziIO.putStrLn
+                       (main:ExamplesziStringConcatenation.myString argaab);
+                     ghczmprim:GHCziTypes.ZC
+                     (ipvsnb::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+                     (ipv1snc::(ghczmprim:GHCziTypes.ZMZN
+                                ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)))) ->
+                       faildn2 ghczmprim:GHCziPrim.realWorldzh}});
