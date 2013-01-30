@@ -14,10 +14,11 @@ category:            Language
 build-type:          Simple
 cabal-version:       >=1.8
 
-executable dart-hs
+executable hs-dart
   main-is:           Main.lhs
   other-modules:        
                      DART.MkRandomValue
+                     Language.Core.ValueDefinition
   build-depends:       base ==4.5.*, unix ==2.5.*, bytestring ==0.9.*, containers ==0.4.*, filepath ==1.3.*, ghc >= 7.4.1, array >= 0.4, extcore >= 1.0, zenc >= 0.1, random >= 1.0
   build-tools:         happy
   Hs-source-dirs:   src

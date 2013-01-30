@@ -17,6 +17,8 @@ To move
 
 > import Text.Encoding.Z
 > import DART.MkRandomValue
+> import Data.Maybe
+> import Language.Core.ValueDefinition
 
 > main :: IO () 
 > main = do
@@ -34,16 +36,20 @@ To move
 >       mapM (\p -> putZDecStrLn $ "\t " ++ show p) tdefs
 >       rint <- rndInt 
 >       putStrLn . show $ rint
->       putStrLn $ "Parsed vdefgs:" 
->       mapM_ (\p -> putZDecStrLn $ "... \t " ++ showVdef p ++ "\n") vdefgs
+>       putStrLn $ "Value definitions1:\n----------------------------------------\n" 
+>       mapM_ (\p -> putZDecStrLn $ "... \t " ++ showVdefg p ++ "\n") vdefgs
+>       putStrLn $ "Value definitions2:\n----------------------------------------\n" 
+>       mapM_ (\p -> putZDecStrLn $ "... \t " ++ showFApp p ++ "\n") (mapMaybe vdefgTapp vdefgs)
 >     _ -> putStrLn "Wrong usage"
 
 helper show function that says which constructor is used
 
-> showVdef :: Vdefg -> String
-> showVdef (Rec vdefs) = concatMap (\p -> "Rec -> " ++ show p) vdefs
-> showVdef (Nonrec (Vdef ((mname,var),ty,exp) )) = "Nonrec\n\t\t..qual_mname: " ++ show mname ++ "\n\t\t..var: " ++ show var ++ "\n\t\t..ty: " ++ show ty ++ "\n\t\t..exp: " ++ show exp
-> --showVdef (Nonrec vdef) = "Nonrec " ++ show vdef
+> showVdefg :: Vdefg -> String
+> showVdefg (Rec vdefs) = concatMap (\p -> "Rec -> " ++ show p) vdefs
+> showVdefg (Nonrec (Vdef ((mname,var),ty,exp) )) = "Nonrec\n\t\t..qual_mname: " ++ show mname ++ "\n\t\t..var: " ++ show var ++ "\n\t\t..ty: " ++ show ty ++ "\n\t\t..exp: " 
+
+> showFApp :: FunctionApplication -> String
+> showFApp (FunApp t1 t2 exp) = "\t\t function FROM " ++ show t1 ++ " TO " ++ show t2 ++ "\n\t\t..exp: " 
 
 Decode any string encoded as Z-encoded string and print it
 

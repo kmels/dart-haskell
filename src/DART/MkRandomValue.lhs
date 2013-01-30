@@ -29,22 +29,3 @@ And use the instances provided by the random package
 > rndBool :: IO Bool
 > rndBool = getStdRandom (randomR (minBound, maxBound))
 
-> rndChar :: IO Char
-> rndChar = getStdRandom (randomR (minBound, maxBound))
-
-> rndDouble :: IO Double
-> rndDouble = getStdRandom (randomR (minBound, maxBound))
-
-> rndFloat :: IO Double
-> rndFloat = getStdRandom (randomR (minBound, maxBound))
-
-> rndInteger :: IO Integer
-> rndInteger = getStdRandom (randomR (minBound, maxBound))
-
-Random Bool	 
-Random Char	 
-Random Double	 
-Random Float	 
-Random Int	 
-Random Integer
-Random 
