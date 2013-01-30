@@ -16,6 +16,7 @@ and functions to interact with the user
 To move
 
 > import Text.Encoding.Z
+> import DART.MkRandomValue
 
 > main :: IO () 
 > main = do
@@ -31,6 +32,8 @@ To move
 >       putStrLn $ "Parsed module name:\n\t" ++ (show mdlname)
 >       putStrLn $ "Parsed tdefs:" 
 >       mapM (\p -> putZDecStrLn $ "\t " ++ show p) tdefs
+>       rint <- rndInt 
+>       putStrLn . show $ rint
 >       putStrLn $ "Parsed vdefgs:" 
 >       mapM_ (\p -> putZDecStrLn $ "... \t " ++ showVdef p ++ "\n") vdefgs
 >     _ -> putStrLn "Wrong usage"
