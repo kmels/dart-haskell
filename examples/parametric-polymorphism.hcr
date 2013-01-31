@@ -1,0 +1,81 @@
+%module main:ParametricPolymorphism
+  main:ParametricPolymorphism.concatenateIfGreaterThan :: %forall aaab . (ghczmprim:GHCziTypes.ZMZN
+                                                                          aaab)
+                                                                         ->
+                                                                         (ghczmprim:GHCziTypes.ZMZN
+                                                                          aaab)
+                                                                         ->
+                                                                         ghczmprim:GHCziTypes.Int ->
+                                                                         (ghczmprim:GHCziTypes.ZMZN
+                                                                          aaab) =
+    \ @ aagr
+      (xsaac::(ghczmprim:GHCziTypes.ZMZN aagr))
+      (ysaad::(ghczmprim:GHCziTypes.ZMZN aagr))
+      (naae::ghczmprim:GHCziTypes.Int) ->
+        %case ((ghczmprim:GHCziTypes.ZMZN
+                aagr)) (ghczmprim:GHCziClasses.zaza
+                        (ghczmprim:GHCziClasses.zg @ ghczmprim:GHCziTypes.Int
+                         ghczmprim:GHCziClasses.zdfOrdInt
+                         (base:GHCziList.length @ aagr xsaac) naae)
+                        (ghczmprim:GHCziClasses.zg @ ghczmprim:GHCziTypes.Int
+                         ghczmprim:GHCziClasses.zdfOrdInt
+                         (base:GHCziList.length @ aagr ysaad) naae))
+        %of (wildX7::ghczmprim:GHCziTypes.Bool)
+          {ghczmprim:GHCziTypes.False ->
+             xsaac;
+           ghczmprim:GHCziTypes.True ->
+             base:GHCziBase.zpzp @ aagr xsaac ysaad};
+  main:ParametricPolymorphism.main :: (ghczmprim:GHCziTypes.IO
+                                       ghczmprim:GHCziTuple.Z0T) =
+    base:GHCziBase.zgzgze @ ghczmprim:GHCziTypes.IO
+    base:GHCziBase.zdfMonadIO
+    @ ((ghczmprim:GHCziTypes.ZMZN
+        ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))))
+    @ ghczmprim:GHCziTuple.Z0T base:SystemziEnvironment.getArgs
+    (\ (argsagm::(ghczmprim:GHCziTypes.ZMZN
+                  ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)))) ->
+         base:GHCziBase.zd
+         @ ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+         @ ((ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T))
+         base:SystemziIO.putStrLn
+         (%let faildmr :: (ghczmprim:GHCziPrim.Statezh
+                           ghczmprim:GHCziPrim.RealWorld)
+                          -> (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+                 \ (dsdms::(ghczmprim:GHCziPrim.Statezh
+                            ghczmprim:GHCziPrim.RealWorld)) ->
+                     base:GHCziErr.error
+                     @ ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+                     (ghczmprim:GHCziCString.unpackCStringzh
+                      ("Two string parameters only please."::ghczmprim:GHCziPrim.Addrzh))
+          %in %case ((ghczmprim:GHCziTypes.ZMZN
+                      ghczmprim:GHCziTypes.Char)) argsagm
+              %of (wildX7::(ghczmprim:GHCziTypes.ZMZN
+                            ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))))
+                {ghczmprim:GHCziTypes.ZMZN ->
+                   faildmr ghczmprim:GHCziPrim.realWorldzh;
+                 ghczmprim:GHCziTypes.ZC
+                 (aagn::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+                 (dsdmp::(ghczmprim:GHCziTypes.ZMZN
+                          ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)))) ->
+                   %case ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) dsdmp
+                   %of (wild1Xj::(ghczmprim:GHCziTypes.ZMZN
+                                  ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))))
+                     {ghczmprim:GHCziTypes.ZMZN ->
+                        faildmr ghczmprim:GHCziPrim.realWorldzh;
+                      ghczmprim:GHCziTypes.ZC
+                      (bago::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+                      (ds1dmq::(ghczmprim:GHCziTypes.ZMZN
+                                ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)))) ->
+                        %case ((ghczmprim:GHCziTypes.ZMZN
+                                ghczmprim:GHCziTypes.Char)) ds1dmq
+                        %of (wild2Xa::(ghczmprim:GHCziTypes.ZMZN
+                                       ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))))
+                          {ghczmprim:GHCziTypes.ZMZN ->
+                             main:ParametricPolymorphism.concatenateIfGreaterThan
+                             @ ghczmprim:GHCziTypes.Char aagn bago
+                             (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh));
+                           ghczmprim:GHCziTypes.ZC
+                           (ipvsmD::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+                           (ipv1smE::(ghczmprim:GHCziTypes.ZMZN
+                                      ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)))) ->
+                             faildmr ghczmprim:GHCziPrim.realWorldzh}}}));
