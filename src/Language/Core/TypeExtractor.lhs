@@ -20,13 +20,16 @@ We use regex-applicative to do the convertion.
 
 > import Text.Regex.Applicative
 
-> type GeneralType = PrimitiveList
+> data GeneralType = CType ConcreteType | Lambda LambdaAbstraction | NoType String deriving Show
+> data ConcreteType = PList PrimitiveList | PType PrimitiveType deriving Show
 
 > data PrimitiveType = PrimitiveCharType String 
 >                      | PrimitiveBoolType String
 >                        deriving Show
 
 > data PrimitiveList = PrimitiveList PrimitiveType deriving Show
+
+> data LambdaAbstraction = LambdaAbstraction ConcreteType GeneralType deriving Show
 
 > data GenericList = GenericList
 
@@ -40,11 +43,19 @@ We use regex-applicative to do the convertion.
 
 > primitiveList :: RE Char PrimitiveList
 > primitiveList = let
->   listConstructor = string $ "ghc-prim:GHC.Prim.(->)\n(ghc-prim:GHC.Types.[]"
+>   listConstructor = string $ "ghc-prim:GHC.Types.[]"
 >   in PrimitiveList <$> (listConstructor *> primitiveType)
 
+> concreteType :: RE Char ConcreteType
+> concreteType = (PList <$> primitiveList) <|> (PType <$> primitiveType)
+
+> functionApplication :: RE Char LambdaAbstraction
+> functionApplication = let
+>   functConstructor = string $ "ghc-prim:GHC.Prim.(->)"
+>   in LambdaAbstraction <$> (functConstructor *> concreteType) <*> generalType 
+
 > generalType :: RE Char GeneralType
-> generalType = primitiveList
+> generalType = (Lambda <$> functionApplication) <|> (CType . PList <$> primitiveList) <|> (NoType <$> pure "END")
 
 The function to extract a type. The first argument must be a z-decoded string.
 

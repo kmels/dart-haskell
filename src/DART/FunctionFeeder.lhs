@@ -29,4 +29,4 @@ And particular useful combinators
 > feedFunction (FunApp i r exp) = let
 >   gtype = extractType . zDecodeString  $ "a" ++ show i
 >   in gtype >>= \type' -> case type' of 
->     g@(PrimitiveList primType) -> Just g
+>     g@(Lambda (LambdaAbstraction p1 p2)) -> Just g

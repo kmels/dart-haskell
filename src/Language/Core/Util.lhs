@@ -18,7 +18,7 @@
 > showType :: Ty -> String
 > showType (Tvar t) = t
 > showType (Tcon (mname,t2)) = showMname mname ++ "." ++ t2
-> showType (Tapp t1 t2) = "(" ++ showType t1 ++ " => " ++ showType t2 ++ ")"
+> showType (Tapp t1 t2) = showType t1 ++ showType t2
 
 > showMname :: Maybe AnMname -> String
 > showMname Nothing = ""
