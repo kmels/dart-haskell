@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------
 -- |
--- Module      :  DART.MkRandomValue
+-- Module      :  Language.Core.ValueDefinition
 -- Copyright   :  (c) Carlos López-Camey, University of Freiburg
 -- License     :  BSD-3
 --
@@ -16,15 +16,19 @@
 -- vdef := qvar :: ty = exp
 --
 -- ty is a type (Language.Core.Core.Ty) and exp an expression (Language.Core.Core.Exp)
------------------------------------------------------------------------------
+----------------------------------------------------------------------------- 
 
 > module Language.Core.ValueDefinition where
 
 > import Language.Core.Core
+> import Language.Core.Util
+
+> import DART.Util -- DELETE
+> import Text.Encoding.Z -- DELETE
 
 Let's create some data types for type safety purposes. First, lambda abstraction (function application)
 
-> data FunctionApplication = FunApp Ty Ty Exp
+> data FunctionApplication = FunApp String String Exp
 
 Extract an expression from a value definition
 
@@ -39,7 +43,8 @@ Useful functions to filter types of value definitions.
 
 > vdefgTapp :: Vdefg -> Maybe FunctionApplication
 > vdefgTapp vdefg = vdefNonRecursive vdefg >>= vdefTapp >>= \tapp -> case tapp of
->   (Vdef (_, (Tapp i r), e)) -> Just $ FunApp i r e
+>   (Vdef (_, (Tapp i r), e)) -> Just $ FunApp (showType i) (showType r) e
+
 
 Given a value definition, return a expression if the vdef is a function application (lambda)
 
