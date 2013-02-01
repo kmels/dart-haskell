@@ -36,7 +36,7 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 > showMname :: Maybe AnMname -> String
 > showMname Nothing = ""
 > showMname (Just (M ((P "ghc-prim"),[s1],s2))) =  "WE FOUND" ++ s2
-> showMname (Just (M ((P packageName),[s1],s2))) = if (packageName == "ghcprim") 
+> showMname (Just (M ((P packageName),[s1],s2))) = if (packageName == "ghc-prim") 
 >                                                  then "GHC!!" ++ ":" ++ s1 ++ "." ++ s2
 >                                                  else ">>>"++(show packageName) ++ "<<<:" ++ s1 ++ "." ++ s2
 
