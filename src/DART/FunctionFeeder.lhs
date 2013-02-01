@@ -32,6 +32,4 @@ And particular useful combinators
 > feedFunction (FunApp i r exp) = let
 >   gtype = extractType . zDecodeString $ (i ++ r) --reify
 >   in gtype >>= \type' -> case type' of 
->     g@(Lambda (LambdaAbstraction p1 p2)) -> trace ("Reified type: " ++ show g ++ "\n\tExpression: "++ (zDecodeString . showExp $ exp)) $ Just g
-
-feedExpression :: Exp -> 
+>     g@(Lambda (LambdaAbstraction p1 p2)) -> trace ("\t\tDEBUG -- Reified type: " ++ show g ++ "\n\t\tDEBUG -- Z-decoded Expression: "++ (zDecodeString . showExp $ exp)) $ Just g

@@ -23,34 +23,32 @@
 
 > showType :: Ty -> String
 > showType (Tvar t) = wrapName "Tvar" t
+
+> showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),primitiveType)) = primitiveType
 > showType (Tcon (mname,t2)) = wrapName "Tcon" $ showMname mname ++ "." ++ t2
 
 In order to pretty print types, we'll pattern match on the list type as a Ty
 
-> showType (Tapp (Tcon (Just (M ((P "ghc-prim"), ["GHC"], "Types")),"[]")) (Tcon (Just (M ((P "ghc-prim"), ["GHC"], "Types")),"Char"))) = "[Char!!!!]"
-> showType (Tapp (Tcon (Just (M ((P "ghc-prim"), ["GHC"], "Types")),"[]")) typ) = "[WTF???]" ++ showType typ
+> showType (Tapp (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),"ZMZN")) (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),listType))) = "[" ++ listType ++ "]"
 > showType (Tapp t1 t2) = wrapName "Tapp" $ showType t1 ++ "TIP2: " ++ showType t2
 
 > showType _ = "NOT IMPLEMENTED YET!!!!!!"
 
 > showMname :: Maybe AnMname -> String
 > showMname Nothing = ""
-> showMname (Just (M ((P "ghc-prim"),[s1],s2))) =  "WE FOUND" ++ s2
-> showMname (Just (M ((P packageName),[s1],s2))) = if (packageName == "ghc-prim") 
->                                                  then "GHC!!" ++ ":" ++ s1 ++ "." ++ s2
->                                                  else ">>>"++(show packageName) ++ "<<<:" ++ s1 ++ "." ++ s2
+> showMname (Just (M ((P packageName),[s1],s2))) = packageName ++ ":" ++ s1 ++ "." ++ s2
 
 > wrapName s r = s ++ "(" ++ r ++ ")"
 
 > showExp :: Exp -> String
-> showExp (Var (mname,variable)) = wrapName "var" $ showMname mname ++ variable
+> showExp (Var (mname,variable)) = wrapName "var" $ showMname mname ++ "." ++ variable
 > showExp (Dcon (mname,dcon)) = wrapName "dataConstructor" $ showMname mname ++ dcon ++")"
 > showExp (Lit (Literal coreLit ty)) = wrapName "lit" $ showCoreLit coreLit ++ showType ty
 > showExp (App exp1 exp2) = wrapName "app" $ showExp exp1 ++ showExp exp2
 > showExp (Appt exp typ) = wrapName "appt" $ showExp exp ++ showType typ
-> showExp (Lam bind exp) = wrapName "lam" $ showBind bind ++ showExp exp
+> showExp (Lam bind exp) = "\n\t\\" ++ showBind bind ++ " -> " ++ showExp exp
 > showExp (Let vdefg exp) = wrapName "let" $ showVdefg vdefg ++ showExp exp
-> showExp (Case exp (vbind_var,vbind_ty) ty alts) = wrapName "case" $ showExp exp ++ vbind_var ++ showType vbind_ty ++ showType ty ++ concatMap showAlt alts
+> showExp (Case exp (vbind_var,vbind_ty) ty alts) = "\n\t\tcase \n\t\t\t" ++ showExp exp ++ "\n\tof " ++vbind_var ++ "TYPE2" ++ showType vbind_ty ++ "TYPE" ++ showType ty ++ concatMap showAlt alts
 > showExp (Cast exp ty) = wrapName "case" $ showExp exp ++ showType ty
 > showExp (Note msg exp) = wrapName "note" $ msg ++ showExp exp
 > showExp (External str ty) = wrapName "external" $ str ++ showType ty
