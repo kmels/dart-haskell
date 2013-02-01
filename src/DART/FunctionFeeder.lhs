@@ -24,9 +24,10 @@ FunctionApplication is a type wrapper to a value definition (from External Core)
 And particular useful combinators
 
 > import Text.Encoding.Z(zDecodeString)
+> import Language.Core.Util(showType)
 
 > feedFunction :: FunctionApplication -> Maybe GeneralType
 > feedFunction (FunApp i r exp) = let
->   gtype = extractType . zDecodeString  $ "a" ++ show i
+>   gtype = extractType . zDecodeString $ i
 >   in gtype >>= \type' -> case type' of 
 >     g@(Lambda (LambdaAbstraction p1 p2)) -> Just g

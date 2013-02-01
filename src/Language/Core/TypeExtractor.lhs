@@ -8,7 +8,7 @@
 -- Stability   :  stable
 --
 --
--- Types in extcore (Language.Core.Ty) are not reifable. We only know 
+-- Types in extcore (Language.Core.Ty) are not refied. We only know 
 their names and the packages they come from.
 
 So if we have a type [Char] (list of Chars), we might only get "ghc-prim:GHC.Prim.(->)\n(ghc-prim:GHC.Types.[] ghc-prim:GHC.Types.Char)" from a Ty. We use regular expressions to convert their representation to concrete data types in order to be able to do pattern matching (e.g. in DART.FunctionFeeder).
@@ -19,6 +19,8 @@ So if we have a type [Char] (list of Chars), we might only get "ghc-prim:GHC.Pri
 We use regex-applicative to do the convertion.
 
 > import Text.Regex.Applicative
+
+> import Debug.Trace
 
 > data GeneralType = CType ConcreteType | Lambda LambdaAbstraction | NoType String deriving Show
 > data ConcreteType = PList PrimitiveList | PType PrimitiveType deriving Show
@@ -39,25 +41,26 @@ We use regex-applicative to do the convertion.
 > primitiveBoolType :: RE Char PrimitiveType
 > primitiveBoolType = PrimitiveBoolType <$> string "ghc-prim:GHC.Types.Bool"
 
-> primitiveType = primitiveCharType <|> primitiveBoolType
+> primitiveType = trace "Debug: primitiveType" $ primitiveCharType <|> primitiveBoolType
 
 > primitiveList :: RE Char PrimitiveList
 > primitiveList = let
 >   listConstructor = string $ "ghc-prim:GHC.Types.[]"
->   in PrimitiveList <$> (listConstructor *> primitiveType)
+>   in trace "debug: primitiveList" $ PrimitiveList <$> (listConstructor *> primitiveType)
 
 > concreteType :: RE Char ConcreteType
-> concreteType = (PList <$> primitiveList) <|> (PType <$> primitiveType)
+> concreteType = trace "debug: concreteType" $ (PList <$> primitiveList) <|> (PType <$> primitiveType)
 
 > functionApplication :: RE Char LambdaAbstraction
 > functionApplication = let
 >   functConstructor = string $ "ghc-prim:GHC.Prim.(->)"
->   in LambdaAbstraction <$> (functConstructor *> concreteType) <*> generalType 
+>   in trace "debug: functionApplication" $ LambdaAbstraction <$> (functConstructor *> concreteType) <*> ((CType . PType . PrimitiveCharType) <$> string "asdf")-- <*> generalType 
 
 > generalType :: RE Char GeneralType
-> generalType = (Lambda <$> functionApplication) <|> (CType . PList <$> primitiveList) <|> (NoType <$> pure "END")
+> generalType = trace "debug: General type" $ (Lambda <$> functionApplication) <|> (CType . PList <$> primitiveList)
 
 The function to extract a type. The first argument must be a z-decoded string.
 
 > extractType :: String -> Maybe GeneralType
-> extractType ty = ty =~ generalType
+> extractType ty = trace ("Doing "++ty) $ ty =~ generalType
+

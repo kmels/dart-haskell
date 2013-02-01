@@ -44,3 +44,12 @@ External Core bugs in GHC
 To read
 ----
 [HsSyn](http://permalink.gmane.org/gmane.comp.lang.haskell.cvs.ghc/17611) from [Get EC to work with readline](http://www.mail-archive.com/cvs-all@haskell.org/msg28422.html)
+
+Acknowledgments
+----
+
+<a href="http://www.cs.uu.nl/~daan/parsec.html">
+ <img src="http://www.cs.uu.nl/~daan/images/parsec.gif"
+      alt="Parsec logo" hspace=20 border=0
+      style="float: right; border: none; padding-left: 4pt">
+</a>
