@@ -48,8 +48,4 @@ To read
 Acknowledgments
 ----
 
-<a href="http://www.cs.uu.nl/~daan/parsec.html">
- <img src="http://www.cs.uu.nl/~daan/images/parsec.gif"
-      alt="Parsec logo" hspace=20 border=0
-      style="float: right; border: none; padding-left: 4pt">
-</a>
+[![Parsec logo](http://www.cs.uu.nl/~daan/images/parsec.gif "Parsec")](http://www.cs.uu.nl/~daan/parsec.html)
