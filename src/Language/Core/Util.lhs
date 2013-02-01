@@ -32,7 +32,7 @@
 > showExp (App exp1 exp2) = showExp exp1 ++ showExp exp2
 > showExp (Appt exp typ) = showExp exp ++ showType typ
 > showExp (Lam bind exp) = showBind bind ++ showExp exp
-> showExp ( bind exp) = showBind bind ++ showExp exp
+> --showExp (Let vdefg exp) = showBind bind ++ showExp exp
 > showExp _ = "NOT IMPLEMENTED YET"
 
 > showCoreLit :: CoreLit -> String
