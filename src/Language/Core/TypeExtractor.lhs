@@ -11,14 +11,15 @@
 -- Types in extcore (Language.Core.Ty) are not refied. We only know 
 their names and the packages they come from.
 
-So if we have a type [Char] (list of Chars), we might only get "ghc-prim:GHC.Prim.(->)\n(ghc-prim:GHC.Types.[] ghc-prim:GHC.Types.Char)" from a Ty. We use regular expressions to convert their representation to concrete data types in order to be able to do pattern matching (e.g. in DART.FunctionFeeder).
+So if we have a type [Char] (list of Chars), we might only get "ghc-prim:GHC.Prim.(->)\n(ghc-prim:GHC.Types.[] ghc-prim:GHC.Types.Char)" from a Ty. We use parser combinators to convert their representation to concrete data types in order to be able to do pattern matching (e.g. in DART.FunctionFeeder).
 -----------------------------------------------------------------------------
 
 > module Language.Core.TypeExtractor where
 
-We use regex-applicative to do the convertion.
+We use Parsec to do the convertion.
 
-> import Text.Regex.Applicative
+> import Text.Parsec
+> import Text.Parsec.String
 
 > import Debug.Trace
 
@@ -35,32 +36,53 @@ We use regex-applicative to do the convertion.
 
 > data GenericList = GenericList
 
-> primitiveCharType :: RE Char PrimitiveType
-> primitiveCharType = PrimitiveCharType <$> string "ghc-prim:GHC.Types.Char"
+> primitiveCharType :: Parser PrimitiveType
+> primitiveCharType = string "ghc-prim:GHC.Types.Char" >>= return . PrimitiveCharType
 
-> primitiveBoolType :: RE Char PrimitiveType
-> primitiveBoolType = PrimitiveBoolType <$> string "ghc-prim:GHC.Types.Bool"
+> primitiveBoolType :: Parser PrimitiveType
+> primitiveBoolType = string "ghc-prim:GHC.Types.Bool" >>= return . PrimitiveBoolType
 
 > primitiveType = trace "Debug: primitiveType" $ primitiveCharType <|> primitiveBoolType
 
-> primitiveList :: RE Char PrimitiveList
+> primitiveList :: Parser PrimitiveList
 > primitiveList = let
 >   listConstructor = string $ "ghc-prim:GHC.Types.[]"
->   in trace "debug: primitiveList" $ PrimitiveList <$> (listConstructor *> primitiveType)
+>   in trace "debug: primitiveList" $ do
+>     lc <- listConstructor 
+>     pt <- primitiveType
+>     return $ PrimitiveList pt
 
-> concreteType :: RE Char ConcreteType
-> concreteType = trace "debug: concreteType" $ (PList <$> primitiveList) <|> (PType <$> primitiveType)
+PrimitiveList <$> (listConstructor *> primitiveType)
 
-> functionApplication :: RE Char LambdaAbstraction
-> functionApplication = let
->   functConstructor = string $ "ghc-prim:GHC.Prim.(->)"
->   in trace "debug: functionApplication" $ LambdaAbstraction <$> (functConstructor *> concreteType) <*> ((CType . PType . PrimitiveCharType) <$> string "asdf")-- <*> generalType 
+> concreteType :: Parser ConcreteType
+> concreteType = trace "debug: concreteType" $ 
+>   (try primitiveList >>= return . PList)
+>   <|> (primitiveType >>= return . PType)
 
-> generalType :: RE Char GeneralType
-> generalType = trace "debug: General type" $ (Lambda <$> functionApplication) <|> (CType . PList <$> primitiveList)
+A Lambda application is a concrete lambda application. That is, there is no unapplied arguments to the function arrow, and has kind *.
+
+> functionApplication :: Parser LambdaAbstraction
+> functionApplication = trace "debug: functionApplication" $ do
+>   functionConstructor <- string $ "ghc-prim:GHC.Prim.(->)"
+>   functionDomain <- concreteType
+>   functionCodomain <- generalType
+>   return $ LambdaAbstraction functionDomain functionCodomain
+
+LambdaAbstraction <$> (functConstructor *> concreteType) <*> ((CType . PType . PrimitiveCharType) <$> string "asdf")-- <*> generalType 
+
+> generalType :: Parser GeneralType
+> generalType = trace "debug: General type" $ do 
+>   fa <- try functionApplication
+>   return $ Lambda fa
+>   <|> (primitiveList >>= return . CType . PList)
+>   <|> (concreteType >>= return . CType)
+
+(Lambda <$> functionApplication) <|> (CType . PList <$> primitiveList)
 
 The function to extract a type. The first argument must be a z-decoded string.
 
 > extractType :: String -> Maybe GeneralType
-> extractType ty = trace ("Doing "++ty) $ ty =~ generalType
+> extractType ty = trace ("Doing "++ty) $ case (parse generalType "" ty) of
+>   Left err -> trace (show err) $ Nothing
+>   Right t -> Just t
 

@@ -28,6 +28,6 @@ And particular useful combinators
 
 > feedFunction :: FunctionApplication -> Maybe GeneralType
 > feedFunction (FunApp i r exp) = let
->   gtype = extractType . zDecodeString $ i
+>   gtype = extractType . zDecodeString $ (i ++ r)
 >   in gtype >>= \type' -> case type' of 
 >     g@(Lambda (LambdaAbstraction p1 p2)) -> Just g
