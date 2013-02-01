@@ -16,3 +16,9 @@ filterFunctions f = do
                  FailP msg -> error msg
            in mapMaybe vdefgToMaybeTapp vdefgs
   
+-- extract the expression of the first function definition in a ExtCore module
+firstExpression :: FileName -> IO Exp
+firstExpression f = filterFunctions f >>= return . funExp . head
+
+funExp :: FunctionApplication -> Exp
+funExp (FunApp i r exp) = exp
