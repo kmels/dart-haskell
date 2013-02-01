@@ -45,7 +45,3 @@ To read
 ----
 [HsSyn](http://permalink.gmane.org/gmane.comp.lang.haskell.cvs.ghc/17611) from [Get EC to work with readline](http://www.mail-archive.com/cvs-all@haskell.org/msg28422.html)
 
-Acknowledgments
-----
-
-[![Parsec logo](http://www.cs.uu.nl/~daan/images/parsec.gif "Parsec")](http://www.cs.uu.nl/~daan/parsec.html)
