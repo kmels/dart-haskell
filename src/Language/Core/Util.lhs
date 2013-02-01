@@ -24,3 +24,23 @@
 > showMname :: Maybe AnMname -> String
 > showMname Nothing = ""
 > showMname (Just (M ((P packageName),[s1],s2))) = packageName ++ ":" ++ s1 ++ "." ++ s2
+
+> showExp :: Exp -> String
+> showExp (Var (mname,variable)) = showMname mname ++ variable
+> showExp (Dcon (mname,dcon)) = showMname mname ++ dcon
+> showExp (Lit (Literal coreLit ty)) = showCoreLit coreLit ++ showType ty
+> showExp (App exp1 exp2) = showExp exp1 ++ showExp exp2
+> showExp (Appt exp typ) = showExp exp ++ showType typ
+> showExp (Lam bind exp) = showBind bind ++ showExp exp
+> showExp ( bind exp) = showBind bind ++ showExp exp
+> showExp _ = "NOT IMPLEMENTED YET"
+
+> showCoreLit :: CoreLit -> String
+> showCoreLit (Lint i) = show i
+> showCoreLit (Lrational r) = show r
+> showCoreLit (Lchar c) = [c]
+> showCoreLit (Lstring s) = s
+
+> showBind :: Bind -> String
+> showBind (Vb (var,ty)) = var ++ showType ty
+> showBind (Tb (tvar,kind)) = "BIND NOT IMPLEMENTED YET"

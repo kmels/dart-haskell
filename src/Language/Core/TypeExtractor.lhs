@@ -21,20 +21,20 @@ We use Parsec to do the convertion.
 > import Text.Parsec
 > import Text.Parsec.String
 
+and define data types in Language.Core.TypeExtractor.DataTypes
+
+> import Language.Core.TypeExtractor.DataTypes
+
 > import Debug.Trace
 
-> data GeneralType = CType ConcreteType | Lambda LambdaAbstraction | NoType String deriving Show
-> data ConcreteType = PList PrimitiveList | PType PrimitiveType deriving Show
+The function to extract a type. The first argument must be a z-decoded string.
 
-> data PrimitiveType = PrimitiveCharType String 
->                      | PrimitiveBoolType String
->                        deriving Show
+> extractType :: String -> Maybe GeneralType
+> extractType ty = trace ("Doing "++ty) $ case (parse generalType "" ty) of
+>   Left err -> trace (show err) $ Nothing
+>   Right t -> Just t
 
-> data PrimitiveList = PrimitiveList PrimitiveType deriving Show
-
-> data LambdaAbstraction = LambdaAbstraction ConcreteType GeneralType deriving Show
-
-> data GenericList = GenericList
+To identify primitive types we need the following parsers
 
 > primitiveCharType :: Parser PrimitiveType
 > primitiveCharType = string "ghc-prim:GHC.Types.Char" >>= return . PrimitiveCharType
@@ -44,6 +44,8 @@ We use Parsec to do the convertion.
 
 > primitiveType = trace "Debug: primitiveType" $ primitiveCharType <|> primitiveBoolType
 
+A primitive list has kind * and no parametric polymorphism associated. That is, it represents a list of primitive types.
+
 > primitiveList :: Parser PrimitiveList
 > primitiveList = let
 >   listConstructor = string $ "ghc-prim:GHC.Types.[]"
@@ -52,37 +54,26 @@ We use Parsec to do the convertion.
 >     pt <- primitiveType
 >     return $ PrimitiveList pt
 
-PrimitiveList <$> (listConstructor *> primitiveType)
+A concrete type is any type of kind *.
 
 > concreteType :: Parser ConcreteType
 > concreteType = trace "debug: concreteType" $ 
 >   (try primitiveList >>= return . PList)
 >   <|> (primitiveType >>= return . PType)
 
-A Lambda application is a concrete lambda application. That is, there is no unapplied arguments to the function arrow, and has kind *.
+A Lambda abstraction is a ready-to-be beta-reduced lambda abstraction. That is, there is no unapplied arguments to the function arrow, and has kind *.
 
-> functionApplication :: Parser LambdaAbstraction
-> functionApplication = trace "debug: functionApplication" $ do
+> lambdaAbstraction :: Parser LambdaAbstraction
+> lambdaAbstraction = trace "debug: lambdaAbstraction" $ do
 >   functionConstructor <- string $ "ghc-prim:GHC.Prim.(->)"
 >   functionDomain <- concreteType
 >   functionCodomain <- generalType
 >   return $ LambdaAbstraction functionDomain functionCodomain
 
-LambdaAbstraction <$> (functConstructor *> concreteType) <*> ((CType . PType . PrimitiveCharType) <$> string "asdf")-- <*> generalType 
 
 > generalType :: Parser GeneralType
 > generalType = trace "debug: General type" $ do 
->   fa <- try functionApplication
+>   fa <- try lambdaAbstraction
 >   return $ Lambda fa
 >   <|> (primitiveList >>= return . CType . PList)
 >   <|> (concreteType >>= return . CType)
-
-(Lambda <$> functionApplication) <|> (CType . PList <$> primitiveList)
-
-The function to extract a type. The first argument must be a z-decoded string.
-
-> extractType :: String -> Maybe GeneralType
-> extractType ty = trace ("Doing "++ty) $ case (parse generalType "" ty) of
->   Left err -> trace (show err) $ Nothing
->   Right t -> Just t
-

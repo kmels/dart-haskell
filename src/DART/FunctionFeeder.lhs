@@ -16,6 +16,7 @@
 We'll need to differentiate types, for that we will pattern match on them. To be able to pattern match on them, we need to parse them. TypeExtractor converts types managed by  Language.Core.Parser into types described in Language.Core.TypeExtractor.
 
 > import Language.Core.TypeExtractor
+> import Language.Core.TypeExtractor.DataTypes
 
 FunctionApplication is a type wrapper to a value definition (from External Core) with a Tapp. It represents a lambda abstraction.
 
@@ -24,10 +25,13 @@ FunctionApplication is a type wrapper to a value definition (from External Core)
 And particular useful combinators
 
 > import Text.Encoding.Z(zDecodeString)
-> import Language.Core.Util(showType)
+> import Language.Core.Util(showType,showExp)
+> import Debug.Trace
 
 > feedFunction :: FunctionApplication -> Maybe GeneralType
 > feedFunction (FunApp i r exp) = let
->   gtype = extractType . zDecodeString $ (i ++ r)
+>   gtype = extractType . zDecodeString $ (i ++ r) --reify
 >   in gtype >>= \type' -> case type' of 
->     g@(Lambda (LambdaAbstraction p1 p2)) -> Just g
+>     g@(Lambda (LambdaAbstraction p1 p2)) -> trace ("Reified type " ++ show g ++ "\n\tExpression: "++ (zDecodeString . showExp $ exp)) $ Just g
+
+feedExpression :: Exp -> 
