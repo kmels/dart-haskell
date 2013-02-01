@@ -11,7 +11,7 @@ We'll need to parse EC input. For that we use the extcore package.
 
 > import System.Environment
 
-> import Language.Core.Util(showType)
+> import Language.Core.Util(showExtCoreType)
 
 To move
 
@@ -42,7 +42,7 @@ To move
 >       putStrLn $ "Functions founded:\n----------------------------------------\n" 
 >       --mapM_ (\p -> putZDecStrLn $ "... \t " ++ showFApp p ++ "\n") $ (mapMaybe vdefgTapp vdefgs)
 >       putStrLn $ "Feeded functions:\n----------------------------------------\n" 
->       mapM_ (\p -> putZDecStrLn $ "... \t " ++ show p ++ "\n") $ map feedFunction $ mapMaybe vdefgTapp vdefgs
+>       mapM_ (\p -> putZDecStrLn $ "... \t " ++ show p ++ "\n") $ map feedFunction $ mapMaybe vdefgToMaybeTapp vdefgs
 >     _ -> putStrLn "Wrong usage"
 
 helper show function that says which constructor is used
@@ -62,4 +62,4 @@ Decode any string encoded as Z-encoded string and print it
 > showVdefg :: Vdefg -> String
 > showVdefg (Rec vdefs) = concatMap (\p -> "Rec -> " ++ show p) vdefs
 > --showVdefg (Nonrec (Vdef ((mname,var),ty,exp) )) = "Nonrec\n\t\t..qual_mname: " ++ show mname ++ "\n\t\t..var: " ++ show var ++ "\n\t\t..ty: " ++ show ty ++ "\n\t\t..exp: " 
-> showVdefg (Nonrec (Vdef ((mname,var),ty,exp) )) = showType ty
+> showVdefg (Nonrec (Vdef ((mname,var),ty,exp) )) = showExtCoreType ty

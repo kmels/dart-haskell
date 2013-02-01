@@ -25,13 +25,13 @@ FunctionApplication is a type wrapper to a value definition (from External Core)
 And particular useful combinators
 
 > import Text.Encoding.Z(zDecodeString)
-> import Language.Core.Util(showType,showExp)
+> import Language.Core.Util(showExtCoreType,showExp)
 > import Debug.Trace
 
 > feedFunction :: FunctionApplication -> Maybe GeneralType
 > feedFunction (FunApp i r exp) = let
 >   gtype = extractType . zDecodeString $ (i ++ r) --reify
 >   in gtype >>= \type' -> case type' of 
->     g@(Lambda (LambdaAbstraction p1 p2)) -> trace ("Reified type " ++ show g ++ "\n\tExpression: "++ (zDecodeString . showExp $ exp)) $ Just g
+>     g@(Lambda (LambdaAbstraction p1 p2)) -> trace ("Reified type: " ++ show g ++ "\n\tExpression: "++ (zDecodeString . showExp $ exp)) $ Just g
 
 feedExpression :: Exp -> 

@@ -41,9 +41,9 @@ Useful functions to filter types of value definitions.
 > vdefNonRecursive (Nonrec vdef) = Just vdef
 > vdefNonRecursive _ = Nothing
 
-> vdefgTapp :: Vdefg -> Maybe FunctionApplication
-> vdefgTapp vdefg = vdefNonRecursive vdefg >>= vdefTapp >>= \tapp -> case tapp of
->   (Vdef (_, (Tapp i r), e)) -> Just $ FunApp (showType i) (showType r) e
+> vdefgToMaybeTapp :: Vdefg -> Maybe FunctionApplication
+> vdefgToMaybeTapp vdefg = vdefNonRecursive vdefg >>= vdefTapp >>= \tapp -> case tapp of
+>   (Vdef (_, (Tapp i r), e)) -> Just $ FunApp (showExtCoreType i) (showExtCoreType r) e
 
 
 Given a value definition, return a expression if the vdef is a function application (lambda)
