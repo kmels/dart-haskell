@@ -1,0 +1,54 @@
+%module main:Main
+  %rec
+  {intListLengthr9J :: (ghczmprim:GHCziTypes.ZMZN
+                        ghczmprim:GHCziTypes.Int)
+                       -> ghczmprim:GHCziTypes.Int =
+     \ (dsdy4::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int)) ->
+         %case ghczmprim:GHCziTypes.Int dsdy4
+         %of (wildX5::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int))
+           {ghczmprim:GHCziTypes.ZMZN ->
+              ghczmprim:GHCziTypes.Izh (0::ghczmprim:GHCziPrim.Intzh);
+            ghczmprim:GHCziTypes.ZC
+            (xak9::ghczmprim:GHCziTypes.Int)
+            (xsaka::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int)) ->
+              base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
+              (intListLengthr9J xsaka)
+              (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh))}};
+  main:Main.main :: (ghczmprim:GHCziTypes.IO
+                     ghczmprim:GHCziTuple.Z0T) =
+    base:GHCziBase.zgzg @ ghczmprim:GHCziTypes.IO
+    base:GHCziBase.zdfMonadIO @ ghczmprim:GHCziTuple.Z0T
+    @ ghczmprim:GHCziTuple.Z0T
+    (base:GHCziBase.zd @ ghczmprim:GHCziTypes.Int
+     @ ((ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T))
+     (base:GHCziBase.zi
+      @ ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+      @ ((ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T))
+      @ ghczmprim:GHCziTypes.Int base:SystemziIO.putStrLn
+      (base:GHCziShow.show @ ghczmprim:GHCziTypes.Int
+       base:GHCziShow.zdfShowInt))
+     (intListLengthr9J
+      (base:GHCziEnum.enumFromThenTo @ ghczmprim:GHCziTypes.Int
+       base:GHCziEnum.zdfEnumInt
+       (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh))
+       (ghczmprim:GHCziTypes.Izh (4::ghczmprim:GHCziPrim.Intzh))
+       (ghczmprim:GHCziTypes.Izh (100::ghczmprim:GHCziPrim.Intzh)))))
+    (base:GHCziBase.zd @ ghczmprim:GHCziTypes.Bool
+     @ ((ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T))
+     (base:GHCziBase.zi
+      @ ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+      @ ((ghczmprim:GHCziTypes.IO ghczmprim:GHCziTuple.Z0T))
+      @ ghczmprim:GHCziTypes.Bool base:SystemziIO.putStrLn
+      (base:GHCziShow.show @ ghczmprim:GHCziTypes.Bool
+       base:GHCziShow.zdfShowBool))
+     (ghczmprim:GHCziClasses.zeze @ ghczmprim:GHCziTypes.Int
+      ghczmprim:GHCziClasses.zdfEqInt
+      (base:GHCziReal.mod @ ghczmprim:GHCziTypes.Int
+       base:GHCziReal.zdfIntegralInt
+       (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh))
+       (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh)))
+      (ghczmprim:GHCziTypes.Izh (0::ghczmprim:GHCziPrim.Intzh))));
+  main:ZCMain.main :: (ghczmprim:GHCziTypes.IO
+                       ghczmprim:GHCziTuple.Z0T) =
+    base:GHCziTopHandler.runMainIO @ ghczmprim:GHCziTuple.Z0T
+    main:Main.main;
