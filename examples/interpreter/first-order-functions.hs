@@ -1,21 +1,29 @@
+module FirstOrderFunctions (
+  plusOneInt
+  , sum
+  , isEven
+  , intListLength
+  , fifty
+  , isOneEven
+  ) where
+  
+plusOneInt :: Int -> Int
+plusOneInt n = n + 1
 
-plusOne n = n + 1
+--plusOneGeneric n = n + 1
 
-sum :: Int -> Int -> Int
-a `sum` b = a + b
+mySum :: Int -> Int -> Int
+a `mySum` b = a + b
 
-isOdd :: Int -> Bool
-isOdd n = n `mod` 2 == 0
+isEven :: Int -> Bool
+isEven n = n `mod` 2 == 0
 
 intListLength :: [Int] -> Int
 intListLength [] = 0
 intListLength (x:xs) = intListLength xs + 1
 
---eval
 fifty = intListLength [2,4..100]
-isOneOdd = isOdd 1
+isOneEven = isEven 1
 
 main :: IO ()
-main = do
-  putStrLn . show $ fifty
-  putStrLn . show $ isOneOdd
+main = putStrLn "main"
