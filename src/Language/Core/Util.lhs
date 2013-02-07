@@ -45,7 +45,7 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 > showExp (Dcon (mname,dcon)) = wrapName "dataConstructor" $ showMname mname ++ dcon ++")"
 > showExp (Lit (Literal coreLit ty)) = wrapName "lit" $ showCoreLit coreLit ++ showType ty
 > showExp (App exp1 exp2) = wrapName "app" $ showExp exp1 ++ showExp exp2
-> showExp (Appt exp typ) = wrapName "appt" $ showExp exp ++ showType typ
+> showExp (Appt exp typ) = wrapName "appt" $ showExp exp ++ showType typ --e.g. >= Int
 > showExp (Lam bind exp) = "\n\t\\" ++ showBind bind ++ " -> " ++ showExp exp
 > showExp (Let vdefg exp) = wrapName "let" $ showVdefg vdefg ++ showExp exp
 > showExp (Case exp (vbind_var,vbind_ty) ty alts) = "\n\t\tcase \n\t\t\t" ++ showExp exp ++ "\n\tof " ++vbind_var ++ "TYPE2" ++ showType vbind_ty ++ "TYPE" ++ showType ty ++ concatMap showAlt alts

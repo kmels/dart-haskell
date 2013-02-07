@@ -1,4 +1,6 @@
 
+plusOne n = n + 1
+
 sum :: Int -> Int -> Int
 a `sum` b = a + b
 
