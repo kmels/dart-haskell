@@ -23,7 +23,6 @@
 > import Language.Core.Core
 > import Language.Core.Util
 
-> import DART.Util -- DELETE
 > import Text.Encoding.Z -- DELETE
 
 Let's create some data types for type safety purposes. First, lambda abstraction (function application)
