@@ -38,7 +38,7 @@ To move
 >       putStrLn $ "Value definitions1:\n----------------------------------------\n" 
 >       mapM_ (\p -> putZDecStrLn $ "... \t " ++ showVdefg p ++ "\n") vdefgs
 >       putStrLn $ "Functions founded:\n----------------------------------------\n" 
->       --mapM_ (\p -> putZDecStrLn $ "... \t " ++ showFApp p ++ "\n") $ (mapMaybe vdefgTapp vdefgs)
+>       mapM_ (\p -> putZDecStrLn $ "... \t " ++ show p ++ "\n") $ (mapMaybe vdefgToMaybeTapp vdefgs)
 >       putStrLn $ "Feeded functions:\n----------------------------------------\n" 
 >       mapM_ (\p -> putZDecStrLn $ "... \t " ++ show p ++ "\n") $ map feedFunction $ mapMaybe vdefgToMaybeTapp vdefgs
 >     _ -> putStrLn "Wrong usage"

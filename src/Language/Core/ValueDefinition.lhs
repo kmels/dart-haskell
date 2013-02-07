@@ -29,6 +29,9 @@ Let's create some data types for type safety purposes. First, lambda abstraction
 
 > data FunctionApplication = FunApp String String Exp
 
+> instance Show FunctionApplication where
+>   show (FunApp t1 t2 exp) = ":: " ++ t1 ++ " -> " ++ t2 ++ " = " ++ showExp exp
+
 Extract an expression from a value definition
 
 > vdefExp :: Vdef -> Exp
