@@ -37,14 +37,17 @@ The function to extract a type. The first argument must be a z-decoded string.
 To identify primitive types we need the following parsers
 
 > primitiveCharType :: Parser PrimitiveType
-> primitiveCharType = string "ghc-prim:GHC.Types.Char" >>= return . PrimitiveCharType
+> primitiveCharType = trace "Debug: primitiveCharType" $ string "ghc-prim:GHC.Types.Char" >>= return . PrimitiveCharType
+
+> primitiveIntType :: Parser PrimitiveType
+> primitiveIntType = trace "debug: primitiveIntType" $ string "ghc-prim:GHC.Types.Int" >>= return . PrimitiveIntType
 
 > primitiveBoolType :: Parser PrimitiveType
-> primitiveBoolType = string "ghc-prim:GHC.Types.Bool" >>= return . PrimitiveBoolType
+> primitiveBoolType = trace "Debug: primitiveBoolType" $ string "ghc-prim:GHC.Types.Bool" >>= return . PrimitiveBoolType
 
-> primitiveType = trace "Debug: primitiveType" $ primitiveCharType <|> primitiveBoolType
+> primitiveType = trace "Debug: primitiveType" $ (try primitiveIntType) <|> (trace "\t missed primitiveInt" $ try primitiveCharType) <|> (try primitiveBoolType)
 
-A primitive list has kind * and no parametric polymorphism associated. That is, it represents a list of primitive types.
+A Primitive list has kind * and no parametric polymorphism associated. That is, it represents a list of primitive types.
 
 > primitiveList :: Parser PrimitiveList
 > primitiveList = let
@@ -59,7 +62,7 @@ A concrete type is any type of kind *.
 > concreteType :: Parser ConcreteType
 > concreteType = trace "debug: concreteType" $ 
 >   (try primitiveList >>= return . PList)
->   <|> (primitiveType >>= return . PType)
+>   <|> (trace "\t missed primitiveList" $ (primitiveType >>= return . PType))
 
 A Lambda abstraction is a ready-to-be beta-reduced lambda abstraction. That is, there is no unapplied arguments to the function arrow, and has kind *.
 
@@ -75,5 +78,5 @@ A Lambda abstraction is a ready-to-be beta-reduced lambda abstraction. That is, 
 > generalType = trace "debug: General type" $ do 
 >   fa <- try lambdaAbstraction
 >   return $ Lambda fa
->   <|> (primitiveList >>= return . CType . PList)
+>   <|> (try primitiveList >>= return . CType . PList)
 >   <|> (concreteType >>= return . CType)

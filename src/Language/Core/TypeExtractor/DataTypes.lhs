@@ -21,6 +21,7 @@
 
 > data PrimitiveType = PrimitiveCharType String 
 >                      | PrimitiveBoolType String
+>                      | PrimitiveIntType String
 >                        deriving Show
 
 
