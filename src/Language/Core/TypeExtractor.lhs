@@ -25,14 +25,21 @@ and define data types in Language.Core.TypeExtractor.DataTypes
 
 > import Language.Core.TypeExtractor.DataTypes
 
+> import Text.Encoding.Z(zDecodeString)
+> import Language.Core.Core(Ty(..))
+> import Language.Core.Util(showExtCoreType)
 > import Debug.Trace
+
 
 The function to extract a type. The first argument must be a z-decoded string.
 
-> extractType :: String -> Maybe GeneralType
-> extractType ty = trace ("Doing "++ty) $ case (parse generalType "" ty) of
+> extractZDecodedType :: String -> Maybe GeneralType
+> extractZDecodedType ty = trace ("Doing "++ty) $ case (parse generalType "" ty) of
 >   Left err -> trace (show err) $ Nothing
 >   Right t -> Just t
+
+> extractType :: Ty -> Maybe GeneralType
+> extractType = extractZDecodedType . zDecodeString . showExtCoreType 
 
 To identify primitive types we need the following parsers
 

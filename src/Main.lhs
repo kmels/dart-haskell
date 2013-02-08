@@ -20,6 +20,7 @@ To move
 > import Data.Maybe
 > import Language.Core.ValueDefinition
 > import DART.FunctionFeeder
+> import Language.Core.Interpreter
 
 > main :: IO () 
 > main = do
@@ -37,27 +38,19 @@ To move
 >       mapM (\p -> putZDecStrLn $ "\t " ++ show p) tdefs
 >       putStrLn $ "Value definitions1:\n----------------------------------------\n" 
 >       mapM_ (\p -> putZDecStrLn $ "... \t " ++ showVdefg p ++ "\n") vdefgs
->       putStrLn $ "Functions founded:\n----------------------------------------\n" 
->       mapM_ (\p -> putZDecStrLn $ "... \t " ++ show p ++ "\n") $ (mapMaybe vdefgToMaybeTapp vdefgs)
->       putStrLn $ "Feeded functions:\n----------------------------------------\n" 
->       mapM_ (\p -> putZDecStrLn $ "... \t " ++ show p ++ "\n") $ map feedFunction $ mapMaybe vdefgToMaybeTapp vdefgs
+>       --putStrLn $ "Functions founded:\n----------------------------------------\n" 
+>       --mapM_ (\p -> putZDecStrLn $ "... \t " ++ show p ++ "\n") $ (mapMaybe vdefgToMaybeTapp vdefgs)
+>       putStrLn $ "Interpreted functions (with no arguments):\n----------------------------------------\n" 
+>       mapM_ (\p -> putStrLn $ "... \t " ++ show p ++ "\n") $ map evalVdefg vdefgs
 >     _ -> putStrLn "Wrong usage"
-
-helper show function that says which constructor is used
-
-> {-showFApp :: FunctionApplication -> String
-> showFApp (FunApp (Tvar t1) t2 exp) = "\t\t function FROM (Tvar) " ++ (show t1) ++ " TO " ++ show t2 ++ "\n\t\t..exp: " 
-> showFApp (FunApp (Tcon t1) t2 exp) = "\t\t function FROM (Tcon) " ++ show t1 ++ " TO " ++ show t2 ++ "\n\t\t..exp: " 
-> showFApp (FunApp (Tapp t1 t1') t2 exp) = "\t\t function FROM (Tapp) " ++ show t1 ++ " .. " ++ show t1' ++ " TO " ++ show t2 ++ "\n\t\t..exp: " 
-> showFApp (FunApp (Tforall t1@(tvar,kind) t1') t2 exp) = "\t\t function FROM (Tforall) " ++ show t1 ++ " TO " ++ show t2 ++ "\n\t\t..exp: " 
-
-> showFApp (FunApp t1 t2 exp) = "\t\t function (Any) FROM " ++ show t1 ++ " TO " ++ show t2 ++ "\n\t\t..exp: " -}
 
 Decode any string encoded as Z-encoded string and print it
 
 > putZDecStrLn = putStrLn . zDecodeString
 
 > showVdefg :: Vdefg -> String
-> showVdefg (Rec vdefs) = concatMap (\p -> "Rec -> " ++ show p) vdefs
-> --showVdefg (Nonrec (Vdef ((mname,var),ty,exp) )) = "Nonrec\n\t\t..qual_mname: " ++ show mname ++ "\n\t\t..var: " ++ show var ++ "\n\t\t..ty: " ++ show ty ++ "\n\t\t..exp: " 
-> showVdefg (Nonrec (Vdef ((mname,var),ty,exp) )) = "Nonrec " ++ showExtCoreType ty
+> showVdefg (Rec vdefs) = "Rec " ++ concatMap showVdef vdefs
+> showVdefg (Nonrec vdef) = "Nonrec " ++ showVdef vdef
+
+> showVdef :: Vdef -> String
+> showVdef (Vdef ((mname,var),ty,exp)) = var ++ " :: " ++ showExtCoreType ty

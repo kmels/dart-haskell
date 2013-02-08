@@ -30,6 +30,6 @@ And particular useful combinators
 
 > feedFunction :: FunctionApplication -> Maybe GeneralType
 > feedFunction (FunApp i r exp) = let
->   gtype = extractType . zDecodeString $ (i ++ r) --reify
+>   gtype = extractZDecodedType $ (i ++ r) --reify
 >   in gtype >>= \type' -> case type' of 
 >     g@(Lambda (LambdaAbstraction p1 p2)) -> trace ("\t\tDEBUG -- Reified type: " ++ show g ++ "\n\t\tDEBUG -- Z-decoded Expression: "++ (zDecodeString . showExp $ exp)) $ Just g

@@ -15,6 +15,12 @@
 
 > import Language.Core.Core
 
+Pretty print a Ty (from extcore) where a function from [Int] to Int is printed as:
+
+`ghc-prim:GHC.Prim.(->)ghc-prim:GHC.Types.[]ghc-prim:GHC.Types.Intghc-prim:GHC.Types.Int`
+
+This representation is used to reify types thorugh Language.Core.TypeExtractor
+
 > showExtCoreType :: Ty -> String
 > showExtCoreType (Tvar t) = t
 > showExtCoreType (Tcon (mname,t2)) = showMname mname ++ "." ++ t2
