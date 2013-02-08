@@ -3,6 +3,7 @@ module FirstOrderFunctions (
   , sum
   , isEven
   , intListLength
+  , numberTen
   , fifty
   , isOneEven
   ) where
