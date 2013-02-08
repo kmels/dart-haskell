@@ -11,7 +11,7 @@ We'll need to parse EC input. For that we use the extcore package.
 
 > import System.Environment
 
-> import Language.Core.Util(showExtCoreType)
+> import Language.Core.Util(showType)
 
 To move
 
@@ -41,7 +41,7 @@ To move
 >       --putStrLn $ "Functions founded:\n----------------------------------------\n" 
 >       --mapM_ (\p -> putZDecStrLn $ "... \t " ++ show p ++ "\n") $ (mapMaybe vdefgToMaybeTapp vdefgs)
 >       putStrLn $ "Interpreted functions (with no arguments):\n----------------------------------------\n" 
->       mapM_ (\p -> putStrLn $ "... \t " ++ show p ++ "\n") $ map evalVdefg vdefgs
+>       mapM_ (\p -> putStrLn $ "... \t " ++ p ++ "\n") $ map evalVdefg vdefgs
 >     _ -> putStrLn "Wrong usage"
 
 Decode any string encoded as Z-encoded string and print it
@@ -53,4 +53,4 @@ Decode any string encoded as Z-encoded string and print it
 > showVdefg (Nonrec vdef) = "Nonrec " ++ showVdef vdef
 
 > showVdef :: Vdef -> String
-> showVdef (Vdef ((mname,var),ty,exp)) = var ++ " :: " ++ showExtCoreType ty
+> showVdef (Vdef ((mname,var),ty,exp)) = var ++ " :: " ++ showType ty

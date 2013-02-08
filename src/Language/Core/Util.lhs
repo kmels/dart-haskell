@@ -27,10 +27,12 @@ This representation is used to reify types thorugh Language.Core.TypeExtractor
 > showExtCoreType (Tapp t1 t2) = showExtCoreType t1 ++ showExtCoreType t2
 > showExtCoreType _ = "UNKNOWN"
 
+Given a type string representation from ext core e.g. ghc-prim:GHC.Prim.(->)ghc-prim:GHC.Types.[]ghc-prim:GHC.Types.Intghc-prim:GHC.Types.Int we transform it in a more readable form e.g. [Int] -> Int
+
 > showType :: Ty -> String
 > showType (Tvar t) = wrapName "Tvar" t
 
-> showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),primitiveType)) = primitiveType
+> showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),primitiveType)) = primitiveType -- ghc.prim:GHC.Types.primitiveType
 > showType (Tcon (mname,t2)) = wrapName "Tcon" $ showMname mname ++ "." ++ t2
 
 In order to pretty print types, we'll pattern match on the list type as a Ty
@@ -42,7 +44,9 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 
 > showMname :: Maybe AnMname -> String
 > showMname Nothing = ""
+> showMname (Just (M ((P packageName),[],s2))) = packageName ++ ":" ++ s2
 > showMname (Just (M ((P packageName),[s1],s2))) = packageName ++ ":" ++ s1 ++ "." ++ s2
+> showMname (Just (M ((P packageName),ss,s2))) = packageName ++ ":" ++ show ss ++ "." ++ s2
 
 > wrapName s r = s ++ "(" ++ r ++ ")"
 
@@ -54,7 +58,7 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 > showExp (Appt exp typ) = wrapName "appt" $ showExp exp ++ showType typ --e.g. >= Int
 > showExp (Lam bind exp) = "\n\t\\" ++ showBind bind ++ " -> " ++ showExp exp
 > showExp (Let vdefg exp) = wrapName "let" $ showVdefg vdefg ++ showExp exp
-> showExp (Case exp (vbind_var,vbind_ty) ty alts) = "\n\t\tcase \n\t\t\t" ++ showExp exp ++ "\n\tof " ++vbind_var ++ "TYPE2" ++ showType vbind_ty ++ "TYPE" ++ showType ty ++ concatMap showAlt alts
+> showExp (Case exp (vbind_var,vbind_ty) ty alts) = "\n\t\tcase \n\t\t\t" ++ showExp exp ++ "\n\tof " ++vbind_var ++ "::" ++ showType vbind_ty ++ ".." ++ showType ty ++ concatMap (\alt -> "\n\t" ++ showAlt alt) alts
 > showExp (Cast exp ty) = wrapName "case" $ showExp exp ++ showType ty
 > showExp (Note msg exp) = wrapName "note" $ msg ++ showExp exp
 > showExp (External str ty) = wrapName "external" $ str ++ showType ty
@@ -79,4 +83,29 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 > showVdef (Vdef ((mname,var),ty,exp)) = wrapName "Vdef" $ showMname mname ++ var ++ showType ty ++ showExp exp
 
 > showAlt :: Alt -> String
-> showAlt alt = "showAlt NOT IMPLEMENTED"
+> showAlt (Adefault exp) = wrapName "Adefault" $ showExp exp
+> showAlt (Alit lit exp) = wrapName "ALit" $ showLit lit ++ showExp exp
+> showAlt (Acon (mname,dcon) tbinds vbinds exp) = wrapName "Acon" $ showMname mname ++ ", " ++ dcon ++ ", " ++ concatMap (\tb -> showTbind tb ++ ",") tbinds ++ concatMap (\vb -> showVbind vb ++ ",") vbinds ++ showExp exp
+
+> showTbind :: Tbind -> String
+> showTbind (tvar,kind) = wrapName "Tbind" $ tvar ++ " with kind " ++ showKind kind
+
+> showVbind :: Vbind -> String
+> showVbind (var,ty) = wrapName "Vbind" $ var ++ "::" ++ showType ty
+
+> showKind :: Kind -> String
+> showKind Klifted = "Klifted"
+> showKind Kunlifted = "Kunlifted"
+> showKind Kopen = "Kopen"
+> showKind (Karrow k k') = wrapName "Karrow" $ showKind k ++ " -> " ++ showKind k'
+> showKind (Keq ty ty') = wrapName "Keq" $ showType ty ++ " -> " ++ showType ty'
+
+> showLit :: Lit -> String
+> showLit (Literal coreLit ty) = 
+>  let
+>    showCoreLit :: CoreLit -> String
+>    showCoreLit (Lint i) = show i
+>    showCoreLit (Lrational r) = show r
+>    showCoreLit (Lchar c) = show c
+>    showCoreLit (Lstring s) = show s
+>  in showCoreLit coreLit ++ showType ty
