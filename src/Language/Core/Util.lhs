@@ -108,4 +108,4 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 >    showCoreLit (Lrational r) = show r
 >    showCoreLit (Lchar c) = show c
 >    showCoreLit (Lstring s) = show s
->  in showCoreLit coreLit ++ showType ty
+>  in showCoreLit coreLit ++ "::" ++ showType ty

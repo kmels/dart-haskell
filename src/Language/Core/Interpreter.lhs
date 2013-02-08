@@ -26,7 +26,7 @@
 >   in case extractedType of
 >     Nothing -> "Could not parse type " ++ showExtCoreType ty ++ "; therefore I did not interpret"
 >     Just (CType (PType pt)) -> "Will evaluate " ++ var ++ "::" ++ show pt ++ "\n\tExp: " ++ showExp exp ++ "\n\tResult: " ++ extCoreEval exp
->     Just ty -> "I still don't know how to evaluate values of type " ++ show ty
+>     Just ty -> var ++ "; I still don't know how to evaluate values of type " ++ show ty ++ "\n\tExp: " ++ showExp exp ++ "\n\tResult: " ++ extCoreEval exp
 
 > extCoreEval :: Exp -> String
 > extCoreEval exp = " nil"
