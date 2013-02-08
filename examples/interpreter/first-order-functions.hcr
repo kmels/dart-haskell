@@ -1,11 +1,11 @@
 %module main:FirstOrderFunctions
   main:FirstOrderFunctions.isEven :: ghczmprim:GHCziTypes.Int ->
                                      ghczmprim:GHCziTypes.Bool =
-    \ (naa7::ghczmprim:GHCziTypes.Int) ->
+    \ (naa8::ghczmprim:GHCziTypes.Int) ->
         ghczmprim:GHCziClasses.zeze @ ghczmprim:GHCziTypes.Int
         ghczmprim:GHCziClasses.zdfEqInt
         (base:GHCziReal.mod @ ghczmprim:GHCziTypes.Int
-         base:GHCziReal.zdfIntegralInt naa7
+         base:GHCziReal.zdfIntegralInt naa8
          (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh)))
         (ghczmprim:GHCziTypes.Izh (0::ghczmprim:GHCziPrim.Intzh));
   main:FirstOrderFunctions.isOneEven :: ghczmprim:GHCziTypes.Bool =
@@ -13,23 +13,23 @@
     (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh));
   main:FirstOrderFunctions.plusOneInt :: ghczmprim:GHCziTypes.Int ->
                                          ghczmprim:GHCziTypes.Int =
-    \ (na9N::ghczmprim:GHCziTypes.Int) ->
+    \ (na9O::ghczmprim:GHCziTypes.Int) ->
         base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
-        na9N (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh));
+        na9O (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh));
   %rec
   {main:FirstOrderFunctions.intListLength :: (ghczmprim:GHCziTypes.ZMZN
                                               ghczmprim:GHCziTypes.Int)
                                              -> ghczmprim:GHCziTypes.Int =
-     \ (dsdt0::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int)) ->
-         %case ghczmprim:GHCziTypes.Int dsdt0
+     \ (dsdt3::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int)) ->
+         %case ghczmprim:GHCziTypes.Int dsdt3
          %of (wildXa::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int))
            {ghczmprim:GHCziTypes.ZMZN ->
               ghczmprim:GHCziTypes.Izh (0::ghczmprim:GHCziPrim.Intzh);
             ghczmprim:GHCziTypes.ZC
-            (xakb::ghczmprim:GHCziTypes.Int)
-            (xsakc::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int)) ->
+            (xakc::ghczmprim:GHCziTypes.Int)
+            (xsakd::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int)) ->
               base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
-              (main:FirstOrderFunctions.intListLength xsakc)
+              (main:FirstOrderFunctions.intListLength xsakd)
               (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh))}};
   main:FirstOrderFunctions.fifty :: ghczmprim:GHCziTypes.Int =
     main:FirstOrderFunctions.intListLength

@@ -10,6 +10,8 @@ module FirstOrderFunctions (
 plusOneInt :: Int -> Int
 plusOneInt n = n + 1
 
+numberTen = plusOneInt 9
+
 --plusOneGeneric n = n + 1
 
 mySum :: Int -> Int -> Int
