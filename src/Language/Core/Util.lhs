@@ -52,9 +52,9 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 
 > showExp :: Exp -> String
 > showExp (Var (mname,variable)) = wrapName "var" $ showMname mname ++ "." ++ variable
-> showExp (Dcon (mname,dcon)) = wrapName "dataConstructor" $ showMname mname ++ dcon ++")"
-> showExp (Lit (Literal coreLit ty)) = wrapName "lit" $ showCoreLit coreLit ++ showType ty
-> showExp (App exp1 exp2) = wrapName "app" $ showExp exp1 ++ showExp exp2
+> showExp (Dcon (mname,dcon)) = wrapName "dataConstructor" $ showMname mname ++ dcon
+> showExp (Lit lit) = showLit lit
+> showExp (App exp1 exp2) = wrapName "app" $ showExp exp1 ++ "," ++ showExp exp2
 > showExp (Appt exp typ) = wrapName "appt" $ showExp exp ++ showType typ --e.g. >= Int
 > showExp (Lam bind exp) = "\n\t\\" ++ showBind bind ++ " -> " ++ showExp exp
 > showExp (Let vdefg exp) = wrapName "let" $ showVdefg vdefg ++ showExp exp
@@ -108,4 +108,4 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 >    showCoreLit (Lrational r) = show r
 >    showCoreLit (Lchar c) = show c
 >    showCoreLit (Lstring s) = show s
->  in showCoreLit coreLit ++ "::" ++ showType ty
+>  in wrapName "lit" $ showCoreLit coreLit ++ "::" ++ showType ty
