@@ -3,7 +3,14 @@ module FirstOrderFunctions (
   , sum
   , isEven
   , intListLength
+  --numbers
   , numberTen
+  , numberEleven
+  , numberTwentyTwo
+  , numberFourtyTwo
+  , numberFourtyFour
+  --integer operations
+  , twice
   , fifty
   , isOneEven
   ) where
@@ -12,6 +19,15 @@ plusOneInt :: Int -> Int
 plusOneInt n = n + 1
 
 numberTen = plusOneInt 9
+numberEleven = plusOneInt numberTen
+
+numberTwentyTwo = twice numberEleven
+
+numberFourtyTwo = twice $ (twice 5) + 11
+numberFourtyFour = twice numberTwentyTwo
+
+twice :: Int -> Int
+twice n = n * 2
 
 --plusOneGeneric n = n + 1
 
