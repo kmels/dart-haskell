@@ -30,7 +30,7 @@ The list of value definitions represents the environment
 >      environment = vdefgsAsEnvironment vdefgs
 >   in case extractedType of
 >     Nothing -> "Could not parse type " ++ showExtCoreType ty ++ "; therefore I did not interpret"
->     Just (CType (PType pt)) -> "Will evaluate " ++ var ++ "::" ++ show pt ++ "\n\tExp: " ++ showExp exp ++ "\n\tResult: " ++ showIM (evalExp exp [])
+>     Just (CType (PType pt)) -> "Will evaluate " ++ var ++ "::" ++ show pt ++ "\n\tExp: " ++ showExp exp ++ "\n\tResult: " ++ showIM (evalExp exp environment)
 >     Just ty -> "" -- var ++ "; I still don't know how to evaluate values of type " ++ show ty ++ "\n\tExp: " ++ showExp exp ++ "\n\tResult: " ++ showIM (evalExp exp [])
 
 > vdefgsAsEnvironment :: [Vdefg] -> Environment
@@ -70,20 +70,22 @@ AThe interpreter monad
 
 > evalExp :: Exp -> Environment -> IM Value
 
-> evalExp (App -- Integer sum
->          (Appt
->           (Var ((Just (M (P ("base"),["GHC"],"Num"))),"zp")) -- +
->           _
->          )
->          (Var ((Just (M (P ("base"),["GHC"],"Num"))),"zdfNumInt")) -- $fNumInt
->         ) env = return . Fun $ \arg1 -> return . Fun $ \arg2 -> addValues arg1 arg2
+This one is a function application which has the type accompanied. We won't care about the type now, as I'm not sure how it can be used now.
+
+Appt is always (?) applied to App together with a var that represents the function call of the Appt. In the case of integer summation, this is base:GHC.Num.f#NumInt. That is why we have to ignore the first parameter when applied.
+
+> evalExp (Appt function_exp _) env = return . Fun $(\_ -> evalExp function_exp env)
+
+This is the sum function
+
+> evalExp (Var ((Just (M (P ("base"),["GHC"],"Num"))),"zp")) env = return . Fun $ \arg1 -> return . Fun $ \arg2 -> addValues arg1 arg2
 
 > evalExp (App -- Integer construction
 >              (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),"Izh"))
 >              (Lit lit) 
 >         ) env = evalLit lit
 
-> evalExp (App exp1 exp2) env = evalExp exp1 env >>= (\f -> apply f (evalExp exp2 env))
+> evalExp (App function_exp argument_exp) env = evalExp function_exp env >>= (\f -> apply f (evalExp argument_exp env))
 
 Variables 
 
@@ -119,4 +121,5 @@ Functions on Nums
 
 > addValues :: IM Value -> IM Value -> IM Value
 > addValues (IM (Num i)) (IM (Num j)) = IM . Num $ i + j 
+> --addValues (IM (ExtCoreExp exp1)) (IM (ExtCoreExp exp2)) = addValues (evalExp exp1) (evalExp exp2)
 > addValues (IM a) (IM b) = return . Wrong $ "Trying to add values " ++ show a ++ " and " ++ show b
