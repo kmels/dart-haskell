@@ -41,7 +41,7 @@ To move
 >       --putStrLn $ "Functions founded:\n----------------------------------------\n" 
 >       --mapM_ (\p -> putZDecStrLn $ "... \t " ++ show p ++ "\n") $ (mapMaybe vdefgToMaybeTapp vdefgs)
 >       putStrLn $ "Interpreted functions (with no arguments):\n----------------------------------------\n" 
->       mapM_ (\p -> putStrLn $ "... \t " ++ p ++ "\n") $ map evalVdefg vdefgs
+>       mapM_ (\p -> putStrLn $ "... \t " ++ p ++ "\n") $ map (\vdg -> evalVdefg vdg vdefgs) vdefgs
 >     _ -> putStrLn "Wrong usage"
 
 Decode any string encoded as Z-encoded string and print it

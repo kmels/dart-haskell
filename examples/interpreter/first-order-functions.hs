@@ -18,8 +18,8 @@ module FirstOrderFunctions (
 plusOneInt :: Int -> Int
 plusOneInt n = n + 1
 
-numberTen = plusOneInt 9
 numberEleven = plusOneInt numberTen
+numberTen = plusOneInt 9
 
 numberTwentyTwo = twice numberEleven
 
