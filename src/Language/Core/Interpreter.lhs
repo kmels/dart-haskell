@@ -95,7 +95,8 @@ Appt is always (?) applied to App together with a var that represents the functi
 
 This is the sum function
 
-> evalExp (Var ((Just (M (P ("base"),["GHC"],"Num"))),"zp")) = return $ Fun (\arg1 -> return . Fun $ \arg2 -> addValues arg1 arg2) -- arg1,arg2 :: Value
+> evalExp (Var ((Just (M (P ("base"),["GHC"],"Num"))),"zp")) = return $ Fun (\arg1 -> return . Fun $ \arg2 -> addValues arg1 arg2)
+> evalExp (Var ((Just (M (P ("base"),["GHC"],"Num"))),"zt")) = return $ Fun (\arg1 -> return . Fun $ \arg2 -> multiplyValues arg1 arg2)
 
 > evalExp (App -- Integer construction
 >              (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),"Izh"))
@@ -130,6 +131,7 @@ Otherwise
 
 > apply :: Value -> Value -> IM Value
 > apply (Fun f) v = f $ v
+> apply w@(Wrong _) _ = return w
 > apply f m = return . Wrong $ "Applying something that is not a function, namely " ++ show f
 
 Functions on Nums
@@ -146,3 +148,7 @@ Functions on Nums
 > addValues :: Value -> Value -> IM Value
 > addValues (Num i) (Num j) = return . Num $ i + j 
 > addValues a b = return . Wrong $ "Trying to add values " ++ show a ++ " and " ++ show b
+
+> multiplyValues :: Value -> Value -> IM Value
+> multiplyValues (Num i) (Num j) = return . Num $ i * j 
+> multiplyValues a b = return . Wrong $ "Trying to multiply values " ++ show a ++ " and " ++ show b
