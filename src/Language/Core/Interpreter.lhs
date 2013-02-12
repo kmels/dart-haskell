@@ -35,9 +35,18 @@ Value definition to mapped values
 
 > evalModule :: Module -> IM Heap
 > evalModule m@(Module name _ vdefgs) = do
->   eval_head <- evalVdefg (head vdefgs) 
+>   eval_head <- evalVdefg (head vdefgs)
+>   liftIO $ putStrLn $ "Result of head: " ++ show eval_head
+>   mapM_ (\vdefg -> do 
+>             h <- get
+>             res <- evalVdefg vdefg
+>             let id = vdefgName vdefg
+>             liftIO $ putStrLn $ "Doing  .. " ++ (vdefgName vdefg)
+>             liftIO $ H.insert h id res
+>             liftIO $ putStrLn $ "Result: " ++ show res
+>         ) vdefgs
 >     {- vdefg <- lift vdefgs -- :: ListT (IO ..)
->     liftIO $ putStrLn $ "Doing  .. " ++ (vdefgName vdefg)
+>     
 >     env <- lift H.toList heap
 >     let 
 >       id = vdefgName vdefg
