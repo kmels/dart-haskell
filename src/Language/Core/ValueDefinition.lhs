@@ -58,3 +58,5 @@ Given a Value definition, return its full name
 
 > vdefgName :: Vdefg -> String
 > vdefgName (Nonrec (Vdef (qvar, _, _))) = qualifiedVar qvar
+> vdefgName (Rec []) = ""
+> vdefgName (Rec ((Vdef (qvar, _, _)):xs)) = qualifiedVar qvar ++ " and " ++ vdefgName (Rec xs)

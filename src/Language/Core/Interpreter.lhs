@@ -31,7 +31,7 @@ Given a module which contains a list of value definitions, *vd*, evaluate every 
 Value definition to mapped values
 -----------------------------------------------------
 | Value definition type              | mapped to    |
-| Concrete type e.g. Int             | IM (Num val) |
+| Concrete type e.g. Int             | Num val      |
 | Concrete type e.g. Int -> Int      | ?            |
 -----------------------------------------------------
 
@@ -69,7 +69,7 @@ The list of value definitions represents the environment
 >       heap <- get 
 >       liftIO $ H.insert heap (qualifiedVar qvar) res
 >       return $ res
->     Just ty -> return . Wrong $ "I still don't know how to evaluate values of type " -- ++ show ty ++ "\n\tExp: " ++ showExp exp ++ "\n\tResult: " ++ showIM (evalExp exp [])
+>     Just ty -> return . Wrong $ "I still don't know how to evaluate values of type " ++ show ty -- ++ "\n\tExp: " ++ showExp exp ++ "\n\tResult: " ++ showIM (evalExp exp [])
 
 
 > evalExp :: Exp -> IM Value
