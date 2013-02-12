@@ -6,6 +6,7 @@ module FirstOrderFunctions (
   --numbers
   , numberTen
   , numberEleven
+  , numberTwenty
   , numberTwentyTwo
   , numberFourtyTwo
   , numberFourtyFour
@@ -20,6 +21,7 @@ plusOneInt n = n + 1
 
 numberEleven = plusOneInt numberTen
 numberTen = plusOneInt 9
+numberTwenty = twice $ numberTen
 
 numberTwentyTwo = twice numberEleven
 
