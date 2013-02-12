@@ -24,6 +24,8 @@
 
 > import Control.Monad.State.Lazy
 
+> import Data.Time.Clock(getCurrentTime,diffUTCTime)
+
 Given a module which contains a list of value definitions, *vd*, evaluate every *vd* and return a heap with their interpreted values.
 
 Value definition to mapped values
@@ -38,35 +40,20 @@ Value definition to mapped values
 >   eval_head <- evalVdefg (head vdefgs)
 >   liftIO $ putStrLn $ "Result of head: " ++ show eval_head
 >   mapM_ (\vdefg -> do 
+>             before <- liftIO getCurrentTime
 >             h <- get
->             res <- evalVdefg vdefg
->             let id = vdefgName vdefg
->             liftIO $ putStrLn $ "Doing  .. " ++ (vdefgName vdefg)
+>             liftIO $ putStr $ "Evaluating " ++ (vdefgName vdefg)
+>             res <- evalVdefg vdefg             
+>             after <- liftIO getCurrentTime
+>             let 
+>               id = vdefgName vdefg
+>               time = after `diffUTCTime` before
+>             liftIO $ putStrLn $ " ... done in " ++ show time ++ " secs. "
+>             liftIO $ putStrLn $ "\tResult: " ++ show res
 >             liftIO $ H.insert h id res
->             liftIO $ putStrLn $ "Result: " ++ show res
 >         ) vdefgs
->     {- vdefg <- lift vdefgs -- :: ListT (IO ..)
->     
->     env <- lift H.toList heap
->     let 
->       id = vdefgName vdefg
->       result = (evalVdefg vdefg env)
->     liftIO $ putStrLn $ "Result  .. " ++ showIM result
->     liftIO $ H.insert heap id result
->     return (id,result)-}
 >   h <- get
 >   return h
-
-where 
-     compute :: Vdefg -> IO (Id, IM Value)
-     compute vdefg = do 
-       env <- H.toList heap
-       return $ evalVdefg vdefg
-
--- sequence :: Monad m => [m a] -> m [a]
-a = (k,v)
-m = IO
-[m a] = IO (k,v) <- results
 
 The list of value definitions represents the environment
 
