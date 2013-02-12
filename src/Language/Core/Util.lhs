@@ -112,3 +112,7 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 
 > qualifiedVar :: Qual Var -> String
 > qualifiedVar (mname,var) = showMname mname ++ "." ++ var
+
+> bindId :: Bind -> Id
+> bindId (Vb (var,ty)) = var
+> bindId (Tb (tvar,kind)) = tvar

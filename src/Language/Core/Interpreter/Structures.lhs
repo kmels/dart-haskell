@@ -46,6 +46,14 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 > data Value = Wrong String
 >            | ExtCoreExp Exp
 >            | Num Integer
->            | Fun (Value -> IM Value) deriving Show
+>            | Fun (Value -> IM Value) Description
+
+> type Description = String
+
+> instance Show Value where
+>   show (Wrong s) = "Wrong " ++ s
+>   show (ExtCoreExp exp) = "ExtCoreExp " ++ show exp
+>   show (Num i) = show i
+>   show (Fun f s) = "Value -> IM Value" ++ s
 
 > --type Environment = [(Id,IM Value)]

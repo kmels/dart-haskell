@@ -16,7 +16,7 @@
 > import Language.Core.Interpreter.Structures
 > import Language.Core.Core
 > import Language.Core.ValueDefinition(vdefgName)
-> import Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,showMname)
+> import Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,showMname,bindId)
 > import Language.Core.TypeExtractor(extractType)
 > import Language.Core.TypeExtractor.DataTypes
 
@@ -65,6 +65,13 @@ The list of value definitions represents the environment
 >   in case extractedType of
 >     Nothing -> return . Wrong $ "Could not parse type " ++ showExtCoreType ty ++ "; therefore I did not interpret"
 >     Just (CType (PType pt)) -> do
+>       liftIO $ putStrLn $ "\n\n Value exp: " ++ showExp exp ++ " \n\n"
+>       res <- evalExp exp -- result
+>       heap <- get 
+>       liftIO $ H.insert heap (qualifiedVar qvar) res
+>       return $ res
+>     Just (Lambda (LambdaAbstraction ct gt)) -> do
+>       liftIO $ putStrLn $ "\n\n Function exp: " ++ showExp exp ++ " \n\n"
 >       res <- evalExp exp -- result
 >       heap <- get 
 >       liftIO $ H.insert heap (qualifiedVar qvar) res
@@ -78,12 +85,36 @@ This one is a function application which has the type accompanied. We won't care
 
 Appt is always (?) applied to App together with a var that represents the function call of the Appt. In the case of integer summation, this is base:GHC.Num.f#NumInt. That is why we have to ignore the first parameter when applied.
 
-> evalExp (Appt function_exp _) = return $ Fun (\_ -> evalExp function_exp)
+> evalExp (Appt function_exp ty) = return $ Fun (\_ -> evalExp function_exp) $ "Appt where type = " ++ showType ty
 
 This is the sum function
 
-> evalExp (Var ((Just (M (P ("base"),["GHC"],"Num"))),"zp")) = return $ Fun (\arg1 -> return . Fun $ \arg2 -> addValues arg1 arg2)
-> evalExp (Var ((Just (M (P ("base"),["GHC"],"Num"))),"zt")) = return $ Fun (\arg1 -> return . Fun $ \arg2 -> multiplyValues arg1 arg2)
+> evalExp (Var ((Just (M (P ("base"),["GHC"],"Num"))),"zp")) = let
+>   add n = Fun (\m -> addValues n m) "GHC.Num.+ :: Int -> Fun (Int -> Int)"
+>  in return $ Fun (\n -> return (add n)) "GHC.Num.+ :: Fun (Int -> Fun (Int -> Int))"
+
+> evalExp (Var ((Just (M (P ("base"),["GHC"],"Num"))),"zt")) = let
+>   mul n = Fun (\m -> multiplyValues n m) "GHC.Num.* :: Int -> Fun (Int -> Int)"
+>  in return $ Fun (\n -> return (mul n)) "GHC.Num.* :: Fun (Int -> Fun (Int -> Int))"
+
+> evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) = let
+>   ap f = Fun (\x -> apply f x) "GHC.Base.$ :: Fun (a -> b) -> Fun (a -> b)"
+>  in return $ Fun (\f -> return (ap f)) "GHC.Base.$ :: Fun ( Fun(a -> b) -> a -> b)"
+
+> evalExp (Var ((Just (M (P ("base"),["GHC"],"Num"))),"zdfNumInt")) = let
+>   ap f = Fun (\x -> apply f x) "GHC.Base.$fNumInt :: Fun (a -> Int) -> Fun (a -> Int)"
+>  in return $ Fun (\f -> return (ap f)) "GHC.Base.$ :: Fun ( Fun(a -> Int) -> a -> Int)"
+
+> evalExp (Lam binded_var exp) = let
+>   name = bindId binded_var
+>   bindAndEval binded_value = do 
+>     heap <- get
+>     --TODO, this should be inserted in an environment instead and then be deleted, (gotta change the IM type). It is now added and deleted in the heap. This assumes External Core source code doesn't have any variables shadowed
+>     liftIO $ H.insert heap name binded_value
+>     res <- evalExp exp
+>     liftIO $ H.delete heap name 
+>     return res
+>  in return $ Fun bindAndEval "Anonymous function"
 
 > evalExp (App -- Integer construction
 >              (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),"Izh"))
@@ -117,7 +148,9 @@ Otherwise
 >     Just v -> return v
 
 > apply :: Value -> Value -> IM Value
-> apply (Fun f) v = f $ v
+> apply (Fun f _) v = do 
+>   liftIO $ putStrLn $ "\nApplying " ++ show f ++  " to " ++ show v
+>   f $ v
 > apply w@(Wrong _) _ = return w
 > apply f m = return . Wrong $ "Applying something that is not a function, namely " ++ show f
 
@@ -139,3 +172,4 @@ Functions on Nums
 > multiplyValues :: Value -> Value -> IM Value
 > multiplyValues (Num i) (Num j) = return . Num $ i * j 
 > multiplyValues a b = return . Wrong $ "Trying to multiply values " ++ show a ++ " and " ++ show b
+
