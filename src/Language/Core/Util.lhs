@@ -109,3 +109,6 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 >    showCoreLit (Lchar c) = show c
 >    showCoreLit (Lstring s) = show s
 >  in wrapName "lit" $ showCoreLit coreLit ++ "::" ++ showType ty
+
+> qualifiedVar :: Qual Var -> String
+> qualifiedVar (mname,var) = showMname mname ++ "." ++ var

@@ -53,3 +53,8 @@ Given a value definition, return a expression if the vdef is a function applicat
 > vdefTapp :: Vdef -> Maybe Vdef
 > vdefTapp tapp@(Vdef (_, (Tapp _ _), exp)) = Just tapp
 > vdefTapp _ = Nothing
+
+Given a Value definition, return its full name
+
+> vdefgName :: Vdefg -> String
+> vdefgName (Nonrec (Vdef (qvar, _, _))) = qualifiedVar qvar

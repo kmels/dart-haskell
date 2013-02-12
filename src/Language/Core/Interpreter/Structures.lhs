@@ -1,0 +1,51 @@
+----------------------------------------------------------------------------
+-- |
+-- Module      :  Language.Core.Interpreter.Structures
+-- Copyright   :  (c) Carlos López-Camey, University of Freiburg
+-- License     :  BSD-3
+--
+-- Maintainer  :  c.lopez@kmels.net
+-- Stability   :  stable
+--
+--
+-- Data types useful for Language.Core.Interpreter
+-----------------------------------------------------------------------------
+
+> {-# LANGUAGE FlexibleInstances #-}
+
+> module Language.Core.Interpreter.Structures where
+
+This is an interpreter for External Core
+
+> import Language.Core.Core
+> import Language.Core.Util(showType,showExtCoreType,showExp,showMname)
+
+For the heap, we use the package [hashtables](http://hackage.haskell.org/package/hashtables)
+
+> import qualified Data.HashTable.IO as H
+> import qualified Data.HashTable.ST.Cuckoo as C
+
+> import           Control.Monad.State
+> import           Control.Monad.Primitive
+
+> type Heap = H.CuckooHashTable Id Value
+
+Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadler, The essence of Functional Programming](http://homepages.inf.ed.ac.uk/wadler/topics/monads.html).
+
+> type IM = StateT Heap IO 
+
+> instance Show Exp where
+>          show = showExp 
+
+> instance Show (StateT (C.HashTable RealWorld String Value) IO Value -> StateT (C.HashTable RealWorld String Value) IO Value) where
+>   show _ = "FUN.."
+
+> instance Show (Value -> StateT (C.HashTable RealWorld String Value) IO Value) where
+>   show _ = "FUN.."
+
+> data Value = Wrong String
+>            | ExtCoreExp Exp
+>            | Num Integer
+>            | Fun (Value -> IM Value) deriving Show
+
+> --type Environment = [(Id,IM Value)]

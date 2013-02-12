@@ -22,6 +22,9 @@ To move
 > import DART.FunctionFeeder
 > import Language.Core.Interpreter
 
+> import Control.Monad.State.Lazy
+> import qualified Data.HashTable.IO as H
+
 > main :: IO () 
 > main = do
 >   args <- getArgs
@@ -34,14 +37,12 @@ To move
 >           OkP modl -> modl
 >           FailP msg -> error msg
 >       putStrLn $ "Parsed module name:\n\t" ++ (show mdlname)
->       putStrLn $ "Parsed tdefs:" 
->       mapM (\p -> putZDecStrLn $ "\t " ++ show p) tdefs
->       putStrLn $ "Value definitions1:\n----------------------------------------\n" 
->       mapM_ (\p -> putZDecStrLn $ "... \t " ++ showVdefg p ++ "\n") vdefgs
->       --putStrLn $ "Functions founded:\n----------------------------------------\n" 
->       --mapM_ (\p -> putZDecStrLn $ "... \t " ++ show p ++ "\n") $ (mapMaybe vdefgToMaybeTapp vdefgs)
->       putStrLn $ "Interpreted functions (with no arguments):\n----------------------------------------\n" 
->       mapM_ (\p -> putStrLn $ "... \t " ++ p ++ "\n") $ map (\vdg -> evalVdefg vdg vdefgs) vdefgs
+>       --putStrLn $ "Parsed tdefs:" 
+>       --mapM (\p -> putZDecStrLn $ "\t " ++ show p) tdefs
+>       putStrLn $ "Heap\n----------------------------------------\n" 
+>       new_heap <- H.new
+>       heap <- execStateT (evalModule module') new_heap
+>       H.mapM_ (\(id,val) -> putStrLn $ id ++ "... \t " ++ show val ++ "\n") heap
 >     _ -> putStrLn "Wrong usage"
 
 Decode any string encoded as Z-encoded string and print it
