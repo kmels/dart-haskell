@@ -18,7 +18,7 @@
 This is an interpreter for External Core
 
 > import Language.Core.Core
-> import Language.Core.Util(showType,showExtCoreType,showExp,showMname)
+> import Language.Core.Util(showType,showExtCoreType,showExp,showMname,wrapName)
 
 For the heap, we use the package [hashtables](http://hackage.haskell.org/package/hashtables)
 
@@ -37,12 +37,6 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 > instance Show Exp where
 >          show = showExp 
 
-> instance Show (StateT (C.HashTable RealWorld String Value) IO Value -> StateT (C.HashTable RealWorld String Value) IO Value) where
->   show _ = "FUN.."
-
-> instance Show (Value -> StateT (C.HashTable RealWorld String Value) IO Value) where
->   show _ = "FUN.."
-
 > data Value = Wrong String
 >            | ExtCoreExp Exp
 >            | Num Integer
@@ -54,6 +48,6 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >   show (Wrong s) = "Wrong " ++ s
 >   show (ExtCoreExp exp) = "ExtCoreExp " ++ show exp
 >   show (Num i) = show i
->   show (Fun f s) = "Value -> IM Value" ++ s
+>   show (Fun f s) = wrapName "Fun" s
 
 > --type Environment = [(Id,IM Value)]

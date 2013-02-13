@@ -16,7 +16,7 @@
 > import Language.Core.Interpreter.Structures
 > import Language.Core.Core
 > import Language.Core.ValueDefinition(vdefgName)
-> import Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,showMname,bindId)
+> import Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,showMname,bindId,showBind)
 > import Language.Core.TypeExtractor(extractType)
 > import Language.Core.TypeExtractor.DataTypes
 
@@ -85,7 +85,12 @@ This one is a function application which has the type accompanied. We won't care
 
 Appt is always (?) applied to App together with a var that represents the function call of the Appt. In the case of integer summation, this is base:GHC.Num.f#NumInt. That is why we have to ignore the first parameter when applied.
 
-> evalExp (Appt function_exp ty) = return $ Fun (\_ -> evalExp function_exp) $ "Appt where type = " ++ showType ty
+If Appt is being applied to another appt, then we ignore another level of parameters. This is the case of function application, namely ($) :: (a -> b) -> a -> b
+
+> evalExp (Appt function_exp ty) = do
+>   heap <- get
+>   g <- liftIO $ evalStateT (evalExp function_exp) heap
+>   return $ Fun (\f -> apply f g) $ " Appt :: " ++ showType ty
 
 This is the sum function
 
@@ -103,11 +108,12 @@ This is the sum function
 
 > evalExp (Var ((Just (M (P ("base"),["GHC"],"Num"))),"zdfNumInt")) = let
 >   ap f = Fun (\x -> apply f x) "GHC.Base.$fNumInt :: Fun (a -> Int) -> Fun (a -> Int)"
->  in return $ Fun (\f -> return (ap f)) "GHC.Base.$ :: Fun ( Fun(a -> Int) -> a -> Int)"
+>  in return $ Fun (\f -> return (ap f)) "GHC.Base.$fNumInt :: Fun ( Fun(a -> Int) -> a -> Int)"
 
 > evalExp (Lam binded_var exp) = let
 >   name = bindId binded_var
 >   bindAndEval binded_value = do 
+>     liftIO $ putStrLn $ "Binding " ++ show binded_value ++ " to " ++ showBind binded_var
 >     heap <- get
 >     --TODO, this should be inserted in an environment instead and then be deleted, (gotta change the IM type). It is now added and deleted in the heap. This assumes External Core source code doesn't have any variables shadowed
 >     liftIO $ H.insert heap name binded_value
@@ -122,8 +128,9 @@ This is the sum function
 >         ) = evalLit lit
 
 > evalExp (App function_exp argument_exp) = do 
->   f <- evalExp function_exp 
+>   f <- evalExp function_exp
 >   x <- evalExp argument_exp
+>   liftIO . putStrLn $ "Applying " ++ show f ++ " to " ++ show x
 >   apply f x
 
 Variables 
@@ -148,11 +155,16 @@ Otherwise
 >     Just v -> return v
 
 > apply :: Value -> Value -> IM Value
-> apply (Fun f _) v = do 
->   liftIO $ putStrLn $ "\nApplying " ++ show f ++  " to " ++ show v
->   f $ v
+> apply fun@(Fun f _) v = f v
 > apply w@(Wrong _) _ = return w
 > apply f m = return . Wrong $ "Applying something that is not a function, namely " ++ show f
+
+> curry' :: Value -> IM Value -> IM Value
+> curry' fun@(Fun f s) g' = do
+>   h <- get
+>   g <- liftIO $ evalStateT g' h
+>   apply fun g
+ 
 
 Functions on Nums
 
