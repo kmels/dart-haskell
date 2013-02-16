@@ -111,6 +111,7 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 >  in wrapName "lit" $ showCoreLit coreLit ++ "::" ++ showType ty
 
 > qualifiedVar :: Qual Var -> String
+> qualifiedVar (Nothing,var) = var
 > qualifiedVar (mname,var) = showMname mname ++ "." ++ var
 
 > bindId :: Bind -> Id
