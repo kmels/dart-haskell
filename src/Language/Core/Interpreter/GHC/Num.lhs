@@ -15,10 +15,10 @@ Given a polymorphic function and a tcf (generated at compile time from a type cl
 The function that adds two numbers in GHC (base:GHC.Num.+).
 
 > evalVar ((Just (M (P ("base"),["GHC"],"Num"))),"zp") = let
->   add_2 x = Fun (\y -> addValues x y) "+ :: a -> a -> a"
+>   add_2 f x = Fun (\y -> f x y) "+ :: a -> a -> a"
 >   add_1 = Fun (\x -> return $ add_2 x) "+ :: a -> (a -> a)"
->   monotype tcf = Fun (\x -> return $ add_2 x) " saber"
->  in return $ Fun (\tcf -> return $ monotype tcf) "+ :: (Num a) -> a -> a -> a" -- tcf can be $fNumInt for instance.
+>   monotype tcf = Fun (\x -> return $ add_2 x) "+ :: (Num a) -> a -> a -> a, monomophied"
+>  in return $ Fun (\tcf -> return $ monotype tcf) $ "Monomophy with " ++ show tcf -- tcf can be $fNumInt for instance.
 
 The function that multiplies two numbers in GHC (base:GHC.Num.*).
 
