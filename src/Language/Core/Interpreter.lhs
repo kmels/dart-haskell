@@ -94,12 +94,17 @@ If Appt is being applied to another appt, then we ignore another level of parame
 > evalExp e@(Appt function_exp ty) = do
 >   heap <- get
 >   liftIO . putStrLn $ "Evaluating subexpression " ++ showExp function_exp
->   g <- liftIO $ evalStateT (evalExp function_exp) heap
->   return $ Fun (\f -> apply f g) $ "\\"++"f :: (a -> " ++ showType ty ++ ") -> apply f " ++ show g
+>   f <- liftIO $ evalStateT (evalExp function_exp) heap
+>   return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
+
+--"\\"++"f :: (a -> " ++ showType ty ++ ") -> apply f " ++ show g
 
 > evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) = let
 >   ap f = Fun (\x -> apply f x) "GHC.Base.$ :: Fun(a -> b)"
->  in return $ Fun (\f -> return (ap f)) "$" -- GHC.Base.$ :: Fun(a -> b) -> Fun(a -> b)
+>   my x = Fun (\x -> return x) "x.."
+>  in return $ Fun (\f -> return f) "$" -- GHC.Base.$ :: Fun(a -> b) -> Fun(a -> b)
+
+--return $ Fun (\f -> return (ap f)) "$" -- GHC.Base.$ :: Fun(a -> b) -> Fun(a -> b)
 
 > evalExp (Lam binded_var exp) = let
 >   name = bindId binded_var
@@ -116,17 +121,22 @@ If Appt is being applied to another appt, then we ignore another level of parame
 >     return res
 >  in return $ Fun bindAndEval $ "\\" ++ bindId binded_var ++ " -> exp" 
 
-> evalExp (App -- Integer construction
+> evalExp e@(App -- Integer construction
 >              (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),"Izh"))
 >              (Lit lit) 
 >         ) = evalLit lit
 
 > evalExp e@(App function_exp argument_exp) = do 
->   f <- evalExp function_exp
->   x <- evalExp argument_exp
 >   liftIO . putStrLn $ "Evaluating subexpression " ++ showExp e
->   liftIO . putStrLn $ "Applying " ++ show f ++ " to " ++ show x
->   apply f x
+>   f <- evalExp function_exp
+>   liftIO . putStrLn $ " f: " ++ showExp function_exp ++ " => " ++ show f
+>   x <- evalExp argument_exp
+>   liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " => " ++ show x
+>   res <- apply f x
+>   liftIO . putStrLn $ "\t Applying f x  = " ++ show res
+> --   liftIO . putStrLn $ "\t Applying " ++ show f ++ " to " ++ show x
+>   liftIO . putStrLn $ "Evaluating subexpression " ++ showExp e ++ " => " ++ show res
+>   return res
 
 Variables 
 
