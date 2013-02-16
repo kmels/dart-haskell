@@ -97,14 +97,9 @@ If Appt is being applied to another appt, then we ignore another level of parame
 >   f <- liftIO $ evalStateT (evalExp function_exp) heap
 >   return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
 
---"\\"++"f :: (a -> " ++ showType ty ++ ") -> apply f " ++ show g
-
 > evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) = let
 >   ap f = Fun (\x -> apply f x) "GHC.Base.$ :: Fun(a -> b)"
->   my x = Fun (\x -> return x) "x.."
->  in return $ Fun (\f -> return f) "$" -- GHC.Base.$ :: Fun(a -> b) -> Fun(a -> b)
-
---return $ Fun (\f -> return (ap f)) "$" -- GHC.Base.$ :: Fun(a -> b) -> Fun(a -> b)
+>  in return $ Fun (\f -> return (ap f)) "$" -- GHC.Base.$ :: Fun(a -> b) -> Fun(a -> b)
 
 > evalExp (Lam binded_var exp) = let
 >   name = bindId binded_var
