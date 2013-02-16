@@ -17,6 +17,7 @@
 > import Language.Core.Interpreter.Structures
 
 > import qualified Language.Core.Interpreter.GHC.Num as GHC.Num
+> import qualified Language.Core.Interpreter.GHC.Classes as GHC.Classes
 
 > import Language.Core.Core
 > import Language.Core.ValueDefinition(vdefgName)
@@ -139,7 +140,7 @@ Variables
 >   let
 >     -- Interpreter modules that might know what to do with `qvar`
 >     -- this list is of type [Qual Var -> Maybe Value]
->     lib_vars = [GHC.Num.evalVar]
+>     lib_vars = [GHC.Num.evalVar,GHC.Classes.evalVar]
 >     lib_val = callEvalVar lib_vars qvar -- Maybe Value
 >   in
 >    -- Space for improvement: maybe we should lookupVar before finding lib functions?

@@ -40,14 +40,23 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 > data Value = Wrong String
 >            | ExtCoreExp Exp
 >            | Num Integer
+>            | Boolean Bool
 >            | Fun (Value -> IM Value) Description
 
 > type Description = String
+
+> instance Eq Value where 
+>   (Wrong s) == Wrong s' = s == s'
+>   (Num i) == (Num i') = i == i'
+>   (Fun _ _) == (Fun _ _) = False  -- too bad we are not intensional as in intensional type equality
+>   (Boolean b) == (Boolean b') = b == b'
+>   (ExtCoreExp exp) == (ExtCoreExp exp') = False -- TODO: I think we don't need this constructor anymore
+>   o == p = False
 
 > instance Show Value where
 >   show (Wrong s) = "Wrong " ++ s
 >   show (ExtCoreExp exp) = "ExtCoreExp " ++ show exp
 >   show (Num i) = show i
 >   show (Fun f s) = wrapName "Fun" s
-
+>   show (Boolean b) = show b
 > --type Environment = [(Id,IM Value)]
