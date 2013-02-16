@@ -1,4 +1,6 @@
-module Examples.StringConcatenation where
+module Examples.StringConcatenation(
+  myString, myString'
+) where
 
 import System.Environment
 

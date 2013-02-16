@@ -1,0 +1,1193 @@
+%module main:CYK
+  %data main:CYK.Symbol =
+    {main:CYK.T ghczmprim:GHCziTypes.Char;
+     main:CYK.NT ((ghczmprim:GHCziTypes.ZMZN
+                   ghczmprim:GHCziTypes.Char));
+     main:CYK.C main:CYK.Symbol main:CYK.Symbol};
+  main:CYK.concatSymbols :: (ghczmprim:GHCziTypes.ZMZN
+                             ghczmprim:GHCziTypes.Char)
+                            ->
+                            (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+                            main:CYK.Symbol =
+    \ (s1akD::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+      (s2akE::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) ->
+        main:CYK.C (main:CYK.NT s1akD) (main:CYK.NT s2akE);
+  arGo :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('S'::ghczmprim:GHCziPrim.Charzh);
+  a1rGp :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char arGo
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a2rGq :: main:CYK.Symbol = main:CYK.NT a1rGp;
+  a3rGr :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('P'::ghczmprim:GHCziPrim.Charzh);
+  a4rGs :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a3rGr
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a5rGt :: main:CYK.Symbol = main:CYK.NT a4rGs;
+  a6rGu :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('Z'::ghczmprim:GHCziPrim.Charzh);
+  a7rGv :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a6rGu
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a8rGw :: main:CYK.Symbol = main:CYK.NT a7rGv;
+  a9rGx :: main:CYK.Symbol = main:CYK.C a5rGt a8rGw;
+  a10rGy :: (ghczmprim:GHCziTuple.Z2T
+             main:CYK.Symbol
+             main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol a2rGq
+    a9rGx;
+  a11rGzz :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('P'::ghczmprim:GHCziPrim.Charzh);
+  a12rGA :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a11rGzz
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a13rGB :: main:CYK.Symbol = main:CYK.NT a12rGA;
+  a14rGC :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('P'::ghczmprim:GHCziPrim.Charzh);
+  a15rGD :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a14rGC
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a16rGE :: main:CYK.Symbol = main:CYK.NT a15rGD;
+  a17rGF :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('Z'::ghczmprim:GHCziPrim.Charzh);
+  a18rGG :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a17rGF
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a19rGH :: main:CYK.Symbol = main:CYK.NT a18rGG;
+  a20rGI :: main:CYK.Symbol = main:CYK.C a16rGE a19rGH;
+  a21rGJ :: (ghczmprim:GHCziTuple.Z2T
+             main:CYK.Symbol
+             main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol a13rGB
+    a20rGI;
+  a22rGK :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('W'::ghczmprim:GHCziPrim.Charzh);
+  a23rGL :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a22rGK
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a24rGM :: main:CYK.Symbol = main:CYK.NT a23rGL;
+  a25rGN :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('A'::ghczmprim:GHCziPrim.Charzh);
+  a26rGO :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a25rGN
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a27rGP :: main:CYK.Symbol = main:CYK.NT a26rGO;
+  a28rGQ :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('X'::ghczmprim:GHCziPrim.Charzh);
+  a29rGR :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a28rGQ
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a30rGS :: main:CYK.Symbol = main:CYK.NT a29rGR;
+  a31rGT :: main:CYK.Symbol = main:CYK.C a27rGP a30rGS;
+  a32rGU :: (ghczmprim:GHCziTuple.Z2T
+             main:CYK.Symbol
+             main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol a24rGM
+    a31rGT;
+  a33rGV :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('W'::ghczmprim:GHCziPrim.Charzh);
+  a34rGW :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a33rGV
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a35rGX :: main:CYK.Symbol = main:CYK.NT a34rGW;
+  a36rGY :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('a'::ghczmprim:GHCziPrim.Charzh);
+  a37rGZZ :: main:CYK.Symbol = main:CYK.T a36rGY;
+  a38rH0 :: (ghczmprim:GHCziTuple.Z2T
+             main:CYK.Symbol
+             main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol a35rGX
+    a37rGZZ;
+  a39rH1 :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('W'::ghczmprim:GHCziPrim.Charzh);
+  a40rH2 :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a39rH1
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a41rH3 :: main:CYK.Symbol = main:CYK.NT a40rH2;
+  a42rH4 :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('b'::ghczmprim:GHCziPrim.Charzh);
+  a43rH5 :: main:CYK.Symbol = main:CYK.T a42rH4;
+  a44rH6 :: (ghczmprim:GHCziTuple.Z2T
+             main:CYK.Symbol
+             main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol a41rH3
+    a43rH5;
+  a45rH7 :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('A'::ghczmprim:GHCziPrim.Charzh);
+  a46rH8 :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a45rH7
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a47rH9 :: main:CYK.Symbol = main:CYK.NT a46rH8;
+  a48rHa :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('a'::ghczmprim:GHCziPrim.Charzh);
+  a49rHb :: main:CYK.Symbol = main:CYK.T a48rHa;
+  a50rHc :: (ghczmprim:GHCziTuple.Z2T
+             main:CYK.Symbol
+             main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol a47rH9
+    a49rHb;
+  a51rHd :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('B'::ghczmprim:GHCziPrim.Charzh);
+  a52rHe :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a51rHd
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a53rHf :: main:CYK.Symbol = main:CYK.NT a52rHe;
+  a54rHg :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('b'::ghczmprim:GHCziPrim.Charzh);
+  a55rHh :: main:CYK.Symbol = main:CYK.T a54rHg;
+  a56rHi :: (ghczmprim:GHCziTuple.Z2T
+             main:CYK.Symbol
+             main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol a53rHf
+    a55rHh;
+  a57rHj :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('C'::ghczmprim:GHCziPrim.Charzh);
+  a58rHk :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a57rHj
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a59rHl :: main:CYK.Symbol = main:CYK.NT a58rHk;
+  a60rHm :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('c'::ghczmprim:GHCziPrim.Charzh);
+  a61rHn :: main:CYK.Symbol = main:CYK.T a60rHm;
+  a62rHo :: (ghczmprim:GHCziTuple.Z2T
+             main:CYK.Symbol
+             main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol a59rHl
+    a61rHn;
+  a63rHp :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('X'::ghczmprim:GHCziPrim.Charzh);
+  a64rHq :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a63rHp
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a65rHr :: main:CYK.Symbol = main:CYK.NT a64rHq;
+  a66rHs :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('Q'::ghczmprim:GHCziPrim.Charzh);
+  a67rHt :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a66rHs
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a68rHu :: main:CYK.Symbol = main:CYK.NT a67rHt;
+  a69rHv :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('B'::ghczmprim:GHCziPrim.Charzh);
+  a70rHw :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a69rHv
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a71rHx :: main:CYK.Symbol = main:CYK.NT a70rHw;
+  a72rHy :: main:CYK.Symbol = main:CYK.C a68rHu a71rHx;
+  a73rHzz :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol a65rHr
+    a72rHy;
+  a74rHA :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('Q'::ghczmprim:GHCziPrim.Charzh);
+  a75rHB :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a74rHA
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a76rHC :: main:CYK.Symbol = main:CYK.NT a75rHB;
+  a77rHD :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('W'::ghczmprim:GHCziPrim.Charzh);
+  a78rHE :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a77rHD
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a79rHF :: main:CYK.Symbol = main:CYK.NT a78rHE;
+  a80rHG :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('W'::ghczmprim:GHCziPrim.Charzh);
+  a81rHH :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a80rHG
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a82rHI :: main:CYK.Symbol = main:CYK.NT a81rHH;
+  a83rHJ :: main:CYK.Symbol = main:CYK.C a79rHF a82rHI;
+  a84rHK :: (ghczmprim:GHCziTuple.Z2T
+             main:CYK.Symbol
+             main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol a76rHC
+    a83rHJ;
+  a85rHL :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('Y'::ghczmprim:GHCziPrim.Charzh);
+  a86rHM :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a85rHL
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a87rHN :: main:CYK.Symbol = main:CYK.NT a86rHM;
+  a88rHO :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('B'::ghczmprim:GHCziPrim.Charzh);
+  a89rHP :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a88rHO
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a90rHQ :: main:CYK.Symbol = main:CYK.NT a89rHP;
+  a91rHR :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('C'::ghczmprim:GHCziPrim.Charzh);
+  a92rHS :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a91rHR
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a93rHT :: main:CYK.Symbol = main:CYK.NT a92rHS;
+  a94rHU :: main:CYK.Symbol = main:CYK.C a90rHQ a93rHT;
+  a95rHV :: (ghczmprim:GHCziTuple.Z2T
+             main:CYK.Symbol
+             main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol a87rHN
+    a94rHU;
+  a96rHW :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('Y'::ghczmprim:GHCziPrim.Charzh);
+  a97rHX :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a96rHW
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a98rHY :: main:CYK.Symbol = main:CYK.NT a97rHX;
+  a99rHZZ :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('B'::ghczmprim:GHCziPrim.Charzh);
+  a100rI0 :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a99rHZZ
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a101rI1 :: main:CYK.Symbol = main:CYK.NT a100rI0;
+  a102rI2 :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('Z'::ghczmprim:GHCziPrim.Charzh);
+  a103rI3 :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a102rI2
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a104rI4 :: main:CYK.Symbol = main:CYK.NT a103rI3;
+  a105rI5 :: main:CYK.Symbol = main:CYK.C a101rI1 a104rI4;
+  a106rI6 :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol a98rHY
+    a105rI5;
+  a107rI7 :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('Z'::ghczmprim:GHCziPrim.Charzh);
+  a108rI8 :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a107rI7
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a109rI9 :: main:CYK.Symbol = main:CYK.NT a108rI8;
+  a110rIa :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('Y'::ghczmprim:GHCziPrim.Charzh);
+  a111rIb :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a110rIa
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a112rIc :: main:CYK.Symbol = main:CYK.NT a111rIb;
+  a113rId :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('C'::ghczmprim:GHCziPrim.Charzh);
+  a114rIe :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a113rId
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a115rIf :: main:CYK.Symbol = main:CYK.NT a114rIe;
+  a116rIg :: main:CYK.Symbol = main:CYK.C a112rIc a115rIf;
+  a117rIh :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a109rI9 a116rIg;
+  a118rIi :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a117rIh
+    (ghczmprim:GHCziTypes.ZMZN
+     @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol)));
+  a119rIj :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a106rI6 a118rIi;
+  a120rIk :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a95rHV a119rIj;
+  a121rIl :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a84rHK a120rIk;
+  a122rIm :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a73rHzz a121rIl;
+  a123rIn :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a62rHo a122rIm;
+  a124rIo :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a56rHi a123rIn;
+  a125rIp :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a50rHc a124rIo;
+  a126rIq :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a44rH6 a125rIp;
+  a127rIr :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a38rH0 a126rIq;
+  a128rIs :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a32rGU a127rIr;
+  a129rIt :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a21rGJ a128rIs;
+  a130rIu :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a10rGy a129rIt;
+  a131rIv :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('S'::ghczmprim:GHCziPrim.Charzh);
+  a132rIw :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a131rIv
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a133rIx :: main:CYK.Symbol = main:CYK.NT a132rIw;
+  main:CYK.gzq :: (ghczmprim:GHCziTuple.Z2T
+                   ((ghczmprim:GHCziTypes.ZMZN
+                     ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+                   main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T
+    @ ((ghczmprim:GHCziTypes.ZMZN
+        ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+    @ main:CYK.Symbol a130rIu a133rIx;
+  a134rIy :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('S'::ghczmprim:GHCziPrim.Charzh);
+  a135rIzz :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a134rIy
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a136rIA :: main:CYK.Symbol = main:CYK.NT a135rIzz;
+  a137rIB :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('P'::ghczmprim:GHCziPrim.Charzh);
+  a138rIC :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a137rIB
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a139rID :: main:CYK.Symbol = main:CYK.NT a138rIC;
+  a140rIE :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('A'::ghczmprim:GHCziPrim.Charzh);
+  a141rIF :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a140rIE
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a142rIG :: main:CYK.Symbol = main:CYK.NT a141rIF;
+  a143rIH :: main:CYK.Symbol = main:CYK.C a139rID a142rIG;
+  a144rII :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a136rIA a143rIH;
+  a145rIJ :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('S'::ghczmprim:GHCziPrim.Charzh);
+  a146rIK :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a145rIJ
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a147rIL :: main:CYK.Symbol = main:CYK.NT a146rIK;
+  a148rIM :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('Q'::ghczmprim:GHCziPrim.Charzh);
+  a149rIN :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a148rIM
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a150rIO :: main:CYK.Symbol = main:CYK.NT a149rIN;
+  a151rIP :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('B'::ghczmprim:GHCziPrim.Charzh);
+  a152rIQ :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a151rIP
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a153rIR :: main:CYK.Symbol = main:CYK.NT a152rIQ;
+  a154rIS :: main:CYK.Symbol = main:CYK.C a150rIO a153rIR;
+  a155rIT :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a147rIL a154rIS;
+  a156rIU :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('S'::ghczmprim:GHCziPrim.Charzh);
+  a157rIV :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a156rIU
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a158rIW :: main:CYK.Symbol = main:CYK.NT a157rIV;
+  a159rIX :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('R'::ghczmprim:GHCziPrim.Charzh);
+  a160rIY :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a159rIX
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a161rIZZ :: main:CYK.Symbol = main:CYK.NT a160rIY;
+  a162rJ0 :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('C'::ghczmprim:GHCziPrim.Charzh);
+  a163rJ1 :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a162rJ0
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a164rJ2 :: main:CYK.Symbol = main:CYK.NT a163rJ1;
+  a165rJ3 :: main:CYK.Symbol = main:CYK.C a161rIZZ a164rJ2;
+  a166rJ4 :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a158rIW a165rJ3;
+  a167rJ5 :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('S'::ghczmprim:GHCziPrim.Charzh);
+  a168rJ6 :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a167rJ5
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a169rJ7 :: main:CYK.Symbol = main:CYK.NT a168rJ6;
+  a170rJ8 :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('a'::ghczmprim:GHCziPrim.Charzh);
+  a171rJ9 :: main:CYK.Symbol = main:CYK.T a170rJ8;
+  a172rJa :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a169rJ7 a171rJ9;
+  a173rJb :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('S'::ghczmprim:GHCziPrim.Charzh);
+  a174rJc :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a173rJb
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a175rJd :: main:CYK.Symbol = main:CYK.NT a174rJc;
+  a176rJe :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('b'::ghczmprim:GHCziPrim.Charzh);
+  a177rJf :: main:CYK.Symbol = main:CYK.T a176rJe;
+  a178rJg :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a175rJd a177rJf;
+  a179rJh :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('S'::ghczmprim:GHCziPrim.Charzh);
+  a180rJi :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a179rJh
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a181rJj :: main:CYK.Symbol = main:CYK.NT a180rJi;
+  a182rJk :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('c'::ghczmprim:GHCziPrim.Charzh);
+  a183rJl :: main:CYK.Symbol = main:CYK.T a182rJk;
+  a184rJm :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a181rJj a183rJl;
+  a185rJn :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('P'::ghczmprim:GHCziPrim.Charzh);
+  a186rJo :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a185rJn
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a187rJp :: main:CYK.Symbol = main:CYK.NT a186rJo;
+  a188rJq :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('A'::ghczmprim:GHCziPrim.Charzh);
+  a189rJr :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a188rJq
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a190rJs :: main:CYK.Symbol = main:CYK.NT a189rJr;
+  a191rJt :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('S'::ghczmprim:GHCziPrim.Charzh);
+  a192rJu :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a191rJt
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a193rJv :: main:CYK.Symbol = main:CYK.NT a192rJu;
+  a194rJw :: main:CYK.Symbol = main:CYK.C a190rJs a193rJv;
+  a195rJx :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a187rJp a194rJw;
+  a196rJy :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('Q'::ghczmprim:GHCziPrim.Charzh);
+  a197rJzz :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a196rJy
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a198rJA :: main:CYK.Symbol = main:CYK.NT a197rJzz;
+  a199rJB :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('B'::ghczmprim:GHCziPrim.Charzh);
+  a200rJC :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a199rJB
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a201rJD :: main:CYK.Symbol = main:CYK.NT a200rJC;
+  a202rJE :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('S'::ghczmprim:GHCziPrim.Charzh);
+  a203rJF :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a202rJE
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a204rJG :: main:CYK.Symbol = main:CYK.NT a203rJF;
+  a205rJH :: main:CYK.Symbol = main:CYK.C a201rJD a204rJG;
+  a206rJI :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a198rJA a205rJH;
+  a207rJJ :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('R'::ghczmprim:GHCziPrim.Charzh);
+  a208rJK :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a207rJJ
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a209rJL :: main:CYK.Symbol = main:CYK.NT a208rJK;
+  a210rJM :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('C'::ghczmprim:GHCziPrim.Charzh);
+  a211rJN :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a210rJM
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a212rJO :: main:CYK.Symbol = main:CYK.NT a211rJN;
+  a213rJP :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('S'::ghczmprim:GHCziPrim.Charzh);
+  a214rJQ :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a213rJP
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a215rJR :: main:CYK.Symbol = main:CYK.NT a214rJQ;
+  a216rJS :: main:CYK.Symbol = main:CYK.C a212rJO a215rJR;
+  a217rJT :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a209rJL a216rJS;
+  a218rJU :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('A'::ghczmprim:GHCziPrim.Charzh);
+  a219rJV :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a218rJU
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a220rJW :: main:CYK.Symbol = main:CYK.NT a219rJV;
+  a221rJX :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('a'::ghczmprim:GHCziPrim.Charzh);
+  a222rJY :: main:CYK.Symbol = main:CYK.T a221rJX;
+  a223rJZZ :: (ghczmprim:GHCziTuple.Z2T
+               main:CYK.Symbol
+               main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a220rJW a222rJY;
+  a224rK0 :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('B'::ghczmprim:GHCziPrim.Charzh);
+  a225rK1 :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a224rK0
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a226rK2 :: main:CYK.Symbol = main:CYK.NT a225rK1;
+  a227rK3 :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('b'::ghczmprim:GHCziPrim.Charzh);
+  a228rK4 :: main:CYK.Symbol = main:CYK.T a227rK3;
+  a229rK5 :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a226rK2 a228rK4;
+  a230rK6 :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('C'::ghczmprim:GHCziPrim.Charzh);
+  a231rK7 :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a230rK6
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  a232rK8 :: main:CYK.Symbol = main:CYK.NT a231rK7;
+  a233rK9 :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('c'::ghczmprim:GHCziPrim.Charzh);
+  a234rKa :: main:CYK.Symbol = main:CYK.T a233rK9;
+  a235rKb :: (ghczmprim:GHCziTuple.Z2T
+              main:CYK.Symbol
+              main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T @ main:CYK.Symbol @ main:CYK.Symbol
+    a232rK8 a234rKa;
+  a236rKc :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a235rKb
+    (ghczmprim:GHCziTypes.ZMZN
+     @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol)));
+  a237rKd :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a229rK5 a236rKc;
+  a238rKe :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a223rJZZ a237rKd;
+  a239rKf :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a217rJT a238rKe;
+  a240rKg :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a206rJI a239rKf;
+  a241rKh :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a195rJx a240rKg;
+  a242rKi :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a184rJm a241rKh;
+  a243rKj :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a178rJg a242rKi;
+  a244rKk :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a172rJa a243rKj;
+  a245rKl :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a166rJ4 a244rKk;
+  a246rKm :: (ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a155rIT a245rKl;
+  main:CYK.palyndromesP :: (ghczmprim:GHCziTypes.ZMZN
+                            ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    ghczmprim:GHCziTypes.ZC
+    @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+    a144rII a246rKm;
+  a247rKn :: ghczmprim:GHCziTypes.Char =
+    ghczmprim:GHCziTypes.Czh ('S'::ghczmprim:GHCziPrim.Charzh);
+  a248rKo :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+    ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char a247rKn
+    (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+  main:CYK.pstartSymbol :: main:CYK.Symbol = main:CYK.NT a248rKo;
+  main:CYK.palyndromes :: (ghczmprim:GHCziTuple.Z2T
+                           ((ghczmprim:GHCziTypes.ZMZN
+                             ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+                           main:CYK.Symbol) =
+    ghczmprim:GHCziTuple.Z2T
+    @ ((ghczmprim:GHCziTypes.ZMZN
+        ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+    @ main:CYK.Symbol main:CYK.palyndromesP main:CYK.pstartSymbol;
+  main:CYK.productionsOfGrammar :: (ghczmprim:GHCziTuple.Z2T
+                                    ((ghczmprim:GHCziTypes.ZMZN
+                                      ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+                                    main:CYK.Symbol)
+                                   ->
+                                   (ghczmprim:GHCziTypes.ZMZN
+                                    ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+    base:DataziTuple.fst
+    @ ((ghczmprim:GHCziTypes.ZMZN
+        ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+    @ main:CYK.Symbol;
+  main:CYK.rightSideOf :: (ghczmprim:GHCziTuple.Z2T
+                           main:CYK.Symbol
+                           main:CYK.Symbol)
+                          -> main:CYK.Symbol =
+    base:DataziTuple.snd @ main:CYK.Symbol @ main:CYK.Symbol;
+  main:CYK.leftSideOf :: (ghczmprim:GHCziTuple.Z2T
+                          main:CYK.Symbol
+                          main:CYK.Symbol)
+                         -> main:CYK.Symbol =
+    base:DataziTuple.fst @ main:CYK.Symbol @ main:CYK.Symbol;
+  %rec
+  {main:CYK.zdfShowSymbol :: (base:GHCziShow.Show main:CYK.Symbol) =
+     base:GHCziShow.DZCShow @ main:CYK.Symbol zdcshowsPrecrKr zdcshowrKq
+     zdcshowListrKp;
+   zdcshowListrKp :: (ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol) ->
+                     (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+                     (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+     base:GHCziShow.zddmshowList @ main:CYK.Symbol
+     main:CYK.zdfShowSymbol;
+   zdcshowrKq :: main:CYK.Symbol ->
+                 (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+     \ (dsdyf::main:CYK.Symbol) ->
+         %case ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) dsdyf
+         %of (wildX4zz::main:CYK.Symbol)
+           {main:CYK.T (cakF::ghczmprim:GHCziTypes.Char) ->
+              ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Char cakF
+              (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Char);
+            main:CYK.NT
+            (sakG::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) ->
+              sakG;
+            main:CYK.C (sakH::main:CYK.Symbol) (s2akI::main:CYK.Symbol) ->
+              base:GHCziBase.zpzp @ ghczmprim:GHCziTypes.Char
+              (base:GHCziShow.show @ main:CYK.Symbol main:CYK.zdfShowSymbol sakH)
+              (base:GHCziShow.show @ main:CYK.Symbol main:CYK.zdfShowSymbol
+               s2akI)};
+   zdcshowsPrecrKr :: ghczmprim:GHCziTypes.Int ->
+                      main:CYK.Symbol ->
+                      (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+                      (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) =
+     base:GHCziShow.zddmshowsPrec @ main:CYK.Symbol
+     main:CYK.zdfShowSymbol};
+  zddEqrKs :: (ghczmprim:GHCziClasses.Eq
+               ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))) =
+    ghczmprim:GHCziClasses.zdfEqZMZN @ ghczmprim:GHCziTypes.Char
+    ghczmprim:GHCziClasses.zdfEqChar;
+  %rec
+  {main:CYK.zdfEqSymbol :: (ghczmprim:GHCziClasses.Eq
+                            main:CYK.Symbol) =
+     ghczmprim:GHCziClasses.DZCEq @ main:CYK.Symbol zdczezerKu
+     zdczszerKt;
+   zdczszerKt :: main:CYK.Symbol ->
+                 main:CYK.Symbol -> ghczmprim:GHCziTypes.Bool =
+     \ (a249arQ::main:CYK.Symbol) (barR::main:CYK.Symbol) ->
+         ghczmprim:GHCziClasses.not
+         (ghczmprim:GHCziClasses.zeze @ main:CYK.Symbol main:CYK.zdfEqSymbol
+          a249arQ barR);
+   zdczezerKu :: main:CYK.Symbol ->
+                 main:CYK.Symbol -> ghczmprim:GHCziTypes.Bool =
+     \ (dsdy5::main:CYK.Symbol) (ds1dy6::main:CYK.Symbol) ->
+         %case ghczmprim:GHCziTypes.Bool dsdy5
+         %of (wildX4H::main:CYK.Symbol)
+           {main:CYK.T (a249arI::ghczmprim:GHCziTypes.Char) ->
+              %case ghczmprim:GHCziTypes.Bool ds1dy6
+              %of (wild1Xs::main:CYK.Symbol)
+                {%_ ->
+                   ghczmprim:GHCziTypes.False;
+                 main:CYK.T (b1arJ::ghczmprim:GHCziTypes.Char) ->
+                   ghczmprim:GHCziClasses.zeze @ ghczmprim:GHCziTypes.Char
+                   ghczmprim:GHCziClasses.zdfEqChar a249arI b1arJ};
+            main:CYK.NT
+            (a249arK::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) ->
+              %case ghczmprim:GHCziTypes.Bool ds1dy6
+              %of (wild1Xs::main:CYK.Symbol)
+                {%_ ->
+                   ghczmprim:GHCziTypes.False;
+                 main:CYK.NT
+                 (b1arL::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) ->
+                   ghczmprim:GHCziClasses.zeze
+                   @ ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) zddEqrKs
+                   a249arK b1arL};
+            main:CYK.C (a249arM::main:CYK.Symbol) (a250arN::main:CYK.Symbol) ->
+              %case ghczmprim:GHCziTypes.Bool ds1dy6
+              %of (wild1Xt::main:CYK.Symbol)
+                {%_ ->
+                   ghczmprim:GHCziTypes.False;
+                 main:CYK.C (b1arO::main:CYK.Symbol) (b2arP::main:CYK.Symbol) ->
+                   ghczmprim:GHCziClasses.zaza
+                   (ghczmprim:GHCziClasses.zeze @ main:CYK.Symbol main:CYK.zdfEqSymbol
+                    a249arM b1arO)
+                   (ghczmprim:GHCziClasses.zeze @ main:CYK.Symbol main:CYK.zdfEqSymbol
+                    a250arN b2arP)}}};
+  main:CYK.isConcatenation :: (ghczmprim:GHCziTuple.Z2T
+                               main:CYK.Symbol
+                               main:CYK.Symbol)
+                              -> main:CYK.Symbol -> ghczmprim:GHCziTypes.Bool =
+    \ (productionaeo::(ghczmprim:GHCziTuple.Z2T
+                       main:CYK.Symbol
+                       main:CYK.Symbol))
+      (dsdxv::main:CYK.Symbol) ->
+        %case ghczmprim:GHCziTypes.Bool productionaeo
+        %of (wildX4I::(ghczmprim:GHCziTuple.Z2T
+                       main:CYK.Symbol
+                       main:CYK.Symbol))
+          {ghczmprim:GHCziTuple.Z2T
+           (ds1dxw::main:CYK.Symbol) (ds2dxx::main:CYK.Symbol) ->
+             %case ghczmprim:GHCziTypes.Bool ds1dxw
+             %of (wild1Xt::main:CYK.Symbol)
+               {%_ ->
+                  ghczmprim:GHCziTypes.False;
+                main:CYK.NT
+                (a249aep::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) ->
+                  %case ghczmprim:GHCziTypes.Bool ds2dxx
+                  %of (wild2Xv::main:CYK.Symbol)
+                    {%_ ->
+                       ghczmprim:GHCziTypes.False;
+                     main:CYK.C (baeq::main:CYK.Symbol) (caer::main:CYK.Symbol) ->
+                       %case ghczmprim:GHCziTypes.Bool dsdxv
+                       %of (wild3Xy::main:CYK.Symbol)
+                         {%_ ->
+                            ghczmprim:GHCziTypes.False;
+                          main:CYK.C (bzqaes::main:CYK.Symbol) (czqaet::main:CYK.Symbol) ->
+                            ghczmprim:GHCziClasses.zaza
+                            (ghczmprim:GHCziClasses.zeze @ main:CYK.Symbol main:CYK.zdfEqSymbol
+                             baeq bzqaes)
+                            (ghczmprim:GHCziClasses.zeze @ main:CYK.Symbol main:CYK.zdfEqSymbol
+                             caer czqaet)}}}};
+  main:CYK.getNTSymbolFor :: (ghczmprim:GHCziTuple.Z2T
+                              ((ghczmprim:GHCziTypes.ZMZN
+                                ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+                              main:CYK.Symbol)
+                             -> main:CYK.Symbol -> (base:DataziMaybe.Maybe main:CYK.Symbol) =
+    \ (gaku::(ghczmprim:GHCziTuple.Z2T
+              ((ghczmprim:GHCziTypes.ZMZN
+                ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+              main:CYK.Symbol))
+      (concatakv::main:CYK.Symbol) ->
+        base:GHCziBase.zgzgze @ base:DataziMaybe.Maybe
+        base:DataziMaybe.zdfMonadMaybe
+        @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+        @ main:CYK.Symbol
+        (base:GHCziBase.zd
+         @ ((ghczmprim:GHCziTypes.ZMZN
+             ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+         @ ((base:DataziMaybe.Maybe
+             ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+         (base:DataziList.find
+          @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+          (\ (productionakw::(ghczmprim:GHCziTuple.Z2T
+                              main:CYK.Symbol
+                              main:CYK.Symbol)) ->
+               main:CYK.isConcatenation productionakw concatakv))
+         (base:DataziTuple.fst
+          @ ((ghczmprim:GHCziTypes.ZMZN
+              ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+          @ main:CYK.Symbol gaku))
+        (base:GHCziBase.zi @ main:CYK.Symbol
+         @ ((base:DataziMaybe.Maybe main:CYK.Symbol))
+         @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+         (base:DataziMaybe.Just @ main:CYK.Symbol)
+         (base:DataziTuple.fst @ main:CYK.Symbol @ main:CYK.Symbol));
+  main:CYK.isTerminalIn :: ghczmprim:GHCziTypes.Char ->
+                           (ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol) ->
+                           ghczmprim:GHCziTypes.Bool =
+    \ (cakB::ghczmprim:GHCziTypes.Char)
+      (prodakC::(ghczmprim:GHCziTuple.Z2T
+                 main:CYK.Symbol
+                 main:CYK.Symbol)) ->
+        ghczmprim:GHCziClasses.zeze @ main:CYK.Symbol main:CYK.zdfEqSymbol
+        (base:DataziTuple.snd @ main:CYK.Symbol @ main:CYK.Symbol prodakC)
+        (main:CYK.T cakB);
+  main:CYK.findT :: (ghczmprim:GHCziTypes.ZMZN
+                     ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol)))
+                    ->
+                    ghczmprim:GHCziTypes.Char ->
+                    (ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol) =
+    \ (prodsakx::(ghczmprim:GHCziTypes.ZMZN
+                  ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+      (caky::ghczmprim:GHCziTypes.Char) ->
+        base:GHCziBase.map
+        @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+        @ main:CYK.Symbol
+        (base:DataziTuple.fst @ main:CYK.Symbol @ main:CYK.Symbol)
+        (base:GHCziList.filter
+         @ ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))
+         (\ (pakA::(ghczmprim:GHCziTuple.Z2T
+                    main:CYK.Symbol
+                    main:CYK.Symbol)) ->
+              main:CYK.isTerminalIn caky pakA)
+         prodsakx);
+  main:CYK.cykMatrix :: (ghczmprim:GHCziTuple.Z2T
+                         ((ghczmprim:GHCziTypes.ZMZN
+                           ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+                         main:CYK.Symbol)
+                        ->
+                        (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+                        (ghczmprim:GHCziTypes.ZMZN
+                         ((ghczmprim:GHCziTypes.ZMZN
+                           ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))))) =
+    \ (grammaradZZ::(ghczmprim:GHCziTuple.Z2T
+                     ((ghczmprim:GHCziTypes.ZMZN
+                       ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+                     main:CYK.Symbol))
+      (wordae0::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) ->
+        %let productionsae1 :: (ghczmprim:GHCziTypes.ZMZN
+                                ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))) =
+               base:DataziTuple.fst
+               @ ((ghczmprim:GHCziTypes.ZMZN
+                   ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+               @ main:CYK.Symbol grammaradZZ
+        %in base:GHCziList.foldl
+            @ ((ghczmprim:GHCziTypes.ZMZN
+                ((ghczmprim:GHCziTypes.ZMZN
+                  ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))))))
+            @ ghczmprim:GHCziTypes.Int
+            (\ (mael::(ghczmprim:GHCziTypes.ZMZN
+                       ((ghczmprim:GHCziTypes.ZMZN
+                         ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))))))
+               (jaem::ghczmprim:GHCziTypes.Int) ->
+                 base:GHCziBase.zpzp
+                 @ ((ghczmprim:GHCziTypes.ZMZN
+                     ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))))
+                 mael
+                 (ghczmprim:GHCziTypes.ZC
+                  @ ((ghczmprim:GHCziTypes.ZMZN
+                      ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))))
+                  (%let %rec
+                        {dsdxI :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int) ->
+                                  (ghczmprim:GHCziTypes.ZMZN
+                                   ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))) =
+                           \ (ds1dxJ::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int)) ->
+                               %case ((ghczmprim:GHCziTypes.ZMZN
+                                       ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol)))) ds1dxJ
+                               %of (ds2Xyh::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int))
+                                 {ghczmprim:GHCziTypes.ZMZN ->
+                                    ghczmprim:GHCziTypes.ZMZN
+                                    @ ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol));
+                                  ghczmprim:GHCziTypes.ZC
+                                  (ds3dxK::ghczmprim:GHCziTypes.Int)
+                                  (ds4dxL::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int)) ->
+                                    ghczmprim:GHCziTypes.ZC
+                                    @ ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))
+                                    (%let getSymbolSetAtaea :: (ghczmprim:GHCziTuple.Z2T
+                                                                ghczmprim:GHCziTypes.Int
+                                                                ghczmprim:GHCziTypes.Int)
+                                                               ->
+                                                               (ghczmprim:GHCziTypes.ZMZN
+                                                                main:CYK.Symbol) =
+                                            \ (ds5dy0::(ghczmprim:GHCziTuple.Z2T
+                                                        ghczmprim:GHCziTypes.Int
+                                                        ghczmprim:GHCziTypes.Int)) ->
+                                                %case ((ghczmprim:GHCziTypes.ZMZN
+                                                        main:CYK.Symbol)) ds5dy0
+                                                %of (wildX50::(ghczmprim:GHCziTuple.Z2T
+                                                               ghczmprim:GHCziTypes.Int
+                                                               ghczmprim:GHCziTypes.Int))
+                                                  {ghczmprim:GHCziTuple.Z2T
+                                                   (caef::ghczmprim:GHCziTypes.Int)
+                                                   (raeg::ghczmprim:GHCziTypes.Int) ->
+                                                     base:GHCziList.znzn
+                                                     @ ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))
+                                                     (base:GHCziList.znzn
+                                                      @ ((ghczmprim:GHCziTypes.ZMZN
+                                                          ((ghczmprim:GHCziTypes.ZMZN
+                                                            main:CYK.Symbol))))
+                                                      mael
+                                                      (base:GHCziNum.zm @ ghczmprim:GHCziTypes.Int
+                                                       base:GHCziNum.zdfNumInt raeg
+                                                       (ghczmprim:GHCziTypes.Izh
+                                                        (1::ghczmprim:GHCziPrim.Intzh))))
+                                                     (base:GHCziNum.zm @ ghczmprim:GHCziTypes.Int
+                                                      base:GHCziNum.zdfNumInt caef
+                                                      (ghczmprim:GHCziTypes.Izh
+                                                       (1::ghczmprim:GHCziPrim.Intzh)))}
+                                     %in base:GHCziBase.zd
+                                         @ ((ghczmprim:GHCziTypes.ZMZN
+                                             ((base:DataziMaybe.Maybe main:CYK.Symbol))))
+                                         @ ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))
+                                         (base:DataziMaybe.catMaybes @ main:CYK.Symbol)
+                                         (base:GHCziBase.map @ main:CYK.Symbol
+                                          @ ((base:DataziMaybe.Maybe main:CYK.Symbol))
+                                          (main:CYK.getNTSymbolFor grammaradZZ)
+                                          (base:GHCziList.concatMap
+                                           @ ((ghczmprim:GHCziTuple.Z2T
+                                               ((ghczmprim:GHCziTuple.Z2T
+                                                 ghczmprim:GHCziTypes.Int
+                                                 ghczmprim:GHCziTypes.Int))
+                                               ((ghczmprim:GHCziTuple.Z2T
+                                                 ghczmprim:GHCziTypes.Int
+                                                 ghczmprim:GHCziTypes.Int))))
+                                           @ main:CYK.Symbol
+                                           (\ (ds5dxY::(ghczmprim:GHCziTuple.Z2T
+                                                        ((ghczmprim:GHCziTuple.Z2T
+                                                          ghczmprim:GHCziTypes.Int
+                                                          ghczmprim:GHCziTypes.Int))
+                                                        ((ghczmprim:GHCziTuple.Z2T
+                                                          ghczmprim:GHCziTypes.Int
+                                                          ghczmprim:GHCziTypes.Int)))) ->
+                                                %case ((ghczmprim:GHCziTypes.ZMZN
+                                                        main:CYK.Symbol)) ds5dxY
+                                                %of (wildX51::(ghczmprim:GHCziTuple.Z2T
+                                                               ((ghczmprim:GHCziTuple.Z2T
+                                                                 ghczmprim:GHCziTypes.Int
+                                                                 ghczmprim:GHCziTypes.Int))
+                                                               ((ghczmprim:GHCziTuple.Z2T
+                                                                 ghczmprim:GHCziTypes.Int
+                                                                 ghczmprim:GHCziTypes.Int))))
+                                                  {ghczmprim:GHCziTuple.Z2T
+                                                   (cell1aeh::(ghczmprim:GHCziTuple.Z2T
+                                                               ghczmprim:GHCziTypes.Int
+                                                               ghczmprim:GHCziTypes.Int))
+                                                   (cell2aei::(ghczmprim:GHCziTuple.Z2T
+                                                               ghczmprim:GHCziTypes.Int
+                                                               ghczmprim:GHCziTypes.Int)) ->
+                                                     %let %rec
+                                                          {ds6dxQ :: (ghczmprim:GHCziTypes.ZMZN
+                                                                      main:CYK.Symbol)
+                                                                     ->
+                                                                     (ghczmprim:GHCziTypes.ZMZN
+                                                                      main:CYK.Symbol) =
+                                                             \ (ds7dxR::(ghczmprim:GHCziTypes.ZMZN
+                                                                         main:CYK.Symbol)) ->
+                                                                 %case ((ghczmprim:GHCziTypes.ZMZN
+                                                                         main:CYK.Symbol)) ds7dxR
+                                                                 %of (ds8Xyu::(ghczmprim:GHCziTypes.ZMZN
+                                                                               main:CYK.Symbol))
+                                                                   {ghczmprim:GHCziTypes.ZMZN ->
+                                                                      ghczmprim:GHCziTypes.ZMZN
+                                                                      @ main:CYK.Symbol;
+                                                                    ghczmprim:GHCziTypes.ZC
+                                                                    (ds9dxS::main:CYK.Symbol)
+                                                                    (ds10dxT::(ghczmprim:GHCziTypes.ZMZN
+                                                                               main:CYK.Symbol)) ->
+                                                                      %let %rec
+                                                                           {ds11dxU :: (ghczmprim:GHCziTypes.ZMZN
+                                                                                        main:CYK.Symbol)
+                                                                                       ->
+                                                                                       (ghczmprim:GHCziTypes.ZMZN
+                                                                                        main:CYK.Symbol) =
+                                                                              \ (ds12dxV::(ghczmprim:GHCziTypes.ZMZN
+                                                                                           main:CYK.Symbol)) ->
+                                                                                  %case ((ghczmprim:GHCziTypes.ZMZN
+                                                                                          main:CYK.Symbol)) ds12dxV
+                                                                                  %of (ds13XyD::(ghczmprim:GHCziTypes.ZMZN
+                                                                                                 main:CYK.Symbol))
+                                                                                    {ghczmprim:GHCziTypes.ZMZN
+                                                                                     ->
+                                                                                       ds6dxQ
+                                                                                       ds10dxT;
+                                                                                     ghczmprim:GHCziTypes.ZC
+                                                                                     (ds14dxW::main:CYK.Symbol)
+                                                                                     (ds15dxX::(ghczmprim:GHCziTypes.ZMZN
+                                                                                                main:CYK.Symbol)) ->
+                                                                                       ghczmprim:GHCziTypes.ZC
+                                                                                       @ main:CYK.Symbol
+                                                                                       (main:CYK.C
+                                                                                        ds9dxS
+                                                                                        ds14dxW)
+                                                                                       (ds11dxU
+                                                                                        ds15dxX)}}
+                                                                      %in ds11dxU
+                                                                          (getSymbolSetAtaea
+                                                                           cell2aei)}}
+                                                     %in ds6dxQ (getSymbolSetAtaea cell1aeh)})
+                                           (%let %rec
+                                                 {ds5dxM :: (ghczmprim:GHCziTypes.ZMZN
+                                                             ghczmprim:GHCziTypes.Int)
+                                                            ->
+                                                            (ghczmprim:GHCziTypes.ZMZN
+                                                             ((ghczmprim:GHCziTuple.Z2T
+                                                               ((ghczmprim:GHCziTuple.Z2T
+                                                                 ghczmprim:GHCziTypes.Int
+                                                                 ghczmprim:GHCziTypes.Int))
+                                                               ((ghczmprim:GHCziTuple.Z2T
+                                                                 ghczmprim:GHCziTypes.Int
+                                                                 ghczmprim:GHCziTypes.Int))))) =
+                                                    \ (ds6dxN::(ghczmprim:GHCziTypes.ZMZN
+                                                                ghczmprim:GHCziTypes.Int)) ->
+                                                        %case ((ghczmprim:GHCziTypes.ZMZN
+                                                                ((ghczmprim:GHCziTuple.Z2T
+                                                                  ((ghczmprim:GHCziTuple.Z2T
+                                                                    ghczmprim:GHCziTypes.Int
+                                                                    ghczmprim:GHCziTypes.Int))
+                                                                  ((ghczmprim:GHCziTuple.Z2T
+                                                                    ghczmprim:GHCziTypes.Int
+                                                                    ghczmprim:GHCziTypes.Int)))))) ds6dxN
+                                                        %of (ds7Xym::(ghczmprim:GHCziTypes.ZMZN
+                                                                      ghczmprim:GHCziTypes.Int))
+                                                          {ghczmprim:GHCziTypes.ZMZN ->
+                                                             ghczmprim:GHCziTypes.ZMZN
+                                                             @ ((ghczmprim:GHCziTuple.Z2T
+                                                                 ((ghczmprim:GHCziTuple.Z2T
+                                                                   ghczmprim:GHCziTypes.Int
+                                                                   ghczmprim:GHCziTypes.Int))
+                                                                 ((ghczmprim:GHCziTuple.Z2T
+                                                                   ghczmprim:GHCziTypes.Int
+                                                                   ghczmprim:GHCziTypes.Int))));
+                                                           ghczmprim:GHCziTypes.ZC
+                                                           (ds8dxO::ghczmprim:GHCziTypes.Int)
+                                                           (ds9dxP::(ghczmprim:GHCziTypes.ZMZN
+                                                                     ghczmprim:GHCziTypes.Int)) ->
+                                                             ghczmprim:GHCziTypes.ZC
+                                                             @ ((ghczmprim:GHCziTuple.Z2T
+                                                                 ((ghczmprim:GHCziTuple.Z2T
+                                                                   ghczmprim:GHCziTypes.Int
+                                                                   ghczmprim:GHCziTypes.Int))
+                                                                 ((ghczmprim:GHCziTuple.Z2T
+                                                                   ghczmprim:GHCziTypes.Int
+                                                                   ghczmprim:GHCziTypes.Int))))
+                                                             (ghczmprim:GHCziTuple.Z2T
+                                                              @ ((ghczmprim:GHCziTuple.Z2T
+                                                                  ghczmprim:GHCziTypes.Int
+                                                                  ghczmprim:GHCziTypes.Int))
+                                                              @ ((ghczmprim:GHCziTuple.Z2T
+                                                                  ghczmprim:GHCziTypes.Int
+                                                                  ghczmprim:GHCziTypes.Int))
+                                                              (ghczmprim:GHCziTuple.Z2T
+                                                               @ ghczmprim:GHCziTypes.Int
+                                                               @ ghczmprim:GHCziTypes.Int ds3dxK
+                                                               ds8dxO)
+                                                              (ghczmprim:GHCziTuple.Z2T
+                                                               @ ghczmprim:GHCziTypes.Int
+                                                               @ ghczmprim:GHCziTypes.Int
+                                                               (base:GHCziNum.zp
+                                                                @ ghczmprim:GHCziTypes.Int
+                                                                base:GHCziNum.zdfNumInt ds3dxK
+                                                                ds8dxO)
+                                                               (base:GHCziNum.zm
+                                                                @ ghczmprim:GHCziTypes.Int
+                                                                base:GHCziNum.zdfNumInt jaem
+                                                                ds8dxO)))
+                                                             (ds5dxM ds9dxP)}}
+                                            %in ds5dxM
+                                                (base:GHCziEnum.enumFromTo
+                                                 @ ghczmprim:GHCziTypes.Int
+                                                 base:GHCziEnum.zdfEnumInt
+                                                 (ghczmprim:GHCziTypes.Izh
+                                                  (1::ghczmprim:GHCziPrim.Intzh))
+                                                 (base:GHCziNum.zm @ ghczmprim:GHCziTypes.Int
+                                                  base:GHCziNum.zdfNumInt jaem
+                                                  (ghczmprim:GHCziTypes.Izh
+                                                   (1::ghczmprim:GHCziPrim.Intzh))))))))
+                                    (dsdxI ds4dxL)}}
+                   %in dsdxI
+                       (base:GHCziEnum.enumFromTo @ ghczmprim:GHCziTypes.Int
+                        base:GHCziEnum.zdfEnumInt
+                        (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh))
+                        (base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int
+                         base:GHCziNum.zdfNumInt
+                         (base:GHCziNum.zm @ ghczmprim:GHCziTypes.Int
+                          base:GHCziNum.zdfNumInt
+                          (base:GHCziList.length @ ghczmprim:GHCziTypes.Char wordae0) jaem)
+                         (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh)))))
+                  (ghczmprim:GHCziTypes.ZMZN
+                   @ ((ghczmprim:GHCziTypes.ZMZN
+                       ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol)))))))
+            (ghczmprim:GHCziTypes.ZC
+             @ ((ghczmprim:GHCziTypes.ZMZN
+                 ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))))
+             (%let %rec
+                   {dsdxE :: (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+                             (ghczmprim:GHCziTypes.ZMZN
+                              ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))) =
+                      \ (ds1dxF::(ghczmprim:GHCziTypes.ZMZN
+                                  ghczmprim:GHCziTypes.Char)) ->
+                          %case ((ghczmprim:GHCziTypes.ZMZN
+                                  ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol)))) ds1dxF
+                          %of (ds2Xyc::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+                            {ghczmprim:GHCziTypes.ZMZN ->
+                               ghczmprim:GHCziTypes.ZMZN
+                               @ ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol));
+                             ghczmprim:GHCziTypes.ZC
+                             (ds3dxG::ghczmprim:GHCziTypes.Char)
+                             (ds4dxH::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) ->
+                               ghczmprim:GHCziTypes.ZC
+                               @ ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))
+                               (main:CYK.findT productionsae1 ds3dxG) (dsdxE ds4dxH)}}
+              %in dsdxE wordae0)
+             (ghczmprim:GHCziTypes.ZMZN
+              @ ((ghczmprim:GHCziTypes.ZMZN
+                  ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))))))
+            (base:GHCziEnum.enumFromTo @ ghczmprim:GHCziTypes.Int
+             base:GHCziEnum.zdfEnumInt
+             (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh))
+             (base:GHCziList.length @ ghczmprim:GHCziTypes.Char wordae0));
+  main:CYK.cyk :: (ghczmprim:GHCziTypes.ZMZN
+                   ghczmprim:GHCziTypes.Char)
+                  ->
+                  (ghczmprim:GHCziTuple.Z2T
+                   ((ghczmprim:GHCziTypes.ZMZN
+                     ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+                   main:CYK.Symbol)
+                  -> ghczmprim:GHCziTypes.Bool =
+    \ (wordacZZ::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+      (gad0::(ghczmprim:GHCziTuple.Z2T
+              ((ghczmprim:GHCziTypes.ZMZN
+                ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+              main:CYK.Symbol)) ->
+        %case ghczmprim:GHCziTypes.Bool gad0
+        %of (wildX4L::(ghczmprim:GHCziTuple.Z2T
+                       ((ghczmprim:GHCziTypes.ZMZN
+                         ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+                       main:CYK.Symbol))
+          {ghczmprim:GHCziTuple.Z2T
+           (productionsad1::(ghczmprim:GHCziTypes.ZMZN
+                             ((ghczmprim:GHCziTuple.Z2T main:CYK.Symbol main:CYK.Symbol))))
+           (startSymbolad2::main:CYK.Symbol) ->
+             base:GHCziList.any @ main:CYK.Symbol
+             (\ (dsdy2::main:CYK.Symbol) ->
+                  ghczmprim:GHCziClasses.zeze @ main:CYK.Symbol main:CYK.zdfEqSymbol
+                  dsdy2 startSymbolad2)
+             (base:GHCziList.znzn
+              @ ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))
+              (base:GHCziList.znzn
+               @ ((ghczmprim:GHCziTypes.ZMZN
+                   ((ghczmprim:GHCziTypes.ZMZN main:CYK.Symbol))))
+               (main:CYK.cykMatrix wildX4L wordacZZ)
+               (ghczmprim:GHCziTypes.Izh (0::ghczmprim:GHCziPrim.Intzh)))
+              (base:GHCziNum.zm @ ghczmprim:GHCziTypes.Int
+               base:GHCziNum.zdfNumInt
+               (base:GHCziList.length @ ghczmprim:GHCziTypes.Char wordacZZ)
+               (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh))))};
