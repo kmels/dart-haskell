@@ -12,7 +12,7 @@ module FirstOrderFunctions (
   , numberFourtyFour
   --integer operations
   , twice
-  , ten
+  , four
   , hundred
   , hundredOne
   , isOneEven
@@ -45,7 +45,7 @@ intListLength :: [Int] -> Int
 intListLength [] = 0
 intListLength (x:xs) = intListLength xs + 1
 
-ten = intListLength [0,1,2,3,4,5,6,7,8,9]
+four = intListLength [0,1,2,3]
 hundred = intListLength $ take 100 [1..]
 hundredOne = intListLength [1..101]
 

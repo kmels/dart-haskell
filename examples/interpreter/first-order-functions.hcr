@@ -66,29 +66,12 @@
               base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
               (main:FirstOrderFunctions.intListLength xsakn)
               (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh))}};
-  main:FirstOrderFunctions.ten :: ghczmprim:GHCziTypes.Int =
+  main:FirstOrderFunctions.hundredOne :: ghczmprim:GHCziTypes.Int =
     main:FirstOrderFunctions.intListLength
-    (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
-     (ghczmprim:GHCziTypes.Izh (0::ghczmprim:GHCziPrim.Intzh))
-     (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
-      (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh))
-      (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
-       (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh))
-       (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
-        (ghczmprim:GHCziTypes.Izh (3::ghczmprim:GHCziPrim.Intzh))
-        (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
-         (ghczmprim:GHCziTypes.Izh (4::ghczmprim:GHCziPrim.Intzh))
-         (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
-          (ghczmprim:GHCziTypes.Izh (5::ghczmprim:GHCziPrim.Intzh))
-          (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
-           (ghczmprim:GHCziTypes.Izh (6::ghczmprim:GHCziPrim.Intzh))
-           (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
-            (ghczmprim:GHCziTypes.Izh (7::ghczmprim:GHCziPrim.Intzh))
-            (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
-             (ghczmprim:GHCziTypes.Izh (8::ghczmprim:GHCziPrim.Intzh))
-             (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
-              (ghczmprim:GHCziTypes.Izh (9::ghczmprim:GHCziPrim.Intzh))
-              (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Int)))))))))));
+    (base:GHCziEnum.enumFromTo @ ghczmprim:GHCziTypes.Int
+     base:GHCziEnum.zdfEnumInt
+     (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh))
+     (ghczmprim:GHCziTypes.Izh (101::ghczmprim:GHCziPrim.Intzh)));
   main:FirstOrderFunctions.hundred :: ghczmprim:GHCziTypes.Int =
     base:GHCziBase.zd
     @ ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int))
@@ -98,9 +81,14 @@
      (base:GHCziEnum.enumFrom @ ghczmprim:GHCziTypes.Int
       base:GHCziEnum.zdfEnumInt
       (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh))));
-  main:FirstOrderFunctions.hundredOne :: ghczmprim:GHCziTypes.Int =
+  main:FirstOrderFunctions.four :: ghczmprim:GHCziTypes.Int =
     main:FirstOrderFunctions.intListLength
-    (base:GHCziEnum.enumFromTo @ ghczmprim:GHCziTypes.Int
-     base:GHCziEnum.zdfEnumInt
-     (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh))
-     (ghczmprim:GHCziTypes.Izh (101::ghczmprim:GHCziPrim.Intzh)));
+    (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
+     (ghczmprim:GHCziTypes.Izh (0::ghczmprim:GHCziPrim.Intzh))
+     (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
+      (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh))
+      (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
+       (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh))
+       (ghczmprim:GHCziTypes.ZC @ ghczmprim:GHCziTypes.Int
+        (ghczmprim:GHCziTypes.Izh (3::ghczmprim:GHCziPrim.Intzh))
+        (ghczmprim:GHCziTypes.ZMZN @ ghczmprim:GHCziTypes.Int)))));
