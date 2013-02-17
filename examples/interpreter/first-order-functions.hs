@@ -12,7 +12,9 @@ module FirstOrderFunctions (
   , numberFourtyFour
   --integer operations
   , twice
-  , fifty
+  , ten
+  , hundred
+  , hundredOne
   , isOneEven
   ) where
   
@@ -43,7 +45,10 @@ intListLength :: [Int] -> Int
 intListLength [] = 0
 intListLength (x:xs) = intListLength xs + 1
 
-fifty = intListLength [2,4..100]
+ten = intListLength [0,1,2,3,4,5,6,7,8,9]
+hundred = intListLength $ take 100 [1..]
+hundredOne = intListLength [1..101]
+
 isOneEven = isEven 1
 
 main :: IO ()
