@@ -1,0 +1,46 @@
+%module main:Lists
+  main:Lists.naturals :: ghczmprim:GHCziTypes.ZMZN
+                         ghczmprim:GHCziTypes.Int =
+    base:GHCziEnum.enumFrom @ ghczmprim:GHCziTypes.Int
+    base:GHCziEnum.zdfEnumInt
+    (ghczmprim:GHCziTypes.Izh (0::ghczmprim:GHCziPrim.Intzh));
+  main:Lists.first5nats :: ghczmprim:GHCziTypes.ZMZN
+                           ghczmprim:GHCziTypes.Int =
+    base:GHCziList.take @ ghczmprim:GHCziTypes.Int
+    (ghczmprim:GHCziTypes.Izh (5::ghczmprim:GHCziPrim.Intzh))
+    main:Lists.naturals;
+  main:Lists.first10primes :: ghczmprim:GHCziTypes.ZMZN
+                              ghczmprim:GHCziTypes.Int =
+    base:GHCziBase.zd
+    @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int)
+    @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int)
+    (base:GHCziList.take @ ghczmprim:GHCziTypes.Int
+     (ghczmprim:GHCziTypes.Izh (10::ghczmprim:GHCziPrim.Intzh)))
+    (base:GHCziList.filter @ ghczmprim:GHCziTypes.Int
+     (\ (nafm::ghczmprim:GHCziTypes.Int) ->
+          base:GHCziBase.zd @ ghczmprim:GHCziTypes.Bool
+          @ ghczmprim:GHCziTypes.Bool ghczmprim:GHCziClasses.not
+          (base:GHCziList.any @ ghczmprim:GHCziTypes.Int
+           (\ (pdakS::ghczmprim:GHCziTypes.Int) ->
+                %let zddRealasp :: base:GHCziReal.Real ghczmprim:GHCziTypes.Int =
+                       base:GHCziReal.zdp1Integral @ ghczmprim:GHCziTypes.Int
+                       base:GHCziReal.zdfIntegralInt
+                %in ghczmprim:GHCziClasses.zeze @ ghczmprim:GHCziTypes.Int
+                    (ghczmprim:GHCziClasses.zdp1Ord @ ghczmprim:GHCziTypes.Int
+                     (base:GHCziReal.zdp2Real @ ghczmprim:GHCziTypes.Int zddRealasp))
+                    (base:GHCziReal.mod @ ghczmprim:GHCziTypes.Int
+                     base:GHCziReal.zdfIntegralInt nafm pdakS)
+                    (base:GHCziNum.fromInteger @ ghczmprim:GHCziTypes.Int
+                     (base:GHCziReal.zdp1Real @ ghczmprim:GHCziTypes.Int zddRealasp)
+                     (0::integerzmgmp:GHCziIntegerziType.Integer)))
+           (base:GHCziBase.zd
+            @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int)
+            @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Int)
+            (base:GHCziList.drop @ ghczmprim:GHCziTypes.Int
+             (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh)))
+            (base:GHCziList.take @ ghczmprim:GHCziTypes.Int
+             (base:GHCziReal.div @ ghczmprim:GHCziTypes.Int
+              base:GHCziReal.zdfIntegralInt nafm
+              (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh)))
+             main:Lists.naturals))))
+     main:Lists.naturals);

@@ -30,6 +30,7 @@
 > import Control.Monad.State.Lazy
 
 > import Data.Time.Clock(getCurrentTime,diffUTCTime)
+> import Data.List(find)
 
 Given a module which contains a list of value definitions, *vd*, evaluate every *vd* and return a heap with their interpreted values.
 
@@ -63,7 +64,13 @@ Value definition to mapped values
 The list of value definitions represents the environment
 
 > evalVdefg :: Vdefg -> IM Value
-> evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive vdefg" -- "Recursive eval not yet implemented\n\t" ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> var ++ " :: " ++ showType ty ++ "\n\t"++ showExp exp) vdefs
+
+> evalVdefg (Rec (v@(Vdef _):[]) ) = evalVdefg $ Nonrec $ v
+
+More than one vdef? I haven't found a test case (TODO)
+
+> evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented\n\t" ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> " VDEF; " ++ var ++ " :: " ++ showType ty ++ "\n\t"++ showExp exp) vdefs
+
 > evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = 
 >   let 
 >      extractedType = extractType ty 
@@ -117,9 +124,9 @@ If Appt is being applied to another appt, then we ignore another level of parame
 >     return res
 >  in return $ Fun bindAndEval $ "\\" ++ bindId binded_var ++ " -> exp" 
 
-> evalExp e@(App -- Integer construction
->              (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),"Izh"))
->              (Lit lit) 
+> evalExp (App -- Integer construction
+>          (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),"Izh"))
+>          (Lit lit) 
 >         ) = evalLit lit
 
 > evalExp e@(App function_exp argument_exp) = do 
@@ -149,9 +156,30 @@ Variables
 >      Just val -> return val
 >      _ -> lookupVar $ qualifiedVar qvar
 
+Case of
+
+> evalExp (Case exp (var,_) _ alts) = do
+>   var_val <- lookupVar var
+>   exp <- return $ find (matches var_val) alts >>= Just . altExp
+>   case exp of
+>     Just e -> evalExp e
+>     _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ var
+
+return . Wrong $ " TODO: " ++ showExp otherExp
+
 Otherwise
 
 > evalExp otherExp = return . Wrong $ " TODO: " ++ showExp otherExp
+
+> matches :: Value -> Alt -> Bool
+> val `matches` (Acon qual_dcon tbs vbs idx_exp) = False --TODO
+> val `matches` (Alit lit exp) = False --TODO
+> val `matches` (Adefault _) = True -- this is the default case, i.e. "_ -> " 
+
+> altExp :: Alt -> Exp
+> altExp (Acon _ _ _ exp) = exp
+> altExp (Alit _ exp) = exp
+> altExp (Adefault exp) = exp
 
 > evalLit :: Lit -> IM Value
 > evalLit (Literal (Lint i) ty) = if (showExtCoreType ty == "ghczmprim:GHC.Prim.Intzh")
@@ -167,15 +195,7 @@ Otherwise
 >     Nothing -> return . Wrong $ "Could not find " ++ x ++ " in the environment"
 >     Just v -> return v
 
-> getInteger :: IM Value -> IM Value
-> getInteger mv = do
->   n <- mv -- first arg
->   case n of
->     (Num i) -> mv
->     other_ty -> return . Wrong $ "Expected Integer, found " ++ show other_ty
-
-
--- Some sort of findMaybe and ($) i.e. it returns only one maybe, the first Just found by mapping the functions to qv, or Nothing.
+A sort of findMaybe and ($) i.e. it returns only one maybe, the first Just found by mapping the functions to qv, or Nothing.
 
 > callEvalVar :: [(Qual Var -> Maybe Value)] -> Qual Var -> Maybe Value
 > callEvalVar [] qv = Nothing
@@ -183,3 +203,4 @@ Otherwise
 >   case eqv qv of
 >     v@(Just value) -> v
 >     _ -> callEvalVar eqvs qv
+
