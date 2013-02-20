@@ -2,12 +2,13 @@ module Lists (
   naturals
   , first5nats
   , first10primes
+  , take'
 ) where
 
+
+first5nats = [1,2,3,4,5]
+
 naturals = [0..]
-
-first5nats = take 5 naturals
-
 first10primes = take 10 $ filter isPrime naturals
 
 isPrime n = let
@@ -26,3 +27,8 @@ intListLength (x:xs) = intListLength xs + 1
 four = intListLength [0,1,2,3]
 hundred = intListLength $ take 100 [1..]
 hundredOne = intListLength [1..101]
+
+take' :: Int -> [Int] -> [Int]
+take' n _      | n <= 0 =  []
+take' _ []              =  []
+take' n (x:xs)          =  x : take (n-1) xs
