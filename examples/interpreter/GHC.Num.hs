@@ -29,3 +29,4 @@ isHundredLargerThanZero = 100 >= 2
 
 isEven n = n `mod` 2 == 0
 
+

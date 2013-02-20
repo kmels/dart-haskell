@@ -46,11 +46,10 @@ Value definition to mapped values
 > evalModule :: Module -> IM Heap
 > evalModule m@(Module name _ vdefgs) = do
 >   eval_head <- evalVdefg (head vdefgs)
->   liftIO $ putStrLn $ "Result of head: " ++ show eval_head
 >   mapM_ (\vdefg -> do 
 >             before <- liftIO getCurrentTime
 >             h <- get
->             liftIO $ putStrLn $ "Evaluating " ++ (vdefgName vdefg)
+>             liftIO $ putStr $ "Evaluating " ++ (vdefgName vdefg)
 >             res <- evalVdefg vdefg             
 >             after <- liftIO getCurrentTime
 >             let 
@@ -90,7 +89,7 @@ If Appt is being applied to another appt, then we ignore another level of parame
 
 > evalExp e@(Appt function_exp ty) = do
 >   heap <- get
->   liftIO . putStrLn $ "Evaluating subexpression " ++ showExp function_exp
+>   --liftIO . putStrLn $ "Evaluating subexpression " ++ showExp function_exp
 >   f <- liftIO $ evalStateT (evalExp function_exp) heap
 >   return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
 
@@ -101,14 +100,14 @@ If Appt is being applied to another appt, then we ignore another level of parame
 > evalExp (Lam binded_var exp) = let
 >   name = bindId binded_var
 >   bindAndEval binded_value = do 
->     liftIO $ putStrLn $ "\t getting the heap"
+>     --liftIO $ putStrLn $ "\t getting the heap"
 >     heap <- get
 >     --TODO, this should be inserted in an environment instead and then be deleted, (gotta change the IM type). It is now added and deleted in the heap. This assumes External Core source code doesn't have any variables shadowed
->     liftIO $ putStrLn $ "\t binding " ++ name ++ " to " ++ show binded_value ++ " in the heap"
+>     --liftIO $ putStrLn $ "\t binding " ++ name ++ " to " ++ show binded_value ++ " in the heap"
 >     liftIO $ H.insert heap name binded_value
->     liftIO $ putStrLn $ "\t evaluating lambda body"
+>     --liftIO $ putStrLn $ "\t evaluating lambda body"
 >     res <- evalExp exp
->     liftIO $ putStrLn $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"
+>     --liftIO $ putStrLn $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"
 >     --liftIO $ H.delete heap name 
 >     return res
 >  in return $ Fun bindAndEval $ "\\" ++ bindId binded_var ++ " -> exp" 
@@ -119,15 +118,15 @@ If Appt is being applied to another appt, then we ignore another level of parame
 >         ) = evalLit lit
 
 > evalExp e@(App function_exp argument_exp) = do 
->   liftIO . putStrLn $ "Evaluating subexpression " ++ showExp e
+>   --liftIO . putStrLn $ "Evaluating subexpression " ++ showExp e
 >   f <- evalExp function_exp
->   liftIO . putStrLn $ " f: " ++ showExp function_exp ++ " => " ++ show f
+>   --liftIO . putStrLn $ " f: " ++ showExp function_exp ++ " => " ++ show f
 >   x <- evalExp argument_exp
->   liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " => " ++ show x
+>   --liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " => " ++ show x
 >   res <- apply f x
->   liftIO . putStrLn $ "\t Applying f x  = " ++ show res
+>   --liftIO . putStrLn $ "\t Applying f x  = " ++ show res
 > --   liftIO . putStrLn $ "\t Applying " ++ show f ++ " to " ++ show x
->   liftIO . putStrLn $ "Evaluating subexpression " ++ showExp e ++ " => " ++ show res
+>   --liftIO . putStrLn $ "Evaluating subexpression " ++ showExp e ++ " => " ++ show res
 >   return res
 
 Variables 
@@ -180,7 +179,7 @@ Otherwise
 
 > lookupVar :: Id -> IM Value
 > lookupVar x = do
->   liftIO . putStrLn $ "Looking up var " ++ x
+>   --liftIO . putStrLn $ "Looking up var " ++ x
 >   env <- get
 >   maybeV <- liftIO $ H.lookup env x
 >   case maybeV of

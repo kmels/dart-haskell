@@ -24,21 +24,21 @@
     base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
     main:FirstOrderFunctions.numberTen
     (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh));
-  twicereN :: ghczmprim:GHCziTypes.Int -> ghczmprim:GHCziTypes.Int =
+  twicereG :: ghczmprim:GHCziTypes.Int -> ghczmprim:GHCziTypes.Int =
     \ (naf9::ghczmprim:GHCziTypes.Int) ->
         base:GHCziNum.zt @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
         naf9 (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh));
+  main:FirstOrderFunctions.numberTwenty :: ghczmprim:GHCziTypes.Int =
+    base:GHCziBase.zd @ ghczmprim:GHCziTypes.Int
+    @ ghczmprim:GHCziTypes.Int twicereG
+    main:FirstOrderFunctions.numberTen;
   main:FirstOrderFunctions.numberTwentyTwo :: ghczmprim:GHCziTypes.Int =
     base:GHCziNum.zt @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
     main:FirstOrderFunctions.numberEleven
     (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh));
-  main:FirstOrderFunctions.numberTwenty :: ghczmprim:GHCziTypes.Int =
-    base:GHCziBase.zd @ ghczmprim:GHCziTypes.Int
-    @ ghczmprim:GHCziTypes.Int twicereN
-    main:FirstOrderFunctions.numberTen;
   main:FirstOrderFunctions.numberFourtyTwo :: ghczmprim:GHCziTypes.Int =
     base:GHCziBase.zd @ ghczmprim:GHCziTypes.Int
-    @ ghczmprim:GHCziTypes.Int twicereN
+    @ ghczmprim:GHCziTypes.Int twicereG
     (base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int
      base:GHCziNum.zdfNumInt
      (base:GHCziNum.zt @ ghczmprim:GHCziTypes.Int
