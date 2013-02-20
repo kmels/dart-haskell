@@ -17,3 +17,12 @@ isPrime n = let
    not $ any (\pd -> n `divides` pd) possible_divisors
 
 n `divides` m = n `mod` m == 0
+
+
+intListLength :: [Int] -> Int
+intListLength [] = 0
+intListLength (x:xs) = intListLength xs + 1
+
+four = intListLength [0,1,2,3]
+hundred = intListLength $ take 100 [1..]
+hundredOne = intListLength [1..101]

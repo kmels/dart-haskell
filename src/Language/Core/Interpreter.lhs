@@ -32,6 +32,8 @@
 > import Data.Time.Clock(getCurrentTime,diffUTCTime)
 > import Data.List(find)
 
+> import Text.Encoding.Z(zDecodeString)
+
 Given a module which contains a list of value definitions, *vd*, evaluate every *vd* and return a heap with their interpreted values.
 
 Value definition to mapped values
@@ -48,7 +50,7 @@ Value definition to mapped values
 >   mapM_ (\vdefg -> do 
 >             before <- liftIO getCurrentTime
 >             h <- get
->             liftIO $ putStr $ "Evaluating " ++ (vdefgName vdefg)
+>             liftIO $ putStrLn $ "Evaluating " ++ (vdefgName vdefg)
 >             res <- evalVdefg vdefg             
 >             after <- liftIO getCurrentTime
 >             let 
@@ -71,25 +73,12 @@ More than one vdef? I haven't found a test case (TODO)
 
 > evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented\n\t" ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> " VDEF; " ++ var ++ " :: " ++ showType ty ++ "\n\t"++ showExp exp) vdefs
 
-> evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = 
->   let 
->      extractedType = extractType ty 
->   in case extractedType of
->     Nothing -> return . Wrong $ "Could not parse type " ++ showExtCoreType ty ++ "; therefore I did not interpret"
->     Just (CType (PType pt)) -> do
->       liftIO $ putStrLn $ "\n\n Value exp: " ++ showExp exp ++ " \n\n"
->       res <- evalExp exp -- result
->       heap <- get 
->       liftIO $ H.insert heap (qualifiedVar qvar) res
->       return $ res
->     Just (Lambda (LambdaAbstraction ct gt)) -> do
->       liftIO $ putStrLn $ "\n\n Function exp: " ++ showExp exp ++ " \n\n"
->       res <- evalExp exp -- result
->       heap <- get 
->       liftIO $ H.insert heap (qualifiedVar qvar) res
->       return $ res
->     Just ty -> return . Wrong $ "I still don't know how to evaluate values of type " ++ show ty -- ++ "\n\tExp: " ++ showExp exp ++ "\n\tResult: " ++ showIM (evalExp exp [])
-
+> evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
+>   --liftIO $ putStrLn $ "\n\n Value exp: " ++ showExp exp ++ " \n\n"
+>   res <- evalExp exp -- result
+>   heap <- get 
+>   liftIO $ H.insert heap (qualifiedVar qvar) res
+>   return res
 
 > evalExp :: Exp -> IM Value
 
@@ -169,6 +158,8 @@ return . Wrong $ " TODO: " ++ showExp otherExp
 
 Otherwise
 
+> evalExp (Lit lit) = evalLit lit
+
 > evalExp otherExp = return . Wrong $ " TODO: " ++ showExp otherExp
 
 > matches :: Value -> Alt -> Bool
@@ -182,9 +173,10 @@ Otherwise
 > altExp (Adefault exp) = exp
 
 > evalLit :: Lit -> IM Value
-> evalLit (Literal (Lint i) ty) = if (showExtCoreType ty == "ghczmprim:GHC.Prim.Intzh")
->                                 then return . Num $ i 
->                                 else return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghczmprim:GHCziPrim.Intzh"
+> evalLit (Literal (Lint i) ty) = case showExtCoreType ty of
+>   "ghczmprim:GHC.Prim.Intzh" -> return . Num $ i 
+>   "integerzmgmp:[\"GHC\",\"Integer\"].Type.Integer" -> return . Num $ i 
+>   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghczmprim:GHCziPrim.Intzh"
 
 > lookupVar :: Id -> IM Value
 > lookupVar x = do
@@ -192,7 +184,13 @@ Otherwise
 >   env <- get
 >   maybeV <- liftIO $ H.lookup env x
 >   case maybeV of
->     Nothing -> return . Wrong $ "Could not find " ++ x ++ " in the environment"
+>     Nothing -> 
+>       let
+>         zDecoded = zDecodeString x
+>       in if (zDecoded /= x) then 
+>            return . Wrong $ "Could not find " ++ zDecoded ++ " in the libraries"
+>          else 
+>            return . Wrong $ "Could not find " ++ x ++ " in the environment"
 >     Just v -> return v
 
 A sort of findMaybe and ($) i.e. it returns only one maybe, the first Just found by mapping the functions to qv, or Nothing.

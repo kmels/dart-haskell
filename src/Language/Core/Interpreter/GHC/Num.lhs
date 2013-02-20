@@ -33,6 +33,7 @@ The function that multiplies two numbers in GHC (base:GHC.Num.*).
 The apply function on Ints. It takes a function `f :: Int -> Int` and an `x :: Int` and evals to `f x :: Int`.
 
 > evalVar ((Just (M (P ("base"),["GHC"],"Num"))),"zdfNumInt") = return $ Fun (\f -> return f) "GHC.Base.$fNumInt"
+> evalVar ((Just (M (P ("base"),["GHC"],"Num"))),"zdfNumInteger") = return $ Fun (\f -> return f) "GHC.Base.$fNumInteger"
 
 --return $ Fun (\f -> return (ap f)) "GHC.Base.$fNumInt :: Fun (Int -> Int) -> Fun(Int -> Int)"
 
