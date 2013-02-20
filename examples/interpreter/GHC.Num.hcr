@@ -1,0 +1,78 @@
+%module main:FirstOrderFunctions
+  twicereG :: %forall aatn . (base:GHCziNum.Num aatn) ->
+                             aatn -> aatn =
+    \ @ aatq (zddNum1atr::base:GHCziNum.Num aatq) (naf8::aatq) ->
+        base:GHCziNum.zt @ aatq zddNum1atr naf8
+        (base:GHCziNum.fromInteger @ aatq zddNum1atr
+         (2::integerzmgmp:GHCziIntegerziType.Integer));
+  plusOneIntreF :: %forall aatR . (base:GHCziNum.Num aatR) ->
+                                  aatR -> aatR =
+    \ @ aatU (zddNum1atV::base:GHCziNum.Num aatU) (naeP::aatU) ->
+        base:GHCziNum.zp @ aatU zddNum1atV naeP
+        (base:GHCziNum.fromInteger @ aatU zddNum1atV
+         (1::integerzmgmp:GHCziIntegerziType.Integer));
+  main:FirstOrderFunctions.numberTen :: integerzmgmp:GHCziIntegerziType.Integer =
+    plusOneIntreF @ integerzmgmp:GHCziIntegerziType.Integer
+    base:GHCziNum.zdfNumInteger
+    (9::integerzmgmp:GHCziIntegerziType.Integer);
+  main:FirstOrderFunctions.numberEleven :: integerzmgmp:GHCziIntegerziType.Integer =
+    plusOneIntreF @ integerzmgmp:GHCziIntegerziType.Integer
+    base:GHCziNum.zdfNumInteger main:FirstOrderFunctions.numberTen;
+  main:FirstOrderFunctions.numberTwentyTwo :: integerzmgmp:GHCziIntegerziType.Integer =
+    twicereG @ integerzmgmp:GHCziIntegerziType.Integer
+    base:GHCziNum.zdfNumInteger main:FirstOrderFunctions.numberEleven;
+  main:FirstOrderFunctions.numberTwenty :: integerzmgmp:GHCziIntegerziType.Integer =
+    base:GHCziBase.zd @ integerzmgmp:GHCziIntegerziType.Integer
+    @ integerzmgmp:GHCziIntegerziType.Integer
+    (twicereG @ integerzmgmp:GHCziIntegerziType.Integer
+     base:GHCziNum.zdfNumInteger)
+    main:FirstOrderFunctions.numberTen;
+  main:FirstOrderFunctions.numberFourtyTwo :: integerzmgmp:GHCziIntegerziType.Integer =
+    base:GHCziBase.zd @ integerzmgmp:GHCziIntegerziType.Integer
+    @ integerzmgmp:GHCziIntegerziType.Integer
+    (twicereG @ integerzmgmp:GHCziIntegerziType.Integer
+     base:GHCziNum.zdfNumInteger)
+    (base:GHCziNum.zp @ integerzmgmp:GHCziIntegerziType.Integer
+     base:GHCziNum.zdfNumInteger
+     (base:GHCziNum.zt @ integerzmgmp:GHCziIntegerziType.Integer
+      base:GHCziNum.zdfNumInteger
+      (twicereG @ integerzmgmp:GHCziIntegerziType.Integer
+       base:GHCziNum.zdfNumInteger
+       (5::integerzmgmp:GHCziIntegerziType.Integer))
+      (4::integerzmgmp:GHCziIntegerziType.Integer))
+     (1::integerzmgmp:GHCziIntegerziType.Integer));
+  zddRealrv1 :: base:GHCziReal.Real
+                integerzmgmp:GHCziIntegerziType.Integer =
+    base:GHCziReal.zdp1Integral
+    @ integerzmgmp:GHCziIntegerziType.Integer
+    base:GHCziReal.zdfIntegralInteger;
+  zddNumrv2 :: base:GHCziNum.Num
+               integerzmgmp:GHCziIntegerziType.Integer =
+    base:GHCziReal.zdp1Real @ integerzmgmp:GHCziIntegerziType.Integer
+    zddRealrv1;
+  arv3 :: ghczmprim:GHCziClasses.Ord
+          integerzmgmp:GHCziIntegerziType.Integer =
+    base:GHCziReal.zdp2Real @ integerzmgmp:GHCziIntegerziType.Integer
+    zddRealrv1;
+  zddEqrv4 :: ghczmprim:GHCziClasses.Eq
+              integerzmgmp:GHCziIntegerziType.Integer =
+    ghczmprim:GHCziClasses.zdp1Ord
+    @ integerzmgmp:GHCziIntegerziType.Integer arv3;
+  main:FirstOrderFunctions.isOneEven :: ghczmprim:GHCziTypes.Bool =
+    ghczmprim:GHCziClasses.zeze
+    @ integerzmgmp:GHCziIntegerziType.Integer zddEqrv4
+    (base:GHCziReal.mod @ integerzmgmp:GHCziIntegerziType.Integer
+     base:GHCziReal.zdfIntegralInteger
+     (1::integerzmgmp:GHCziIntegerziType.Integer)
+     (base:GHCziNum.fromInteger
+      @ integerzmgmp:GHCziIntegerziType.Integer zddNumrv2
+      (2::integerzmgmp:GHCziIntegerziType.Integer)))
+    (base:GHCziNum.fromInteger
+     @ integerzmgmp:GHCziIntegerziType.Integer zddNumrv2
+     (0::integerzmgmp:GHCziIntegerziType.Integer));
+  main:FirstOrderFunctions.isHundredLargerThanZZero :: ghczmprim:GHCziTypes.Bool =
+    ghczmprim:GHCziClasses.zlze
+    @ integerzmgmp:GHCziIntegerziType.Integer
+    integerzmgmp:GHCziIntegerziType.zdfOrdInteger
+    (100::integerzmgmp:GHCziIntegerziType.Integer)
+    (2::integerzmgmp:GHCziIntegerziType.Integer);
