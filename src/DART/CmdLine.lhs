@@ -27,3 +27,8 @@
 >                         else if (':' `elem` id) -- then id has a package
 >                              then putStrLn $ id ++ " => " ++ show val
 >                              else return ()
+
+Inspired by Prelude.when
+
+> whenFlag              :: (MonadIO m) => Bool -> IO () -> m ()
+> whenFlag p s          =  if p then io s else return ()
