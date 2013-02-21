@@ -29,6 +29,7 @@ To move
 > import Control.Monad.State.Lazy
 > import qualified Data.HashTable.IO as H
 > import DART.CmdLine (dodebug,io,printHeap)
+> import DART.FileIO (readHcrFile)
 
 We'll use the package cmdargs to identify flags, parameters, etc.,  from the command line
 
@@ -59,7 +60,7 @@ The interpreter mode reads an external core file and evaluates the declarations 
 Every .hcr file corresponds to a haskell module
 
 > readModule :: FilePath -> IO Module
-> readModule fp = readFile fp >>= \c -> case parse c 0 of
+> readModule fp = readHcrFile fp >>= \c -> case parse c 0 of
 >   OkP m -> return m
 >   FailP msg -> error msg
 
