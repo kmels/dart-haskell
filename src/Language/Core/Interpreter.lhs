@@ -1,3 +1,6 @@
+
+> {-# LANGUAGE ImplicitParams #-}
+
 ----------------------------------------------------------------------------
 -- |
 -- Module      :  Language.Core.Interpreter
@@ -20,7 +23,7 @@
 > import qualified Language.Core.Interpreter.GHC.Classes as GHC.Classes
 
 > import Language.Core.Core
-> import Language.Core.ValueDefinition(vdefgName)
+> import Language.Core.ValueDefinition (vdefgId,vdefgName)
 > import Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,showMname,bindId,showBind)
 > import Language.Core.TypeExtractor(extractType)
 > import Language.Core.TypeExtractor.DataTypes
@@ -31,7 +34,7 @@
 
 > import Data.Time.Clock(getCurrentTime,diffUTCTime)
 > import Data.List(find)
-
+> import DART.CmdLine
 > import Text.Encoding.Z(zDecodeString)
 
 Given a module which contains a list of value definitions, *vd*, evaluate every *vd* and return a heap with their interpreted values.
@@ -43,24 +46,41 @@ Value definition to mapped values
 | Concrete type e.g. Int -> Int      | ?            |
 -----------------------------------------------------
 
-> evalModule :: Module -> IM Heap
+> evalModule :: (?debug :: Bool) => Module -> IM Heap
 > evalModule m@(Module name _ vdefgs) = do
 >   eval_head <- evalVdefg (head vdefgs)
 >   mapM_ (\vdefg -> do 
 >             before <- liftIO getCurrentTime
 >             h <- get
->             liftIO $ putStr $ "Evaluating " ++ (vdefgName vdefg)
+>             io . dodebugNoLine $ "Evaluating " ++ (vdefgId vdefg) ++ " to ... "
 >             res <- evalVdefg vdefg             
 >             after <- liftIO getCurrentTime
 >             let 
->               id = vdefgName vdefg
+>               id = vdefgId vdefg
 >               time = after `diffUTCTime` before
->             liftIO $ putStrLn $ " ... done in " ++ show time ++ " secs. "
->             liftIO $ putStrLn $ "\tResult: " ++ show res
+>             io . dodebugNoLine $ show res
+>             io . dodebug $ "; done in " ++ show time ++ " secs. "
 >             liftIO $ H.insert h id res
 >         ) vdefgs
 >   h <- get
 >   return h
+
+Given a module and a function name, we evaluate the function in that module and return the heap
+
+> evalModuleFunction :: (?debug :: Bool) => Module -> String -> IM Value
+> modl@(Module mname _ vdefgs) `evalModuleFunction` fname = 
+>   if null fname then 
+>     error $ "evalModuleFunction: function name is empty" 
+>   else case maybeVdefg of
+>     Nothing -> return . Wrong $  "Could not find function " ++ fname ++ " in " ++ showMname (Just mname)
+>     Just vdefg -> do
+>       io . dodebug $ "Found function name " ++ fname
+>       heap <- get -- should be empty
+>       evalVdefg vdefg
+>   where
+>     fnames = map vdefgName vdefgs -- [String]
+>     fnames_vdefgs = zip fnames vdefgs 
+>     maybeVdefg = find ((==) fname . fst) fnames_vdefgs >>= return . snd 
 
 The list of value definitions represents the environment
 

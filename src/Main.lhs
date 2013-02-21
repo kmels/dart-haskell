@@ -1,4 +1,7 @@
 
+> {-# LANGUAGE ImplicitParams #-}
+> {-# LANGUAGE DeriveDataTypeable #-}
+
 This program reads a program in Haskell External Core (EC) syntax and evaluates its main function. The module name is Main
 
 > module Main where
@@ -25,26 +28,71 @@ To move
 
 > import Control.Monad.State.Lazy
 > import qualified Data.HashTable.IO as H
+> import DART.CmdLine (dodebug,io,printHeap)
+
+We'll use the package cmdargs to identify flags, parameters, etc.,  from the command line
+
+The interpreter mode reads an external core file and evaluates the declarations of its module. 
+
+> import System.Console.CmdArgs
+
+> data Interpret = InterpreterMode { 
+> file :: String
+> , eval :: String
+> , debug :: Bool
+> , show_heap :: Bool
+> --, show_time :: Bool
+> --, show_expressions :: Bool
+> , show_tmp_variables :: Bool 
+> } deriving (Show, Data, Typeable)
+
+> interpret = InterpreterMode {
+>   file = def &= typFile &= groupname "USAGE"
+>   , eval = def &= typ "FUNCTION_NAME" &= groupname "USAGE" &= help "The function to evaluate (if not provided, all function declarations will be evaluated)"
+>   , debug = def &= groupname "DEBUG" &= help "Be verbose about what this program is doing"
+>   , show_heap = def &= groupname "DEBUG" &= help "Shows binded values in the heap"
+>   --, show_expressions = def &= groupname "DEBUG" &= help "Shows evaluated external core expressions (if debug flag is on)"
+> --   , show_time = def &= groupname "DEBUG" &= help "Shows the time in which an evaluation was done (if depends flag is on)"
+>   , show_tmp_variables = def &= groupname "DEBUG" &= help "Shows debug messages for temporal variables (if depends flag is on)"
+> } &= summary "Reads a .hcr file and evaluates its declarations. "
+
+Every .hcr file corresponds to a haskell module
+
+> readModule :: FilePath -> IO Module
+> readModule fp = readFile fp >>= \c -> case parse c 0 of
+>   OkP m -> return m
+>   FailP msg -> error msg
 
 > main :: IO () 
 > main = do
->   args <- getArgs
->   case args of
->     [f] -> do
->       putStrLn $ "Reading " ++ f ++ " .."
->       contents <- readFile f
->       let 
->         module'@(Module mdlname tdefs vdefgs)  = case parse contents 0 of
->           OkP modl -> modl
->           FailP msg -> error msg
->       putStrLn $ "Parsed module name:\n\t" ++ (show mdlname)
->       --putStrLn $ "Parsed tdefs:" 
->       --mapM (\p -> putZDecStrLn $ "\t " ++ show p) tdefs
->       putStrLn $ "Heap\n----------------------------------------\n" 
->       new_heap <- H.new
->       heap <- execStateT (evalModule module') new_heap
->       H.mapM_ (\(id,val) -> putStrLn $ id ++ "... \t " ++ show val ++ "\n") heap
->     _ -> putStrLn "Wrong usage"
+
+>   -- Command line handling
+>   args <- cmdArgs interpret
+>   -- Implicit variables
+>   let
+>     ?debug = debug args
+>     ?show_tmp_variables = show_tmp_variables args
+>     ?show_heap = show_heap args
+
+>   dodebug $ "Flags: " ++ show args
+>   dodebug $ "Reading " ++ file args  ++ " .."
+>   module'@(Module mdlname tdefs vdefgs) <- readModule $ file args
+>   dodebug $ "Read module " ++ show mdlname
+
+>   -- Time to evaluate
+>   fresh_heap <- H.new
+>   case (eval args) of
+>     -- If all functions were evaluated
+>     "" -> do
+>       (_,heap) <- runStateT (evalModule module') fresh_heap
+>       when (not ?show_heap) $ putStrLn "WARNING: You did not specify a function name to eval (flags --eval or -e), neither the flag --show-heap. That is why this program has no output"
+>       when (?show_heap) $ printHeap heap
+>     -- If a function was evaluated
+>     fun_name -> do
+>       (result,heap) <- runStateT (module' `evalModuleFunction` fun_name) fresh_heap
+>       when (?show_heap) $ printHeap heap
+>       putStrLn $ show result -- will be a Value iff fun_name is not null
+
 
 Decode any string encoded as Z-encoded string and print it
 
