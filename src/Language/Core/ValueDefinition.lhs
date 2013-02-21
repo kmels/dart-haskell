@@ -54,9 +54,16 @@ Given a value definition, return a expression if the vdef is a function applicat
 > vdefTapp tapp@(Vdef (_, (Tapp _ _), exp)) = Just tapp
 > vdefTapp _ = Nothing
 
-Given a Value definition, return its full name
+Given a value definition, we return its full identifier. That is, containing the package and the module name together with the function name.
+
+> vdefgId :: Vdefg -> String
+> vdefgId (Nonrec (Vdef (qvar, _, _))) = qualifiedVar qvar
+> vdefgId (Rec []) = ""
+> vdefgId (Rec ((Vdef (qvar, _, _)):xs)) = qualifiedVar qvar ++ " and " ++ vdefgName (Rec xs)
+
+Given a Value definition, return its name within its module.
 
 > vdefgName :: Vdefg -> String
-> vdefgName (Nonrec (Vdef (qvar, _, _))) = qualifiedVar qvar
+> vdefgName (Nonrec (Vdef ((_,id), _, _))) = id
 > vdefgName (Rec []) = ""
-> vdefgName (Rec ((Vdef (qvar, _, _)):xs)) = qualifiedVar qvar ++ " and " ++ vdefgName (Rec xs)
+> vdefgName (Rec ((Vdef ((_,id), _, _)):xs)) = id

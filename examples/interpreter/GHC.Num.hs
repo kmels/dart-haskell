@@ -6,12 +6,14 @@ module FirstOrderFunctions (
   , numberTwentyTwo
   , numberFourtyTwo
   -- predicates on Nums
-  , isOneEven
+  , isTenEven
   , isHundredLargerThanZero
   ) where
 
 -- Operatinons on Num
+plusOneInt :: Int -> Int --TODO, remove type signature
 plusOneInt n = n + 1
+twice :: Int -> Int --TODO, remove type signature
 twice n = n * 2
 
 -- Computed with Num operations
@@ -22,8 +24,9 @@ numberTwentyTwo = twice numberEleven
 numberFourtyTwo = twice $ (twice 5) * 4 + 1
 
 -- Predicates
-isOneEven = isEven 1
-isHundredLargerThanZero = 100 <= 2
+
+isTenEven = isEven numberTen
+isHundredLargerThanZero = 100 >= 2
 
 isEven n = n `mod` 2 == 0
 

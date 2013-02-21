@@ -1,77 +1,56 @@
 %module main:FirstOrderFunctions
-  twicereG :: %forall aatn . (base:GHCziNum.Num aatn) ->
-                             aatn -> aatn =
-    \ @ aatq (zddNum1atr::base:GHCziNum.Num aatq) (naf8::aatq) ->
-        base:GHCziNum.zt @ aatq zddNum1atr naf8
-        (base:GHCziNum.fromInteger @ aatq zddNum1atr
-         (2::integerzmgmp:GHCziIntegerziType.Integer));
-  plusOneIntreF :: %forall aatR . (base:GHCziNum.Num aatR) ->
-                                  aatR -> aatR =
-    \ @ aatU (zddNum1atV::base:GHCziNum.Num aatU) (naeP::aatU) ->
-        base:GHCziNum.zp @ aatU zddNum1atV naeP
-        (base:GHCziNum.fromInteger @ aatU zddNum1atV
-         (1::integerzmgmp:GHCziIntegerziType.Integer));
-  main:FirstOrderFunctions.numberTen :: integerzmgmp:GHCziIntegerziType.Integer =
-    plusOneIntreF @ integerzmgmp:GHCziIntegerziType.Integer
-    base:GHCziNum.zdfNumInteger
-    (9::integerzmgmp:GHCziIntegerziType.Integer);
-  main:FirstOrderFunctions.numberEleven :: integerzmgmp:GHCziIntegerziType.Integer =
-    plusOneIntreF @ integerzmgmp:GHCziIntegerziType.Integer
-    base:GHCziNum.zdfNumInteger main:FirstOrderFunctions.numberTen;
-  main:FirstOrderFunctions.numberTwentyTwo :: integerzmgmp:GHCziIntegerziType.Integer =
-    twicereG @ integerzmgmp:GHCziIntegerziType.Integer
-    base:GHCziNum.zdfNumInteger main:FirstOrderFunctions.numberEleven;
-  main:FirstOrderFunctions.numberTwenty :: integerzmgmp:GHCziIntegerziType.Integer =
-    base:GHCziBase.zd @ integerzmgmp:GHCziIntegerziType.Integer
-    @ integerzmgmp:GHCziIntegerziType.Integer
-    (twicereG @ integerzmgmp:GHCziIntegerziType.Integer
-     base:GHCziNum.zdfNumInteger)
-    main:FirstOrderFunctions.numberTen;
-  main:FirstOrderFunctions.numberFourtyTwo :: integerzmgmp:GHCziIntegerziType.Integer =
-    base:GHCziBase.zd @ integerzmgmp:GHCziIntegerziType.Integer
-    @ integerzmgmp:GHCziIntegerziType.Integer
-    (twicereG @ integerzmgmp:GHCziIntegerziType.Integer
-     base:GHCziNum.zdfNumInteger)
-    (base:GHCziNum.zp @ integerzmgmp:GHCziIntegerziType.Integer
-     base:GHCziNum.zdfNumInteger
-     (base:GHCziNum.zt @ integerzmgmp:GHCziIntegerziType.Integer
-      base:GHCziNum.zdfNumInteger
-      (twicereG @ integerzmgmp:GHCziIntegerziType.Integer
-       base:GHCziNum.zdfNumInteger
-       (5::integerzmgmp:GHCziIntegerziType.Integer))
-      (4::integerzmgmp:GHCziIntegerziType.Integer))
-     (1::integerzmgmp:GHCziIntegerziType.Integer));
-  zddRealrv1 :: base:GHCziReal.Real
-                integerzmgmp:GHCziIntegerziType.Integer =
-    base:GHCziReal.zdp1Integral
-    @ integerzmgmp:GHCziIntegerziType.Integer
-    base:GHCziReal.zdfIntegralInteger;
-  zddNumrv2 :: base:GHCziNum.Num
-               integerzmgmp:GHCziIntegerziType.Integer =
-    base:GHCziReal.zdp1Real @ integerzmgmp:GHCziIntegerziType.Integer
-    zddRealrv1;
-  arv3 :: ghczmprim:GHCziClasses.Ord
-          integerzmgmp:GHCziIntegerziType.Integer =
-    base:GHCziReal.zdp2Real @ integerzmgmp:GHCziIntegerziType.Integer
-    zddRealrv1;
-  zddEqrv4 :: ghczmprim:GHCziClasses.Eq
-              integerzmgmp:GHCziIntegerziType.Integer =
-    ghczmprim:GHCziClasses.zdp1Ord
-    @ integerzmgmp:GHCziIntegerziType.Integer arv3;
-  main:FirstOrderFunctions.isOneEven :: ghczmprim:GHCziTypes.Bool =
-    ghczmprim:GHCziClasses.zeze
-    @ integerzmgmp:GHCziIntegerziType.Integer zddEqrv4
-    (base:GHCziReal.mod @ integerzmgmp:GHCziIntegerziType.Integer
-     base:GHCziReal.zdfIntegralInteger
-     (1::integerzmgmp:GHCziIntegerziType.Integer)
-     (base:GHCziNum.fromInteger
-      @ integerzmgmp:GHCziIntegerziType.Integer zddNumrv2
+  main:FirstOrderFunctions.numberTen :: ghczmprim:GHCziTypes.Int =
+    base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
+    (ghczmprim:GHCziTypes.Izh (9::ghczmprim:GHCziPrim.Intzh))
+    (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh));
+  zddRealru8 :: base:GHCziReal.Real ghczmprim:GHCziTypes.Int =
+    base:GHCziReal.zdp1Integral @ ghczmprim:GHCziTypes.Int
+    base:GHCziReal.zdfIntegralInt;
+  zddNumru9 :: base:GHCziNum.Num ghczmprim:GHCziTypes.Int =
+    base:GHCziReal.zdp1Real @ ghczmprim:GHCziTypes.Int zddRealru8;
+  arua :: ghczmprim:GHCziClasses.Ord ghczmprim:GHCziTypes.Int =
+    base:GHCziReal.zdp2Real @ ghczmprim:GHCziTypes.Int zddRealru8;
+  zddEqrub :: ghczmprim:GHCziClasses.Eq ghczmprim:GHCziTypes.Int =
+    ghczmprim:GHCziClasses.zdp1Ord @ ghczmprim:GHCziTypes.Int arua;
+  main:FirstOrderFunctions.isTenEven :: ghczmprim:GHCziTypes.Bool =
+    ghczmprim:GHCziClasses.zeze @ ghczmprim:GHCziTypes.Int zddEqrub
+    (base:GHCziReal.mod @ ghczmprim:GHCziTypes.Int
+     base:GHCziReal.zdfIntegralInt main:FirstOrderFunctions.numberTen
+     (base:GHCziNum.fromInteger @ ghczmprim:GHCziTypes.Int zddNumru9
       (2::integerzmgmp:GHCziIntegerziType.Integer)))
-    (base:GHCziNum.fromInteger
-     @ integerzmgmp:GHCziIntegerziType.Integer zddNumrv2
+    (base:GHCziNum.fromInteger @ ghczmprim:GHCziTypes.Int zddNumru9
      (0::integerzmgmp:GHCziIntegerziType.Integer));
+  main:FirstOrderFunctions.numberEleven :: ghczmprim:GHCziTypes.Int =
+    base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
+    main:FirstOrderFunctions.numberTen
+    (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh));
+  twicereN :: ghczmprim:GHCziTypes.Int -> ghczmprim:GHCziTypes.Int =
+    \ (naf9::ghczmprim:GHCziTypes.Int) ->
+        base:GHCziNum.zt @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
+        naf9 (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh));
+  main:FirstOrderFunctions.numberTwentyTwo :: ghczmprim:GHCziTypes.Int =
+    base:GHCziNum.zt @ ghczmprim:GHCziTypes.Int base:GHCziNum.zdfNumInt
+    main:FirstOrderFunctions.numberEleven
+    (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh));
+  main:FirstOrderFunctions.numberTwenty :: ghczmprim:GHCziTypes.Int =
+    base:GHCziBase.zd @ ghczmprim:GHCziTypes.Int
+    @ ghczmprim:GHCziTypes.Int twicereN
+    main:FirstOrderFunctions.numberTen;
+  main:FirstOrderFunctions.numberFourtyTwo :: ghczmprim:GHCziTypes.Int =
+    base:GHCziBase.zd @ ghczmprim:GHCziTypes.Int
+    @ ghczmprim:GHCziTypes.Int twicereN
+    (base:GHCziNum.zp @ ghczmprim:GHCziTypes.Int
+     base:GHCziNum.zdfNumInt
+     (base:GHCziNum.zt @ ghczmprim:GHCziTypes.Int
+      base:GHCziNum.zdfNumInt
+      (base:GHCziNum.zt @ ghczmprim:GHCziTypes.Int
+       base:GHCziNum.zdfNumInt
+       (ghczmprim:GHCziTypes.Izh (5::ghczmprim:GHCziPrim.Intzh))
+       (ghczmprim:GHCziTypes.Izh (2::ghczmprim:GHCziPrim.Intzh)))
+      (ghczmprim:GHCziTypes.Izh (4::ghczmprim:GHCziPrim.Intzh)))
+     (ghczmprim:GHCziTypes.Izh (1::ghczmprim:GHCziPrim.Intzh)));
   main:FirstOrderFunctions.isHundredLargerThanZZero :: ghczmprim:GHCziTypes.Bool =
-    ghczmprim:GHCziClasses.zlze
+    ghczmprim:GHCziClasses.zgze
     @ integerzmgmp:GHCziIntegerziType.Integer
     integerzmgmp:GHCziIntegerziType.zdfOrdInteger
     (100::integerzmgmp:GHCziIntegerziType.Integer)
