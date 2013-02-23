@@ -46,9 +46,8 @@ Value definition to mapped values
 | Concrete type e.g. Int -> Int      | ?            |
 -----------------------------------------------------
 
-> evalModule :: (?debug :: Bool) => Module -> IM Heap
-> evalModule m@(Module name _ vdefgs) = do
->   eval_head <- evalVdefg (head vdefgs)
+> evalModule :: (?debug :: Bool, ?show_expressions :: Bool) => Module -> IM Heap
+> evalModule m@(Module name tdefs vdefgs) = do
 >   mapM_ (\vdefg -> do 
 >             before <- liftIO getCurrentTime
 >             h <- get
@@ -65,9 +64,9 @@ Value definition to mapped values
 >   h <- get
 >   return h
 
-Given a module and a function name, we evaluate the function in that module and return the heap
+Given a module and a function name, we evaluate the function in that module and return the heap. 
 
-> evalModuleFunction :: (?debug :: Bool) => Module -> String -> IM Value
+> evalModuleFunction :: (?debug :: Bool, ?show_expressions :: Bool) => Module -> String -> IM Value
 > modl@(Module mname _ vdefgs) `evalModuleFunction` fname = 
 >   if null fname then 
 >     error $ "evalModuleFunction: function name is empty" 
@@ -84,7 +83,7 @@ Given a module and a function name, we evaluate the function in that module and 
 
 The list of value definitions represents the environment
 
-> evalVdefg :: Vdefg -> IM Value
+> evalVdefg :: (?debug :: Bool, ?show_expressions :: Bool) => Vdefg -> IM Value
 
 > evalVdefg (Rec (v@(Vdef _):[]) ) = evalVdefg $ Nonrec $ v
 
@@ -93,7 +92,8 @@ More than one vdef? I haven't found a test case (TODO)
 > evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented\n\t" ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> " VDEF; " ++ var ++ " :: " ++ showType ty ++ "\n\t"++ showExp exp) vdefs
 
 > evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
->   --liftIO $ putStrLn $ "\n\n Value exp: " ++ showExp exp ++ " \n\n"
+>   whenFlag (?show_expressions) $ do
+>     io . dodebug $ "\n\n Value exp: " ++ showExp exp ++ " \n\n"
 >   res <- evalExp exp -- result
 >   heap <- get 
 >   liftIO $ H.insert heap (qualifiedVar qvar) res
@@ -173,12 +173,14 @@ Case of
 >     Just e -> evalExp e
 >     _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ var
 
-return . Wrong $ " TODO: " ++ showExp otherExp
-
-Otherwise
-
+Literals 
 > evalExp (Lit lit) = evalLit lit
 
+Data constructors
+
+> evalExp (Dcon qvar) = lookupVar qvar
+
+Otherwise
 > evalExp otherExp = return . Wrong $ " TODO: " ++ showExp otherExp
 
 > matches :: Value -> Alt -> Bool

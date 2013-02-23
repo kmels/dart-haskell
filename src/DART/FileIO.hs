@@ -1,0 +1,30 @@
+{-# LANGUAGE QuasiQuotes #-}
+
+module DART.FileIO where 
+
+import qualified Data.ByteString.Char8 as Char8
+import           Data.ByteString.Lazy.UTF8 (toString)
+import           Data.Conduit.Process
+import           Language.Core.Core (Module)
+import           System.Directory (getCurrentDirectory)
+import           System.Environment
+import           System.FilePath (dropExtension,takeExtension)
+import           System.IO
+import           System.Process.QQ(cmd)
+readHcrFile :: FilePath -> IO String
+readHcrFile filepath = case takeExtension filepath of
+  ".hcr" -> readFile filepath
+  ".hs" -> do
+    currentDir <- getCurrentDirectory
+    let pathToFile = currentDir </> filepath
+    inp <- [cmd|ghc --make -fext-core #{pathToFile} |] 
+    readHcrFile $ dropExtension pathToFile ++ ".hcr"
+  ".lhs" -> do
+    currentDir <- getCurrentDirectory
+    let pathToFile = currentDir </> filepath
+    inp <- [cmd|ghc --make -fext-core #{pathToFile} |] 
+    readHcrFile $ dropExtension pathToFile ++ ".hcr"
+  _ -> error "Invalid extension. Use either an .hcr, .lhs or a .hs file"
+
+(</>) :: FilePath -> FilePath -> FilePath
+p </> c = p ++ "/" ++ c

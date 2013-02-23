@@ -29,6 +29,7 @@ To move
 > import Control.Monad.State.Lazy
 > import qualified Data.HashTable.IO as H
 > import DART.CmdLine (dodebug,io,printHeap)
+> import DART.FileIO (readHcrFile)
 
 We'll use the package cmdargs to identify flags, parameters, etc.,  from the command line
 
@@ -42,7 +43,7 @@ The interpreter mode reads an external core file and evaluates the declarations 
 > , debug :: Bool
 > , show_heap :: Bool
 > --, show_time :: Bool
-> --, show_expressions :: Bool
+> , show_expressions :: Bool
 > , show_tmp_variables :: Bool 
 > } deriving (Show, Data, Typeable)
 
@@ -51,7 +52,7 @@ The interpreter mode reads an external core file and evaluates the declarations 
 >   , eval = def &= typ "FUNCTION_NAME" &= groupname "USAGE" &= help "The function to evaluate (if not provided, all function declarations will be evaluated)"
 >   , debug = def &= groupname "DEBUG" &= help "Be verbose about what this program is doing"
 >   , show_heap = def &= groupname "DEBUG" &= help "Shows binded values in the heap"
->   --, show_expressions = def &= groupname "DEBUG" &= help "Shows evaluated external core expressions (if debug flag is on)"
+>   , show_expressions = def &= groupname "DEBUG" &= help "Shows external core expressions being evaluated (if debug flag is on)"
 > --   , show_time = def &= groupname "DEBUG" &= help "Shows the time in which an evaluation was done (if depends flag is on)"
 >   , show_tmp_variables = def &= groupname "DEBUG" &= help "Shows debug messages for temporal variables (if depends flag is on)"
 > } &= summary "Reads a .hcr file and evaluates its declarations. "
@@ -59,7 +60,7 @@ The interpreter mode reads an external core file and evaluates the declarations 
 Every .hcr file corresponds to a haskell module
 
 > readModule :: FilePath -> IO Module
-> readModule fp = readFile fp >>= \c -> case parse c 0 of
+> readModule fp = readHcrFile fp >>= \c -> case parse c 0 of
 >   OkP m -> return m
 >   FailP msg -> error msg
 
@@ -73,6 +74,7 @@ Every .hcr file corresponds to a haskell module
 >     ?debug = debug args
 >     ?show_tmp_variables = show_tmp_variables args
 >     ?show_heap = show_heap args
+>     ?show_expressions = show_expressions args
 
 >   dodebug $ "Flags: " ++ show args
 >   dodebug $ "Reading " ++ file args  ++ " .."
