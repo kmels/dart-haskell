@@ -1,3 +1,6 @@
+> {-# LANGUAGE TypeSynonymInstances #-}
+> {-# LANGUAGE FlexibleInstances #-}
+
 ----------------------------------------------------------------------------
 -- |
 -- Module      :  Language.Core.Util
@@ -87,7 +90,7 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 > showAlt (Alit lit exp) = wrapName "ALit" $ showLit lit ++ showExp exp
 > showAlt (Acon (mname,dcon) tbinds vbinds exp) = wrapName "Acon" $ showMname mname ++ ", " ++ dcon ++ ", " ++ concatMap (\tb -> showTbind tb ++ ",") tbinds ++ concatMap (\vb -> showVbind vb ++ ",") vbinds ++ showExp exp
 
-> showTbind :: Tbind -> String
+> showTbind :: (Tvar,Kind) -> String
 > showTbind (tvar,kind) = wrapName "Tbind" $ tvar ++ " with kind " ++ showKind kind
 
 > showVbind :: Vbind -> String
@@ -117,3 +120,13 @@ In order to pretty print types, we'll pattern match on the list type as a Ty
 > bindId :: Bind -> Id
 > bindId (Vb (var,ty)) = var
 > bindId (Tb (tvar,kind)) = tvar
+
+> instance Show Cdef where
+>   show (Constr (_,dcon) tbinds tys) = show dcon ++ " :: " ++ show tbinds ++ "; " ++ show tys
+
+> instance Show Ty where show = showExtCoreType
+> instance Show Kind where show = showKind
+> instance Show Tdef where 
+>   show (Data qtcon tbinds cdefs) = (show . qualifiedVar) qtcon ++ " ..\n\tType parameters:\n" ++ tbinds' ++ "\n\tType constructors:\n" ++ cdefs' where
+>      tbinds' = concatMap (\tb -> "\t\t" ++ show tb ++ "\n") tbinds
+>      cdefs' = concatMap (\cd -> "\t\t" ++ show cd ++ "\n") cdefs
