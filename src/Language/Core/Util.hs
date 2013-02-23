@@ -153,4 +153,4 @@ instance Show Kind where show = showKind
 instance Show Tdef where 
   show (Data qtcon@(_,tcon) tbinds cdefs) = (show . qualifiedVar) qtcon ++ " ..\n\tType parameters:\n" ++ tbinds' ++ "\n\tType constructors:\n" ++ cdefs' where
      tbinds' = concatMap (\tb -> "\t\t" ++ showTbind tb ++ "\n") tbinds
-     cdefs' = concatMap (\cd -> "\t\t" ++ show cd ++ "\n") cdefs ++ " -> " ++ tcon
+     cdefs' = concatMap (\cd -> "\t\t" ++ show cd ++ " -> " ++ tcon ++ "\n") cdefs
