@@ -36,7 +36,7 @@ We'll also need to keep track of the declared types and their constructors, for 
 
 > data Type = TyConApp TyCon [Type]
 > data TyCon = AlgTyCon Id [DataCon]
-> data DataCon = MkDataCon Name Type
+> data DataCon = MkDataCon Id Type
 
 Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadler, The essence of Functional Programming](http://homepages.inf.ed.ac.uk/wadler/topics/monads.html).
 

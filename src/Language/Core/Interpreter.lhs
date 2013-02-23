@@ -174,13 +174,15 @@ Case of
 >     _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ var
 
 Literals 
+
 > evalExp (Lit lit) = evalLit lit
 
 Data constructors
 
-> evalExp (Dcon qvar) = lookupVar qvar
+> evalExp (Dcon qcon) = lookupVar . qualifiedVar $ qcon
 
 Otherwise
+
 > evalExp otherExp = return . Wrong $ " TODO: " ++ showExp otherExp
 
 > matches :: Value -> Alt -> Bool
