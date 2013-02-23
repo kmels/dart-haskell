@@ -28,18 +28,32 @@ showExtCoreType (Tcon (mname,t2)) = showMname mname ++ "." ++ t2
 showExtCoreType (Tapp t1 t2) = showExtCoreType t1 ++ showExtCoreType t2
 showExtCoreType _ = "UNKNOWN"
 
--- Given a type string representation from ext core e.g. ghc-prim:GHC.Prim.(->)ghc-prim:GHC.Types.[]ghc-prim:GHC.Types.Intghc-prim:GHC.Types.Int we transform it in a more readable form e.g. [Int] -Int
+-- | Given a type string representation from ext core e.g. ghc-prim:GHC.Prim.(->) ghc-prim:GHC.Types.[] ghc-prim:GHC.Types.Int ghc-prim:GHC.Types.Int we transform it in a more readable string form e.g. [Int] -> Int
 
 showType :: Ty -> String
-showType (Tvar t) = wrapName "Tvar" t
-
-showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),primitiveType)) = primitiveType -- ghc.prim:GHC.Types.primitiveType
+showType (Tvar t) = t
+-- constructors
+showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Tuple")),"Z2T")) = "(,)"
+showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),"ZMZN")) = "[]"
+-- a primitive type from GHC
+showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),primitiveType)) = primitiveType 
 showType (Tcon (mname,t2)) = wrapName "Tcon" $ showMname mname ++ "." ++ t2
-
--- | In order to pretty print types, we'll pattern match on the list type as a Ty
-
-showType (Tapp (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),"ZMZN")) (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),listType))) = "[" ++ listType ++ "]"
-showType (Tapp t1 t2) = wrapName "Tapp" $ showType t1 ++ "TIP2: " ++ showType t2
+-- a type constructor applied to a type parameter e.g. a list
+showType (Tapp tc@(Tcon _) innerType') = 
+  let 
+    constructor = showType tc
+    innerType = showType innerType'
+  in case constructor of
+    "[]" -> if (innerType == "Char") then "String" else "[" ++ innerType ++ "]"
+    _ -> constructor ++ " " ++ innerType
+-- a type constructor applied to two type parameters e.g. a Tuple
+showType (Tapp ta@(Tapp tc@(Tcon _) ty2) ty1) = let
+  constructor = showType tc
+  in case constructor of
+    "(,)" -> "(" ++ showType ty1 ++ "," ++ showType ty2 ++ ")"
+    _ -> constructor ++ " " ++ showType ty1 ++ " " ++ showType ty2
+    
+showType (Tapp t1 t2) = wrapName "Tapp" $ showType t1 ++ " " ++ showType t2
 showType _ = undefined
 
 showMname :: Maybe AnMname -> String
@@ -88,7 +102,7 @@ showAlt (Alit lit exp) = wrapName "ALit" $ showLit lit ++ showExp exp
 showAlt (Acon (mname,dcon) tbinds vbinds exp) = wrapName "Acon" $ showMname mname ++ ", " ++ dcon ++ ", " ++ concatMap (\tb -> showTbind tb ++ ",") tbinds ++ concatMap (\vb ->showVbind vb ++ ",") vbinds ++ showExp exp
 
 showTbind :: (Tvar,Kind) -> String
-showTbind (tvar,kind) = wrapName "Tbind" $ tvar ++ " with kind " ++ showKind kind
+showTbind (tvar,kind) = tvar ++ " :: " ++ showKind kind
 
 showVbind :: Vbind -> String
 showVbind (var,ty) = wrapName "Vbind" $ var ++ "::" ++ showType ty
@@ -119,7 +133,18 @@ bindId (Vb (var,ty)) = var
 bindId (Tb (tvar,kind)) = tvar
 
 instance Show Cdef where
-  show (Constr (_,dcon) tbinds tys) = show dcon ++ " :: " ++ show tbinds ++ "; " ++ show tys
+  show (Constr (_,dcon) tbinds types) = 
+    let 
+      tbinds' = if (not . null $ tbinds) 
+                then " :: forall(?) " ++ concatMap (\tb -> showTbind tb) tbinds                                     else " "
+      showType' (Tvar t) = t
+      showType' (Tapp (Tcon (_,tcon)) (Tvar t)) = tcon ++ " " ++ t
+      showType' (Tapp dcon@(Tapp dt tv) ty) = showType' dcon ++ " " ++ showType' ty
+      showType' x = showType x
+      types' = if (not . null $ types)
+               then concatMap (\t -> showType' t ++ " -> ") (init types) ++ (showType' . last $ types)
+               else ""
+    in dcon ++ tbinds' ++ types'
 
 instance Show Ty where show = showExtCoreType
                        
