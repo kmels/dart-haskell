@@ -20,19 +20,29 @@ This is an interpreter for External Core
 > import Language.Core.Core
 > import Language.Core.Util(showType,showExtCoreType,showExp,showMname,wrapName)
 
+> import           Control.Monad.State
+> import           Control.Monad.Primitive
+
 For the heap, we use the package [hashtables](http://hackage.haskell.org/package/hashtables)
 
 > import qualified Data.HashTable.IO as H
 > import qualified Data.HashTable.ST.Cuckoo as C
 
-> import           Control.Monad.State
-> import           Control.Monad.Primitive
-
 > type Heap = H.CuckooHashTable Id Value
+
+We'll also need to keep track of the declared types and their constructors, for which we'll also use a hashtable, where a type is identified by its qualified name.
+
+> type Types = H.CuckooHashTable Id Type
+
+> data Type = TyConApp TyCon [Type]
+> data TyCon = AlgTyCon Id [DataCon]
+> data DataCon = MkDataCon Name Type
 
 Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadler, The essence of Functional Programming](http://homepages.inf.ed.ac.uk/wadler/topics/monads.html).
 
 > type IM = StateT Heap IO 
+
+> -- DARTState = { heap :: Heap, types :: 
 
 > instance Show Exp where
 >          show = showExp 

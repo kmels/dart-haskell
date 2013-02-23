@@ -47,8 +47,7 @@ Value definition to mapped values
 -----------------------------------------------------
 
 > evalModule :: (?debug :: Bool, ?show_expressions :: Bool) => Module -> IM Heap
-> evalModule m@(Module name _ vdefgs) = do
->   eval_head <- evalVdefg (head vdefgs)
+> evalModule m@(Module name tdefs vdefgs) = do
 >   mapM_ (\vdefg -> do 
 >             before <- liftIO getCurrentTime
 >             h <- get
@@ -174,12 +173,14 @@ Case of
 >     Just e -> evalExp e
 >     _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ var
 
-return . Wrong $ " TODO: " ++ showExp otherExp
-
-Otherwise
-
+Literals 
 > evalExp (Lit lit) = evalLit lit
 
+Data constructors
+
+> evalExp (Dcon qvar) = lookupVar qvar
+
+Otherwise
 > evalExp otherExp = return . Wrong $ " TODO: " ++ showExp otherExp
 
 > matches :: Value -> Alt -> Bool
