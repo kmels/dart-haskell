@@ -201,6 +201,18 @@ Otherwise
 >   "integerzmgmp:[\"GHC\",\"Integer\"].Type.Integer" -> return . Num $ i 
 >   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghczmprim:GHCziPrim.Intzh"
 
+> evalLit (Literal (Lrational r) ty) = case showExtCoreType ty of
+>   "Rational" -> return . Rat $ r
+>   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "Rational"
+
+> evalLit (Literal (Lchar c) ty) = case showExtCoreType ty of
+>   "ghczmprim:CHAR" -> return . Char $ c 
+>   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "Char"
+
+> evalLit (Literal (Lstring s) ty) = case showExtCoreType ty of
+>   "ghczmprim:GHC.Prim.STRING" -> return . String $ s
+>   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "String"
+
 > lookupVar :: Id -> IM Value
 > lookupVar x = do
 >   --liftIO . putStrLn $ "Looking up var " ++ x

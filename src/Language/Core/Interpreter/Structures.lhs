@@ -50,7 +50,10 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 > data Value = Wrong String
 >            | ExtCoreExp Exp
 >            | Num Integer
+>            | Rat Rational -- arbitrary-precision rational numbers
 >            | Boolean Bool
+>            | Char Char
+>            | String String
 >            | Fun (Value -> IM Value) Description
 
 > type Description = String
