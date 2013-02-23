@@ -10,7 +10,7 @@
 > io = liftIO 
 
 > dodebug :: (?debug :: Bool) => String -> IO ()
-> dodebug msg = if (?debug) then putStrLn $ msg ++ " .. " else return ()
+> dodebug msg = if (?debug) then putStrLn msg  else return ()
 
 > dodebugNoLine :: (?debug :: Bool) => String -> IO ()
 > dodebugNoLine msg = if (?debug) then putStr msg else return ()
