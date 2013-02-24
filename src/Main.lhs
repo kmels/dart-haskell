@@ -22,7 +22,7 @@ To move
 > import Text.Encoding.Z
 > import DART.MkRandomValue
 > import Data.Maybe
-> import Language.Core.ValueDefinition
+> import Language.Core.Vdefg
 > import DART.FunctionFeeder
 > import Language.Core.Interpreter
 

@@ -23,7 +23,7 @@ import qualified Language.Core.Interpreter.GHC.Num as GHC.Num
 import qualified Language.Core.Interpreter.GHC.Classes as GHC.Classes
 
 import Language.Core.Core
-import Language.Core.ValueDefinition (vdefgId,vdefgName)
+import Language.Core.Vdefg (isTmp,vdefgId,vdefgName)
 import Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,showMname,bindId,showBind)
 import Language.Core.TypeExtractor(extractType)
 import Language.Core.TypeExtractor.DataTypes
@@ -47,7 +47,9 @@ Value definition to mapped values
 -----------------------------------------------------
 -}
 
-doEvalVdefg :: (?debug :: Bool, ?show_expressions :: Bool) => Vdefg -> IM Value
+doEvalVdefg :: (?debug :: Bool
+               , ?show_expressions :: Bool
+               , ?show_tmp_variables :: Bool ) => Vdefg -> IM Value
 doEvalVdefg vdefg = do
   before <- liftIO getCurrentTime
   h <- get
@@ -55,14 +57,19 @@ doEvalVdefg vdefg = do
   after <- liftIO getCurrentTime
   let 
     id = vdefgId vdefg
-    time = after `diffUTCTime` before
-  io . dodebugNoLine $ "Evaluating " ++ (vdefgId vdefg) 
-  --io . dodebugNoLine $ show res
-  when (?debug) $ io . putStrLn $ " done in " ++ show time ++ " secs. "  
+    time = after `diffUTCTime` before    
+    should_print = ?debug && ?show_tmp_variables
+                   || ?debug && (not ?show_tmp_variables) && (not $ isTmp vdefg)
+  (when should_print) $ do
+    io . dodebugNoLine $ "Evaluating " ++ (vdefgId vdefg) 
+    --io . dodebugNoLine $ show res
+    io . putStrLn $ " done in " ++ show time ++ " secs. " ++ show (isTmp vdefg)
   liftIO $ H.insert h id res
   return res
 
-evalModule :: (?debug :: Bool, ?show_expressions :: Bool) => Module -> IM Heap
+evalModule :: (?debug :: Bool
+              , ?show_expressions :: Bool
+              , ?show_tmp_variables :: Bool) => Module -> IM Heap
 evalModule m@(Module name tdefs vdefgs) = do
   mapM_ doEvalVdefg vdefgs
   h <- get
@@ -70,7 +77,9 @@ evalModule m@(Module name tdefs vdefgs) = do
 
 -- | Given a module and a function name, we evaluate the function in that module and return the heap. 
 
-evalModuleFunction :: (?debug :: Bool, ?show_expressions :: Bool) => Module -> String -> IM Value
+evalModuleFunction :: (?debug :: Bool
+                      , ?show_expressions :: Bool
+                      , ?show_tmp_variables :: Bool) => Module -> String -> IM Value
 evalModuleFunction modl@(Module mname tdefs vdefgs) fname = 
    if null fname then 
      error $ "evalModuleFunction: function name is empty" 

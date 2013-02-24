@@ -21,7 +21,7 @@ executable dart-haskell
   other-modules:        
                     DART.FunctionFeeder
                     DART.MkRandomValue
-                    Language.Core.ValueDefinition
+                    Language.Core.Vdefg
                     Language.Core.TypeExtractor
                     Language.Core.TypeExtractor.DataTypes
   build-depends:

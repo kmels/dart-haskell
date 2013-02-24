@@ -20,7 +20,7 @@ We'll need to differentiate types, for that we will pattern match on them. To be
 
 FunctionApplication is a type wrapper to a value definition (from External Core) with a Tapp. It represents a lambda abstraction.
 
-> import Language.Core.ValueDefinition
+> import Language.Core.Vdefg
 
 And particular useful combinators
 
