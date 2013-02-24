@@ -72,4 +72,6 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >   show (Num i) = show i
 >   show (Fun f s) = wrapName "Fun" s
 >   show (Boolean b) = show b
+>   show (Rat r) = show r
+>   show (String s) = s
 > --type Environment = [(Id,IM Value)]

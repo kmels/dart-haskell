@@ -21,6 +21,7 @@ import Language.Core.Interpreter.Structures
   
 import qualified Language.Core.Interpreter.GHC.Num as GHC.Num
 import qualified Language.Core.Interpreter.GHC.Classes as GHC.Classes
+import qualified Language.Core.Interpreter.GHC.CString as GHC.CString
 
 import Language.Core.Core
 import Language.Core.Vdefg (isTmp,vdefgId,vdefgName)
@@ -62,8 +63,7 @@ doEvalVdefg vdefg = do
                    || ?debug && (not ?show_tmp_variables) && (not $ isTmp vdefg)
   (when should_print) $ do
     io . dodebugNoLine $ "Evaluating " ++ (vdefgId vdefg) 
-    --io . dodebugNoLine $ show res
-    io . putStrLn $ " done in " ++ show time ++ " secs. " ++ show (isTmp vdefg)
+    io . putStrLn $ " .. done in " ++ show time ++ " secs; result: " ++ show res
   liftIO $ H.insert h id res
   return res
 
@@ -174,7 +174,7 @@ evalExp e@(Var qvar) =
   let
      -- Interpreter modules that might know what to do with `qvar`
      -- this list is of type [Qual Var - Maybe Value]
-     lib_vars = [GHC.Num.evalVar,GHC.Classes.evalVar]
+     lib_vars = [GHC.Num.evalVar,GHC.Classes.evalVar,GHC.CString.evalVar]
      lib_val = callEvalVar lib_vars qvar -- Maybe Value
    in
     -- Space for improvement: maybe we should lookupVar before finding lib functions?
@@ -229,8 +229,8 @@ evalLit (Literal (Lchar c) ty) = case showExtCoreType ty of
   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "Char"
 
 evalLit (Literal (Lstring s) ty) = case showExtCoreType ty of
-   "ghczmprim:GHC.Prim.STRING" -> return . String $ s
-   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "String"
+   "ghczmprim:GHC.Prim.Addrzh" -> return . String $ s
+   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghczmprim:GHC.Prim.Addrzh"
 
 lookupVar :: Id -> IM Value
 lookupVar x = do
