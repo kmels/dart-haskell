@@ -61,3 +61,12 @@ type ISBN = Integer
 data Book = MkBook Name Author ISBN
 
 myFirstBook = MkBook "The biography of José Mourinho" "Some author" 2040240
+
+-- | SPJ's book
+data Tree = Leaf Int | Branch Tree Tree
+tree1 = Branch (Branch (Leaf 1) (Leaf 2)) (Leaf 3)
+reflect (Leaf n) = Leaf n
+reflect (Branch t1 t2) = Branch (reflect t2) (reflect t1)
+
+data Color = VERMILLION | PUCE | LAVENDER
+puce = PUCE

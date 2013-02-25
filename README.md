@@ -15,3 +15,47 @@ It reports
 
  - How many functions were run. How many functions seem normal.
  - Which functions terminated because of an error and what kind of parameters make them crash.
+
+Install
+------
+    > git clone https://github.com/kmels/dart-haskell
+    > cd dart-haskell
+    > cabal install
+
+Usage examples  
+-------
+    > dart-haskell -f examples/interpreter/GHC.Num.hs -e numberTen
+10
+
+    > dart-haskell -f examples/interpreter/GHC.Num.hs --show-heap
+
+-------------------- Heap begins --------------------
+main:FirstOrderFunctions.numberTen => 10
+main:FirstOrderFunctions.numberEleven => 11
+main:FirstOrderFunctions.numberFourtyTwo => 82
+main:FirstOrderFunctions.isHundredLargerThanZZero => True
+main:FirstOrderFunctions.isTenEven => False
+main:FirstOrderFunctions.numberTwenty => 20
+main:FirstOrderFunctions.numberTwentyTwo => 22
+-------------------- Heap ends --------------------
+
+    > dart-haskell --help
+Reads a .hcr file and evaluates its declarations.
+
+interpret [OPTIONS]
+
+USAGE:
+  -f --file=FILE          
+  -e --eval=FUNCTION_NAME   The function to evaluate (if not provided, all
+                            function declarations will be evaluated)
+DEBUG:
+  -d --debug                Be verbose about what this program is doing
+     --show-heap            Shows binded values in the heap
+     --show-expressions     Shows the external core expression for every
+                            value being evaluated
+     --show-subexpressions  Shows *every* (external core) expression being
+                            evaluated
+     --show-tmp-variables   Shows debug messages for temporal variables (if
+                            depends flag is on)
+  -? --help                 Display help message
+  -V --version              Print version information
