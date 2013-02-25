@@ -44,7 +44,6 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >          show = showExp 
 
 > data Value = Wrong String
->            | ExtCoreExp Exp
 >            | Num Integer
 >            | Rat Rational -- arbitrary-precision rational numbers
 >            | Boolean Bool
@@ -52,9 +51,7 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >            | String String
 >            | Fun (Value -> IM Value) Description
 >            | List [Value]
->            | TyConV String [Value]
->            | MkDataConV Id
-
+>            | Thunk Exp -- weak head normal form, or thunk
 
 > -- data Type = TyConApp TyCon [Type]
 > -- data TyCon = AlgTyCon Id [DataCon]
@@ -67,12 +64,10 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >   (Num i) == (Num i') = i == i'
 >   (Fun _ _) == (Fun _ _) = False  -- too bad we are not intensional as in intensional type equality
 >   (Boolean b) == (Boolean b') = b == b'
->   (ExtCoreExp exp) == (ExtCoreExp exp') = False -- TODO: I think we don't need this constructor anymore
 >   o == p = False
 
 > instance Show Value where
 >   show (Wrong s) = "Wrong " ++ s
->   show (ExtCoreExp exp) = "ExtCoreExp " ++ show exp
 >   show (Num i) = show i
 >   show (Fun f s) = wrapName "Fun" s
 >   show (Boolean b) = show b
@@ -80,5 +75,5 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >   show (String s) = s
 >   show (List vs) = show vs
 >   show (Char c) = [c]
->   --show (Dcon n v) = show n ++ " " ++ v
+>   show (Thunk exp) = "Thunk" -- "Thunk(" ++ showExp exp ++ ")"
 > --type Environment = [(Id,IM Value)]

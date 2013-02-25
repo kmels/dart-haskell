@@ -46,6 +46,7 @@ The interpreter mode reads an external core file and evaluates the declarations 
 > , show_expressions :: Bool
 > , show_subexpressions :: Bool
 > , show_tmp_variables :: Bool 
+> , watch_reduction :: Bool
 > } deriving (Show, Data, Typeable)
 
 > interpret = InterpreterMode {
@@ -57,6 +58,7 @@ The interpreter mode reads an external core file and evaluates the declarations 
 >   , show_subexpressions = def &= groupname "DEBUG" &= help "Shows *every* (external core) expression being evaluated"
 > --   , show_time = def &= groupname "DEBUG" &= help "Shows the time in which an evaluation was done (if depends flag is on)"
 >   , show_tmp_variables = def &= groupname "DEBUG" &= help "Shows debug messages for temporal variables (if depends flag is on)"
+>   , watch_reduction = def &= groupname "DEBUG" &= help "Shows debug messages for the evaluation of a value definition (shows reductions of expressions)"
 > } &= summary "Reads a .hcr file and evaluates its declarations. "
 
 Every .hcr file corresponds to a haskell module
@@ -78,6 +80,7 @@ Every .hcr file corresponds to a haskell module
 >     ?show_heap = show_heap args
 >     ?show_expressions = show_expressions args
 >     ?show_subexpressions = show_subexpressions args
+>     ?watch_reduction = watch_reduction args
 
 >   dodebug $ "Flags: " ++ show args
 >   dodebug $ "Reading " ++ file args  ++ " .."

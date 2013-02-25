@@ -51,7 +51,8 @@ Value definition to mapped values
 doEvalVdefg :: (?debug :: Bool
                , ?show_expressions :: Bool
                , ?show_tmp_variables :: Bool
-               , ?show_subexpressions :: Bool ) => Vdefg -> IM Value
+               , ?show_subexpressions :: Bool
+               , ?watch_reduction :: Bool ) => Vdefg -> IM Value
 doEvalVdefg vdefg = do
   before <- liftIO getCurrentTime
   h <- get
@@ -71,7 +72,8 @@ doEvalVdefg vdefg = do
 evalModule :: (?debug :: Bool
               , ?show_expressions :: Bool
               , ?show_tmp_variables :: Bool
-              , ?show_subexpressions :: Bool) => Module -> IM Heap
+              , ?show_subexpressions :: Bool
+              , ?watch_reduction :: Bool) => Module -> IM Heap
 evalModule m@(Module name tdefs vdefgs) = do
   acknowledgeTypes m
   mapM_ doEvalVdefg vdefgs
@@ -83,7 +85,8 @@ evalModule m@(Module name tdefs vdefgs) = do
 evalModuleFunction :: (?debug :: Bool
                       , ?show_expressions :: Bool
                       , ?show_tmp_variables :: Bool
-                      , ?show_subexpressions :: Bool) => Module -> String -> IM Value
+                      , ?show_subexpressions :: Bool
+                      , ?watch_reduction :: Bool) => Module -> String -> IM Value
 evalModuleFunction m@(Module mname tdefs vdefgs) fname = 
    if null fname then 
      error $ "evalModuleFunction: function name is empty" 
@@ -92,20 +95,24 @@ evalModuleFunction m@(Module mname tdefs vdefgs) fname =
      Just vdefg -> do
        io . dodebug $ "Found definition of " ++ fname
        acknowledgeTypes m
-       let show_exps = ?show_expressions 
-       _ <- let ?show_expressions = False in evalModule m
-       let ?show_expressions = show_exps in doEvalVdefg vdefg
+       acknowledgeVdefgs m
+       --let show_exps = ?show_expressions 
+       --_ <- let ?show_expressions = False in evalModule m
+       --let ?show_expressions = show_exps in doEvalVdefg vdefg
+       doEvalVdefg vdefg
    where
      fnames = map vdefgName vdefgs -- [String]
      fnames_vdefgs = zip fnames vdefgs 
      maybeVdefg = find ((==) fname . fst) fnames_vdefgs >>= return . snd -- :: Maybe Vdefg
 
--- | Given a module, recognize type constructors and put them in the heap so that we can build values for custom types afterwards.
+-- | Given a module, recognize type constructors and put them in the heap so that we can build values for custom types afterwards. 
      
-acknowledgeTypes :: (?debug :: Bool) => Module -> IM ()
+acknowledgeTypes :: (?debug :: Bool
+                    , ?watch_reduction :: Bool) => Module -> IM ()
 acknowledgeTypes modl@(Module _ tdefs _) = mapM_ acknowledgeType tdefs
   
-acknowledgeType :: (?debug :: Bool) => Tdef -> IM ()
+acknowledgeType :: (?debug :: Bool
+                   , ?watch_reduction :: Bool) => Tdef -> IM ()
 acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs)  = do
   io . dodebug $ "Acknowledging type " ++ show tdef
   mapM_ insertTyCon cdefs where
@@ -115,8 +122,20 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs)  = do
       h <- get 
       io . dodebug $ "Inserting " ++ qualifiedVar qcname
       io $ H.insert h (qualifiedVar qcname) conv
-      
-evalTypeCon :: (?debug :: Bool) => String -> Cdef -> IM Value
+    
+-- | Given a module, recognize all of its value definitions, functions, and put them in the heap so that we can evaluate them when required. 
+acknowledgeVdefgs :: (?debug :: Bool) => Module -> IM ()
+acknowledgeVdefgs m@(Module _ _ vdefgs) = mapM_ acknowledgeVdefg vdefgs
+
+-- | Acknowledges value definitions
+acknowledgeVdefg  :: Vdefg -> IM ()
+acknowledgeVdefg (Nonrec vdef) = acknowledgeVdef vdef
+acknowledgeVdefg (Rec vdefs) = mapM_ acknowledgeVdef vdefs
+
+acknowledgeVdef :: Vdef -> IM ()  
+acknowledgeVdef (Vdef (qvar, ty, exp)) = get >>= \heap -> io $ H.insert heap (qualifiedVar qvar) (Thunk exp)
+
+evalTypeCon :: (?debug :: Bool, ?watch_reduction :: Bool) => String -> Cdef -> IM Value
 evalTypeCon finalType (Constr qcname@(_,cname) typarams types) = do
   h <- get -- get the heap
   io . dodebug $ "Building constructor for " ++ cname
@@ -129,8 +148,8 @@ evalTypeCon finalType (Constr qcname@(_,cname) typarams types) = do
     evalTypeCon' [] = Fun (\v -> return v) cname
     evalTypeCon' targs@(ty:tys) = 
       let desc = mkConDesc targs 
-      in Fun (\v -> do -- 'a'
-                 io . dodebug $ " Reducing " ++ desc ++ " with " ++ show v
+      in Fun (\v -> do -- '                 
+                 io . dowatch $ " Reducing " ++ desc ++ " with " ++ show v
                  return $ v
              ) desc
         
@@ -138,11 +157,12 @@ evalTypeCon finalType (Constr qcname@(_,cname) typarams types) = do
 --The list of value definitions represents the environment
 evalVdefg :: (?debug :: Bool
              , ?show_expressions :: Bool
-             , ?show_subexpressions :: Bool) => Vdefg -> IM Value
+             , ?show_subexpressions :: Bool
+             , ?watch_reduction :: Bool) => Vdefg -> IM Value
 evalVdefg (Rec (v@(Vdef _):[]) ) = evalVdefg $ Nonrec $ v
 -- More than one vdef? I haven't found a test case (TODO)
---evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented\n\t"  ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> " VDEF; " ++ var ++ " :: " ++ showType ty ++ "\n\t"++ showExp exp) vdefs
-evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented\n\t" ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> var ++ " :: " ++ showType ty) vdefs
+evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented\n\t" --  ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> " VDEF; " ++ var ++ " :: " ++ showType ty ++ "\n\t"++ showExp exp) vdefs
+--evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented for value definitions :\n" ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> "\t" ++ var ++ " :: " ++ showType ty++ "\n\t\tExpression:" ++ showExp exp) vdefs
 
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
   whenFlag (?show_expressions) $ do
@@ -152,7 +172,9 @@ evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
   liftIO $ H.insert heap (qualifiedVar qvar) res
   return res
 
-evalExp :: (?debug :: Bool, ?show_subexpressions :: Bool) => Exp -> IM Value
+evalExp :: (?debug :: Bool
+           , ?show_subexpressions :: Bool
+           , ?watch_reduction :: Bool) => Exp -> IM Value
 
 -- | This one is a function application which has the type accompanied. We won't care about the type now, as I'm not sure how it can be used now.
 -- Appt is always (?) applied to App together with a var that represents the function call of the Appt. In the case of integer summation, this is base:GHC.Num.f#NumInt. That is why we have to ignore the first parameter when applied.
@@ -199,7 +221,8 @@ evalExp e@(App function_exp argument_exp) = do
    --liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " = " ++ show x
    res <- apply f x
    --liftIO . putStrLn $ "\t Applying f x  = " ++ show res
-   io . dodebug $ "\t Applying " ++ show f ++ " to " ++ show x
+   when(?watch_reduction) $ 
+     io . dodebug $ "\t Applying " ++ show f ++ " to " ++ show x
    --liftIO . putStrLn $ "Evaluating subexpression " ++ showExp e ++ " = " ++ show res
    return res
 
