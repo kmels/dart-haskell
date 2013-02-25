@@ -32,11 +32,7 @@ For the heap, we use the package [hashtables](http://hackage.haskell.org/package
 
 We'll also need to keep track of the declared types and their constructors, for which we'll also use a hashtable, where a type is identified by its qualified name.
 
-> type Types = H.CuckooHashTable Id Type
-
-> data Type = TyConApp TyCon [Type]
-> data TyCon = AlgTyCon Id [DataCon]
-> data DataCon = MkDataCon Id Type
+> -- type Types = H.CuckooHashTable Id Type
 
 Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadler, The essence of Functional Programming](http://homepages.inf.ed.ac.uk/wadler/topics/monads.html).
 
@@ -55,6 +51,14 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >            | Char Char
 >            | String String
 >            | Fun (Value -> IM Value) Description
+>            | List [Value]
+>            | TyConV String [Value]
+>            | MkDataConV Id
+
+
+> -- data Type = TyConApp TyCon [Type]
+> -- data TyCon = AlgTyCon Id [DataCon]
+> -- data DataCon = MkDataCon Id Type
 
 > type Description = String
 
@@ -74,4 +78,7 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >   show (Boolean b) = show b
 >   show (Rat r) = show r
 >   show (String s) = s
+>   show (List vs) = show vs
+>   show (Char c) = [c]
+>   --show (Dcon n v) = show n ++ " " ++ v
 > --type Environment = [(Id,IM Value)]

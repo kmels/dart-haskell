@@ -37,6 +37,7 @@ showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Tuple")),"Z2T")) = "(,)"
 showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),"ZMZN")) = "[]"
 -- a primitive type from GHC
 showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),primitiveType)) = primitiveType 
+showType (Tcon (Just (M ((P "integerzmgmp"), ["GHC","Integer"], "Type")),"Integer")) = "Integer"
 showType (Tcon (mname,t2)) = wrapName "Tcon" $ showMname mname ++ "." ++ t2
 -- a type constructor applied to a type parameter e.g. a list
 showType (Tapp tc@(Tcon _) innerType') = 
@@ -54,7 +55,7 @@ showType (Tapp ta@(Tapp tc@(Tcon _) ty2) ty1) = let
     _ -> constructor ++ " " ++ showType ty1 ++ " " ++ showType ty2
     
 showType (Tapp t1 t2) = wrapName "Tapp" $ showType t1 ++ " " ++ showType t2
-showType _ = undefined
+showType _ = "showType, TODO"
 
 showMname :: Maybe AnMname -> String
 showMname Nothing = ""
@@ -81,12 +82,12 @@ showExp (External str ty) = wrapName "external" $ str ++ showType ty
 showCoreLit :: CoreLit -> String
 showCoreLit (Lint i) = show i
 showCoreLit (Lrational r) = show r
-showCoreLit (Lchar c) = [c]
+showCoreLit (Lchar c) = show c
 showCoreLit (Lstring s) = s
 
 showBind :: Bind -> String
 showBind (Vb (var,ty)) = wrapName "Bind" $ var ++ "::" ++ showType ty
-showBind (Tb (tvar,kind)) = "BIND NOT IMPLEMENTED YET"
+showBind (Tb tb@(tvar,kind)) = showTbind tb
 
 showVdefg :: Vdefg -> String
 showVdefg (Rec vdefs) = wrapName "Rec" $ concatMap showVdef vdefs
@@ -136,7 +137,8 @@ instance Show Cdef where
   show (Constr (_,dcon) tbinds types) = 
     let 
       tbinds' = if (not . null $ tbinds) 
-                then " :: forall(?) " ++ concatMap (\tb -> showTbind tb) tbinds                                     else " "
+                then " :: forall(?) " ++ concatMap (\tb -> showTbind tb) tbinds
+                else " " 
       showType' (Tvar t) = t
       showType' (Tapp (Tcon (_,tcon)) (Tvar t)) = tcon ++ " " ++ t
       showType' (Tapp dcon@(Tapp dt tv) ty) = showType' dcon ++ " " ++ showType' ty

@@ -1,7 +1,16 @@
 module DataConstructors where
 
+data Letter = Letter Char
+
+a = Letter 'a'
+
 data List a = Cons a (List a) | Nil deriving Show
 
+nil = Nil
+singleList = Cons 'S' Nil
+singleLetter = Cons a Nil
+
+singleListAB = ConsA 'S' ABNil
 firstNumbers = Cons 1 (Cons 2 (Cons 3 Nil))
 firstLetters = Cons 'a' (Cons 'b' (Cons 'c' Nil))
 
