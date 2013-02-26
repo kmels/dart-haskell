@@ -28,7 +28,7 @@ For the heap, we use the package [hashtables](http://hackage.haskell.org/package
 > import qualified Data.HashTable.IO as H
 > import qualified Data.HashTable.ST.Cuckoo as C
 
-> type Heap = H.CuckooHashTable Id Value
+> type Heap = H.CuckooHashTable Id (Either Thunk Value)
 
 We'll also need to keep track of the declared types and their constructors, for which we'll also use a hashtable, where a type is identified by its qualified name.
 
@@ -51,7 +51,9 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >            | String String
 >            | Fun (Value -> IM Value) Description
 >            | List [Value]
->            | Thunk Exp -- weak head normal form, or thunk
+
+> data Thunk = Thunk Exp 
+> instance Show Thunk where show _ = "Thunk"
 
 > -- data Type = TyConApp TyCon [Type]
 > -- data TyCon = AlgTyCon Id [DataCon]
@@ -75,5 +77,4 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >   show (String s) = s
 >   show (List vs) = show vs
 >   show (Char c) = [c]
->   show (Thunk exp) = "Thunk" -- "Thunk(" ++ showExp exp ++ ")"
 > --type Environment = [(Id,IM Value)]

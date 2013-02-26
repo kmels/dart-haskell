@@ -66,8 +66,7 @@ doEvalVdefg vdefg = do
   (when should_print) $ do
     io . dodebugNoLine $ "Evaluating " ++ (vdefgId vdefg) ++ (show ?show_expressions)
     io . putStrLn $ " .. done in " ++ show time ++ " secs; result: " ++ show res
-  liftIO $ H.insert h id res
-  return res
+  res `saveResultAs` id
 
 evalModule :: (?debug :: Bool
               , ?show_expressions :: Bool
@@ -121,7 +120,8 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs)  = do
       conv <- dname `evalTypeCon` tcon
       h <- get 
       io . dodebug $ "Inserting " ++ qualifiedVar qcname
-      io $ H.insert h (qualifiedVar qcname) conv
+      saveResultAs conv (qualifiedVar qcname)
+      return ()
     
 -- | Given a module, recognize all of its value definitions, functions, and put them in the heap so that we can evaluate them when required. 
 acknowledgeVdefgs :: (?debug :: Bool) => Module -> IM ()
@@ -133,7 +133,7 @@ acknowledgeVdefg (Nonrec vdef) = acknowledgeVdef vdef
 acknowledgeVdefg (Rec vdefs) = mapM_ acknowledgeVdef vdefs
 
 acknowledgeVdef :: Vdef -> IM ()  
-acknowledgeVdef (Vdef (qvar, ty, exp)) = get >>= \heap -> io $ H.insert heap (qualifiedVar qvar) (Thunk exp)
+acknowledgeVdef (Vdef (qvar, ty, exp)) = exp `saveThunkAs` (qualifiedVar qvar) >>= \_ -> return ()
 
 evalTypeCon :: (?debug :: Bool, ?watch_reduction :: Bool) => String -> Cdef -> IM Value
 evalTypeCon finalType (Constr qcname@(_,cname) typarams types) = do
@@ -169,8 +169,7 @@ evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
     io . putStrLn $ "Value expression: " ++ showExp exp ++ "\n"
   res <- evalExp exp -- result
   heap <- get 
-  liftIO $ H.insert heap (qualifiedVar qvar) res
-  return res
+  res `saveResultAs` (qualifiedVar qvar)
 
 evalExp :: (?debug :: Bool
            , ?show_subexpressions :: Bool
@@ -198,7 +197,7 @@ evalExp (Lam binded_var exp) = let
      heap <- get
      --TODO, this should be inserted in an environment instead and then be deleted, (gotta change the IM type). It is now added and deleted in the heap. This assumes External Core source code doesn't have any variables shadowed
      --liftIO $ putStrLn $ "\t binding " ++ name ++ " to " ++ show binded_value ++ " in the heap"
-     liftIO $ H.insert heap name binded_value
+     liftIO $ H.insert heap name (Right binded_value)
      --liftIO $ putStrLn $ "\t evaluating lambda body"
      res <- evalExp exp
      --liftIO $ putStrLn $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"
@@ -239,12 +238,12 @@ evalExp e@(Var qvar) =
     -- It might be more common
     case lib_val of  
       Just val -> return val
-      _ -> lookupVar $ qualifiedVar qvar
+      _ -> evalVar $ qualifiedVar qvar
 
 -- Case of
 
 evalExp (Case exp (var,_) _ alts) = do
-   var_val <- lookupVar var
+   var_val <- evalVar var
    exp <- return $ find (matches var_val) alts >>= Just . altExp -- Maybe Exp
    case exp of
      Just e -> evalExp e
@@ -256,11 +255,12 @@ evalExp (Lit lit) = evalLit lit
 
 -- Data constructors
 
-evalExp (Dcon qcon) = lookupVar . qualifiedVar $ qcon
-
+evalExp (Dcon qcon) = evalVar . qualifiedVar $ qcon
+    
 -- Otherwise
 
 evalExp otherExp = return . Wrong $ " TODO: " ++ showExp otherExp
+
 
 matches :: Value -> Alt -> Bool
 val `matches` (Acon qual_dcon tbs vbs idx_exp) = False --TODO
@@ -290,7 +290,14 @@ evalLit (Literal (Lstring s) ty) = case showExtCoreType ty of
    "ghczmprim:GHC.Prim.Addrzh" -> return . String $ s
    _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghczmprim:GHC.Prim.Addrzh"
 
-lookupVar :: Id -> IM Value
+evalVar :: ( ?watch_reduction :: Bool 
+            ,?show_subexpressions :: Bool
+            ,?debug :: Bool) => Id -> IM Value
+evalVar id = lookupVar id >>= \v -> case v of
+    Left (Thunk e) -> evalExp e
+    Right v -> return v
+    
+lookupVar :: Id -> IM (Either Thunk Value)
 lookupVar x = do
    --liftIO . putStrLn $ "Looking up var " ++ x
    env <- get
@@ -300,9 +307,9 @@ lookupVar x = do
        let
          zDecoded = zDecodeString x
        in if (zDecoded /= x) then 
-            return . Wrong $ "Could not find " ++ zDecoded ++ " in the libraries"
+            evalFails $ "Could not find " ++ zDecoded ++ " in the libraries"
           else 
-            return . Wrong $ "Could not find " ++ x ++ " in the environment"
+            evalFails $ "Could not find " ++ x ++ " in the environment"
      Just v -> return v
 
 -- | A sort of findMaybe and ($) i.e. it returns only one maybe, the first Just found by mapping the functions to qv, or Nothing.
@@ -314,3 +321,18 @@ callEvalVar (eqv:eqvs) qv =
      v@(Just value) -> v
      _ -> callEvalVar eqvs qv
 
+evalFails :: String -> IM (Either Thunk Value)
+evalFails = return . Right . Wrong
+
+saveResultAs :: Value -> Id -> IM Value
+val `saveResultAs` qvar = do
+  heap <- get
+  io $ H.insert heap qvar (Right val)
+  return val
+
+saveThunkAs :: Exp -> Id -> IM Thunk
+exp `saveThunkAs` qvar = do
+  heap <- get
+  io $ H.insert heap qvar (Left thunk)
+  return thunk where
+    thunk = Thunk exp
