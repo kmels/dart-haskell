@@ -14,6 +14,7 @@
 > {-# LANGUAGE FlexibleInstances #-}
 
 > module Language.Core.Interpreter.Structures where
+> import Data.List(findIndices)
 
 This is an interpreter for External Core
 
@@ -51,13 +52,14 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >            | String String
 >            | Fun (Value -> IM Value) Description
 >            | List [Value]
-
+>            | TyConApp TyCon [Value]
+>            | TyCon TyCon
 > data Thunk = Thunk Exp 
 > instance Show Thunk where show _ = "Thunk"
 
 > -- data Type = TyConApp TyCon [Type]
-> -- data TyCon = AlgTyCon Id [DataCon]
-> -- data DataCon = MkDataCon Id Type
+> data TyCon = AlgTyCon Id [Ty] -- if Left, then this tycon expects at least one value of type Ty; if Value, this TyCon replaced a Ty for a Value
+> data DataCon = MkDataCon Id [Value] --when a TyCon has no Lefts, we shall create a data con
 
 > type Description = String
 
@@ -77,4 +79,18 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >   show (String s) = s
 >   show (List vs) = show vs
 >   show (Char c) = [c]
+>   show (TyConApp tc@(AlgTyCon n _) vals) = idName n ++ ", " ++ show vals
+>   show (TyCon tycon) = "Tycon " ++ show tycon
+>   --show (AlgTyCon n args) = "AlgTyCon" ++ n ++ ", " ++ show args
 > --type Environment = [(Id,IM Value)]
+
+> instance Show TyCon where
+>   show (AlgTyCon id types) = id ++ " " ++ show types
+
+Take a qualified name and return only its last name. E.g. idName "main.Module.A" = "A"
+
+> idName :: Id -> String
+> idName id = drop (lastDotIndex id + 1) id where
+>   isDot = ((==) '.')
+>   dotIndexes = findIndices isDot
+>   lastDotIndex = last . dotIndexes

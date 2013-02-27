@@ -64,9 +64,14 @@ myFirstBook = MkBook "The biography of José Mourinho" "Some author" 2040240
 
 -- | SPJ's book
 data Tree = Leaf Int | Branch Tree Tree
+leaf1 = Leaf 1
+tree10 = Branch (Leaf 10) (Leaf 20)
 tree1 = Branch (Branch (Leaf 1) (Leaf 2)) (Leaf 3)
 reflect (Leaf n) = Leaf n
 reflect (Branch t1 t2) = Branch (reflect t2) (reflect t1)
 
 data Color = VERMILLION | PUCE | LAVENDER
 puce = PUCE
+
+data Triple a b c = Triple a b c
+triple = Triple 'c' 10 "String"

@@ -56,6 +56,7 @@ doEvalVdefg :: (?debug :: Bool
 doEvalVdefg vdefg = do
   before <- liftIO getCurrentTime
   h <- get
+  io . dodebug $ "Evaluating " ++ (vdefgId vdefg)
   res <- evalVdefg vdefg             
   after <- liftIO getCurrentTime
   let 
@@ -64,8 +65,8 @@ doEvalVdefg vdefg = do
     should_print = ?debug && ?show_tmp_variables
                    || ?debug && (not ?show_tmp_variables) && (not $ isTmp vdefg)
   (when should_print) $ do
-    io . dodebugNoLine $ "Evaluating " ++ (vdefgId vdefg) ++ (show ?show_expressions)
-    io . putStrLn $ " .. done in " ++ show time ++ " secs; result: " ++ show res
+    io . dodebug $ "Evaluation of " ++ (vdefgId vdefg)
+    io . dodebug $ "\t.. was done in " ++ show time ++ "\n\t.. and resulted in " ++ show res
   res `saveResultAs` id
 
 evalModule :: (?debug :: Bool
@@ -116,11 +117,14 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs)  = do
   io . dodebug $ "Acknowledging type " ++ show tdef
   mapM_ insertTyCon cdefs where
     insertTyCon :: Cdef -> IM ()
-    insertTyCon tcon@(Constr qcname _ _) = do
-      conv <- dname `evalTypeCon` tcon
+    insertTyCon tcon@(Constr qcname tbinds' types) = do
       h <- get 
       io . dodebug $ "Inserting " ++ qualifiedVar qcname
-      saveResultAs conv (qualifiedVar qcname)
+      let 
+        tyConName = qualifiedVar qcname
+        tConArgs = map Left types
+        tyCons = TyCon $ AlgTyCon tyConName types
+      tyCons `saveResultAs` tyConName
       return ()
     
 -- | Given a module, recognize all of its value definitions, functions, and put them in the heap so that we can evaluate them when required. 
@@ -135,23 +139,19 @@ acknowledgeVdefg (Rec vdefs) = mapM_ acknowledgeVdef vdefs
 acknowledgeVdef :: Vdef -> IM ()  
 acknowledgeVdef (Vdef (qvar, ty, exp)) = exp `saveThunkAs` (qualifiedVar qvar) >>= \_ -> return ()
 
-evalTypeCon :: (?debug :: Bool, ?watch_reduction :: Bool) => String -> Cdef -> IM Value
+{-evalTypeCon :: (?debug :: Bool, ?watch_reduction :: Bool) => String -> Cdef -> IM Value
 evalTypeCon finalType (Constr qcname@(_,cname) typarams types) = do
   h <- get -- get the heap
   io . dodebug $ "Building constructor for " ++ cname
-  constructor <- return . evalTypeCon' $ types    
+  constructor <- return . evalTypeCon' $ types
   io . dodebug $ "Built constructor value " ++ show constructor
   return constructor where 
-    mkConDesc (ty:[]) = (showType ty) ++ " ->" ++ finalType
-    mkConDesc (ty:tys)= (showType ty) ++ " ->" ++ show (Constr (Nothing,"") [] tys) ++ " -> " ++ finalType
-    evalTypeCon' :: [Ty] -> Value -- TyCon
-    evalTypeCon' [] = Fun (\v -> return v) cname
-    evalTypeCon' targs@(ty:tys) = 
-      let desc = mkConDesc targs 
-      in Fun (\v -> do -- '                 
-                 io . dowatch $ " Reducing " ++ desc ++ " with " ++ show v
-                 return $ v
-             ) desc
+    mkConDesc :: [Ty] -> String
+    mkConDesc (ty:[]) = cname ++ " :: " ++ (showType ty) ++ " ->" ++ finalType
+    mkConDesc (ty:tys)= cname ++ " :: " ++ (showType ty) ++ " ->" ++ show (Constr (Nothing,"") [] tys) ++ " -> " ++ finalType
+    
+    evalTypeCon' :: [Ty] -> Value -- TyCon-}
+    
         
                                              
 --The list of value definitions represents the environment
@@ -166,7 +166,7 @@ evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implement
 
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
   whenFlag (?show_expressions) $ do
-    io . putStrLn $ "Value expression: " ++ showExp exp ++ "\n"
+    io . dodebug $ "\t.. expression: " ++ showExp exp ++ "\n"
   res <- evalExp exp -- result
   heap <- get 
   res `saveResultAs` (qualifiedVar qvar)
@@ -218,10 +218,11 @@ evalExp e@(App function_exp argument_exp) = do
    --liftIO . putStrLn $ " f: " ++ showExp function_exp ++ " = " ++ show f
    x <- evalExp argument_exp
    --liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " = " ++ show x
-   res <- apply f x
-   --liftIO . putStrLn $ "\t Applying f x  = " ++ show res
    when(?watch_reduction) $ 
      io . dodebug $ "\t Applying " ++ show f ++ " to " ++ show x
+   res <- apply f x
+   --liftIO . putStrLn $ "\t Applying f x  = " ++ show res
+   
    --liftIO . putStrLn $ "Evaluating subexpression " ++ showExp e ++ " = " ++ show res
    return res
 
@@ -336,3 +337,15 @@ exp `saveThunkAs` qvar = do
   io $ H.insert heap qvar (Left thunk)
   return thunk where
     thunk = Thunk exp
+
+apply :: Value -> Value -> IM Value
+apply fun@(Fun f _) v = f v
+--apply tc@(AlgTyCon name []) v = return . Wrong $ "[], Applying " ++ show tc ++ " with argument " ++ show v
+apply (TyCon tc@(AlgTyCon name (t:types))) v = return $ TyConApp tc' [v] where
+  tc' :: TyCon
+  tc' = AlgTyCon name types
+apply (TyConApp tc@(AlgTyCon name (t:types)) vals) v = return $ TyConApp tc' (vals ++ [v]) where          
+  tc' :: TyCon
+  tc' = AlgTyCon name types
+apply w@(Wrong _) _ = return w
+apply f m = return . Wrong $ "Applying " ++ show f ++ " with argument " ++ show m
