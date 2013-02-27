@@ -53,13 +53,13 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >            | Fun (Value -> IM Value) Description
 >            | List [Value]
 >            | TyConApp TyCon [Value]
->            | TyCon TyCon
+>            | TyCon TyCon -- so that we can store type constructors in the heap
+
 > data Thunk = Thunk Exp 
 > instance Show Thunk where show _ = "Thunk"
 
-> -- data Type = TyConApp TyCon [Type]
 > data TyCon = AlgTyCon Id [Ty] -- if Left, then this tycon expects at least one value of type Ty; if Value, this TyCon replaced a Ty for a Value
-> data DataCon = MkDataCon Id [Value] --when a TyCon has no Lefts, we shall create a data con
+> --data DataCon = MkDataCon Id [Value] --when a TyCon has no Lefts, we shall create a data con
 
 > type Description = String
 
@@ -76,16 +76,20 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >   show (Fun f s) = wrapName "Fun" s
 >   show (Boolean b) = show b
 >   show (Rat r) = show r
->   show (String s) = s
+>   show (String s) = show s
 >   show (List vs) = show vs
 >   show (Char c) = [c]
->   show (TyConApp tc@(AlgTyCon n _) vals) = idName n ++ ", " ++ show vals
->   show (TyCon tycon) = "Tycon " ++ show tycon
+>   show (TyConApp tc@(AlgTyCon n _) vals) = idName n ++ " " ++ vals' where
+>     vals' = concatMap show' vals
+>   show (TyCon tycon) = show tycon
 >   --show (AlgTyCon n args) = "AlgTyCon" ++ n ++ ", " ++ show args
 > --type Environment = [(Id,IM Value)]
 
 > instance Show TyCon where
->   show (AlgTyCon id types) = id ++ " " ++ show types
+>   show (AlgTyCon id []) = idName id
+>   show (AlgTyCon id types) = idName id ++ " " ++ types' where
+>     types' :: String
+>     types' = concatMap (\t -> show t ++ " -> ") types
 
 Take a qualified name and return only its last name. E.g. idName "main.Module.A" = "A"
 
@@ -94,3 +98,6 @@ Take a qualified name and return only its last name. E.g. idName "main.Module.A"
 >   isDot = ((==) '.')
 >   dotIndexes = findIndices isDot
 >   lastDotIndex = last . dotIndexes
+
+> wrapInParenthesis s = "(" ++ s ++ ")"
+> show' s = show s ++ " "
