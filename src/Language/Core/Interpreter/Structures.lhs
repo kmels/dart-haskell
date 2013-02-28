@@ -51,7 +51,8 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >            | Char Char
 >            | String String
 >            | Fun (Value -> IM Value) Description
->            | List [Value]
+>            -- |  List [Value]
+>            | Pair Value Value
 >            | TyConApp TyCon [Value]
 >            | TyCon TyCon -- so that we can store type constructors in the heap
 
@@ -77,13 +78,14 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 >   show (Boolean b) = show b
 >   show (Rat r) = show r
 >   show (String s) = show s
->   show (List vs) = show vs
->   show (Char c) = [c]
->   show (TyConApp tc@(AlgTyCon n _) vals) = idName n ++ " " ++ vals' where
->     vals' = concatMap show' vals
+> --  show (List vs) = show vs
+>   show (Char c) = show c
+>   show (TyConApp (AlgTyCon "ghczmprim:GHC.Tuple.Z2T" _) [x,y]) = show (x,y)
+>   show (TyConApp tc@(AlgTyCon n _) vals) = idName n ++ vals' where
+>     show' tca@(TyConApp _ _) = " " ++ wrapInParenthesis (show tca) 
+>     vals' = concatMap (\v -> " \n\t" ++ show v) vals
 >   show (TyCon tycon) = show tycon
->   --show (AlgTyCon n args) = "AlgTyCon" ++ n ++ ", " ++ show args
-> --type Environment = [(Id,IM Value)]
+>   show (Pair a b) = show (a,b)
 
 > instance Show TyCon where
 >   show (AlgTyCon id []) = idName id
@@ -100,4 +102,3 @@ Take a qualified name and return only its last name. E.g. idName "main.Module.A"
 >   lastDotIndex = last . dotIndexes
 
 > wrapInParenthesis s = "(" ++ s ++ ")"
-> show' s = show s ++ " "

@@ -16,28 +16,30 @@
 
 module Language.Core.Interpreter where
 
-import Language.Core.Interpreter.Apply
-import Language.Core.Interpreter.Structures
+import           Language.Core.Interpreter.Apply
+import           Language.Core.Interpreter.Structures
   
 import qualified Language.Core.Interpreter.GHC.Num as GHC.Num
 import qualified Language.Core.Interpreter.GHC.Classes as GHC.Classes
 import qualified Language.Core.Interpreter.GHC.CString as GHC.CString
+import qualified Language.Core.Interpreter.GHC.Types as GHC.Types
+import qualified Language.Core.Interpreter.GHC.Tuple as GHC.Tuple
 
-import Language.Core.Core
-import Language.Core.Vdefg (isTmp,vdefgId,vdefgName)
-import Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,showMname,bindId,showBind)
-import Language.Core.TypeExtractor(extractType)
-import Language.Core.TypeExtractor.DataTypes
+import           Language.Core.Core
+import           Language.Core.Vdefg (isTmp,vdefgId,vdefgName)
+import           Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,showMname,bindId,showBind)
+import           Language.Core.TypeExtractor(extractType)
+import           Language.Core.TypeExtractor.DataTypes
 
 import qualified Data.HashTable.IO as H
 
-import Control.Monad.State.Lazy
+import           Control.Monad.State.Lazy
 
-import Data.Time.Clock(getCurrentTime,diffUTCTime)
-import Data.List(find)
-import DART.CmdLine
-import Text.Encoding.Z(zDecodeString)
-
+import           DART.CmdLine
+import           DART.FileIO
+import           Data.List(find)
+import           Data.Time.Clock(getCurrentTime,diffUTCTime)
+import           Text.Encoding.Z(zDecodeString)
 {-Given a module which contains a list of value definitions, *vd*, evaluate every *vd* and return a heap with their interpreted values.
 
 Value definition to mapped values
@@ -114,12 +116,11 @@ acknowledgeTypes modl@(Module _ tdefs _) = mapM_ acknowledgeType tdefs
 acknowledgeType :: (?debug :: Bool
                    , ?watch_reduction :: Bool) => Tdef -> IM ()
 acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs)  = do
-  io . dodebug $ "Acknowledging type " ++ show tdef
+  io . dodebug $ "Acknowledging type " ++ qualifiedVar qdname
   mapM_ insertTyCon cdefs where
     insertTyCon :: Cdef -> IM ()
     insertTyCon tcon@(Constr qcname tbinds' types) = do
       h <- get 
-      io . dodebug $ "Inserting " ++ qualifiedVar qcname
       let 
         tyConName = qualifiedVar qcname
         tConArgs = map Left types
@@ -179,13 +180,25 @@ evalExp :: (?debug :: Bool
 -- Appt is always (?) applied to App together with a var that represents the function call of the Appt. In the case of integer summation, this is base:GHC.Num.f#NumInt. That is why we have to ignore the first parameter when applied.
 -- If Appt is being applied to another appt, then we ignore another level of parameters. This is the case of function application, namely ($) :: (a - b) - a - b
 
-evalExp e@(Appt function_exp ty) = do
+evalExp e@(Appt dc@(Dcon dcon) ty) = do
   heap <- get
-  when (?debug && ?show_subexpressions) $
-    liftIO . putStrLn $ "Evaluating subexpression " ++ showExp function_exp
-  f <- liftIO $ evalStateT (evalExp function_exp) heap
-  return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
+  --when (?debug && ?show_subexpressions) $
+  liftIO . putStrLn $ "Evaluating subexp " ++ (qualifiedVar dcon)
+  f <- liftIO $ evalStateT (evalExp dc) heap
+  -- if the type constructor has type parameters but has no type arguments
+  -- e.g. as in Nil :: [a], we shall ignore the type parameter
+  return $ case f of
+    TyCon tc@(AlgTyCon id []) -> TyCon tc -- we don't expect any further arguments
+    TyCon tc -> Fun (\g -> return $ TyConApp tc [g]) ("TyConApp " ++ show tc)
+    _ -> Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
 
+evalExp e@(Appt fun ty) = do
+  heap <- get
+  --when (?debug && ?show_subexpressions) $
+  --  liftIO . putStrLn $ "Evaluating " ++ qualifiedVar qvar
+  f <- liftIO $ evalStateT (evalExp fun) heap
+  return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
+  
 evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) = let
   ap f = Fun (\x -> apply f x) "GHC.Base.$ :: Fun(a - b)"
   in return $ Fun (\f -> return (ap f)) "$" -- GHC.Base.$ :: Fun(a - b) - Fun(a - b)
@@ -228,18 +241,7 @@ evalExp e@(App function_exp argument_exp) = do
 
 -- Variables 
 
-evalExp e@(Var qvar) = 
-  let
-     -- Interpreter modules that might know what to do with `qvar`
-     -- this list is of type [Qual Var - Maybe Value]
-     lib_vars = [GHC.Num.evalVar,GHC.Classes.evalVar,GHC.CString.evalVar]
-     lib_val = callEvalVar lib_vars qvar -- Maybe Value
-   in
-    -- Space for improvement: maybe we should lookupVar before finding lib functions?
-    -- It might be more common
-    case lib_val of  
-      Just val -> return val
-      _ -> evalVar $ qualifiedVar qvar
+evalExp e@(Var qvar) = evalVar . qualifiedVar $ qvar
 
 -- Case of
 
@@ -249,8 +251,6 @@ evalExp (Case exp (var,_) _ alts) = do
    case exp of
      Just e -> evalExp e
      _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ var
-
--- Literals 
 
 evalExp (Lit lit) = evalLit lit
 
@@ -302,13 +302,13 @@ lookupVar :: Id -> IM (Either Thunk Value)
 lookupVar x = do
    --liftIO . putStrLn $ "Looking up var " ++ x
    env <- get
-   maybeV <- liftIO $ H.lookup env x
+   maybeV <- liftIO $ H.lookup env x -- looks in the heap
    case maybeV of
      Nothing -> 
        let
          zDecoded = zDecodeString x
-       in if (zDecoded /= x) then 
-            evalFails $ "Could not find " ++ zDecoded ++ " in the libraries"
+       in if (zDecoded /= x) then -- it is z-decoded
+            evalFails $ "Could not find " ++ x ++ " in the libraries"
           else 
             evalFails $ "Could not find " ++ x ++ " in the environment"
      Just v -> return v
@@ -349,3 +349,33 @@ apply (TyConApp tc@(AlgTyCon name (t:types)) vals) v = return $ TyConApp tc' (va
   tc' = AlgTyCon name types
 apply w@(Wrong _) _ = return w
 apply f m = return . Wrong $ "Applying " ++ show f ++ " with argument " ++ show m
+
+-- | List of library functions
+libraries :: [(Id,Either Thunk Value)]
+libraries = concat $ [--GHC.Num.all,
+  --GHC.Classes.all,
+  GHC.CString.all,
+  GHC.Types.all
+  , GHC.Tuple.all
+  ]
+
+-- | Loads nothing ATM, but it'll be useful
+loadLibraries :: (?watch_reduction :: Bool
+                 , ?debug :: Bool) => IM ()
+loadLibraries = do
+  -- loadLib "lib/GHC/Tuple.hs" -- fails due to builtin syntax but good idea
+  h <- get
+  mapM_ loadBinding libraries
+  return ()
+  where
+    loadLib :: FilePath -> IM ()
+    loadLib f = do
+      io . dodebug $ "Loading " ++ f
+      m <- io . readModule $ f
+      acknowledgeTypes m
+    loadBinding :: (Id,Either Thunk Value) -> IM ()
+    loadBinding (id,val) = do
+      h <- get 
+      io . dodebug $ "Loading " ++ id
+      io $ H.insert h id val
+  

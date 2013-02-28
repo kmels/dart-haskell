@@ -6,15 +6,8 @@ This program reads a program in Haskell External Core (EC) syntax and evaluates 
 
 > module Main where
 
-We'll need to parse EC input. For that we use the extcore package.
-
-> import Language.Core.Parser
-> import Language.Core.ParseGlue
 > import Language.Core.Core
-> import Language.Core.Core
-
 > import System.Environment
-
 > import Language.Core.Util(showType)
 
 To move
@@ -24,12 +17,12 @@ To move
 > import Data.Maybe
 > import Language.Core.Vdefg
 > import DART.FunctionFeeder
-> import Language.Core.Interpreter
+> import qualified Language.Core.Interpreter as Interpreter
 
 > import Control.Monad.State.Lazy
 > import qualified Data.HashTable.IO as H
 > import DART.CmdLine (dodebug,io,printHeap)
-> import DART.FileIO (readHcrFile)
+> import DART.FileIO
 
 We'll use the package cmdargs to identify flags, parameters, etc.,  from the command line
 
@@ -61,13 +54,6 @@ The interpreter mode reads an external core file and evaluates the declarations 
 >   , watch_reduction = def &= groupname "DEBUG" &= help "Shows debug messages for the evaluation of a value definition (shows reductions of expressions)"
 > } &= summary "Reads a .hcr file and evaluates its declarations. "
 
-Every .hcr file corresponds to a haskell module
-
-> readModule :: FilePath -> IO Module
-> readModule fp = readHcrFile fp >>= \c -> case parse c 0 of
->   OkP m -> return m
->   FailP msg -> error msg
-
 > main :: IO () 
 > main = do
 
@@ -88,16 +74,17 @@ Every .hcr file corresponds to a haskell module
 >   dodebug $ "Read module " ++ show mdlname
 
 >   -- Time to evaluate
->   fresh_heap <- H.new
+>   dodebug $ "Loading libraries "
+>   heap <- H.new  -- get a heap with some predefined functions
+>   (_,libs) <- runStateT (Interpreter.loadLibraries) heap
 >   case (eval args) of
->     -- If all functions were evaluated
->     "" -> do
->       (_,heap) <- runStateT (evalModule module') fresh_heap
+>     -- What should we eval?
+>     "" -> do  -- not specified
+>       (_,heap) <- runStateT (Interpreter.evalModule module') libs
 >       when (not ?show_heap) $ putStrLn "WARNING: You did not specify a function name to eval (flags --eval or -e), neither the flag --show-heap. That is why this program has no output"
 >       when (?show_heap) $ printHeap heap
->     -- If a function was evaluated
->     fun_name -> do
->       (result,heap) <- runStateT (module' `evalModuleFunction` fun_name) fresh_heap
+>     fun_name -> do -- eval fun_name
+>       (result,heap) <- runStateT (module' `Interpreter.evalModuleFunction` fun_name) libs
 >       when (?show_heap) $ printHeap heap
 >       putStrLn $ show result -- will be a Value iff fun_name is not null
 

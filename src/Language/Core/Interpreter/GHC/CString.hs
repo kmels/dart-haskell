@@ -4,13 +4,17 @@ import Language.Core.Interpreter.Structures
 import Language.Core.Core
 import Language.Core.Interpreter.Apply
 
--- | Evaluate a function variable in ghc-prim:GHC.CString
-evalVar :: Qual Var -> Maybe Value
+unpackCString = (id, Right val) where
+  id = "ghczmprim:GHC.CString.unpackCStringzh"
+  val = Fun return "unpackString# = id"
 
-evalVar ((Just (M (P ("ghczmprim"),["GHC"],"CString"))),"unpackCStringzh") = let
-  in return $ Fun return "unpackString# = id"
-
-evalVar ((Just (M (P ("ghczmprim"),["GHC"],"CString"))),"unpackCStringUtf8zh") = let
-  in return $ Fun return "unpackStringUtf8# = id"
+unpackCStringUtf8 = (id,Right val) where
+  id = "ghczmprim:GHC.CString.unpackCStringUtf8zh"
+  val = Fun return "unpackStringUtf8# = id"
   
 evalVar _ = Nothing
+
+all :: [(Id, Either Thunk Value)]
+all = [ unpackCString
+        , unpackCStringUtf8
+      ]

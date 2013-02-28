@@ -11,6 +11,10 @@ import           System.Environment
 import           System.FilePath (dropExtension,takeExtension)
 import           System.IO
 import           System.Process.QQ(cmd)
+import Language.Core.Core
+import Language.Core.Parser
+import Language.Core.ParseGlue
+
 readHcrFile :: FilePath -> IO String
 readHcrFile filepath = case takeExtension filepath of
   ".hcr" -> readFile filepath
@@ -28,3 +32,10 @@ readHcrFile filepath = case takeExtension filepath of
 
 (</>) :: FilePath -> FilePath -> FilePath
 p </> c = p ++ "/" ++ c
+
+-- | Every .hcr file corresponds to a haskell module
+
+readModule :: FilePath -> IO Module
+readModule fp = readHcrFile fp >>= \c -> case parse c 0 of
+  OkP m -> return m
+  FailP msg -> error msg

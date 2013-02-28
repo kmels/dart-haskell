@@ -2,21 +2,20 @@ module DataConstructors where
 
 data Letter = Letter Char
 
-a = Letter 'a'
+a = Letter 'a' -- DONE
 
 data List a = Cons a (List a) | Nil deriving Show
 
-nil = Nil
-singleList = Cons 'S' Nil
-singleLetter = Cons a Nil
+nil = Nil -- DONE
+singleList = Cons 'S' Nil -- DONE
+singleLetter = Cons a Nil -- DONE
 
-singleListAB = ConsA 'S' ABNil
-firstNumbers = Cons 1 (Cons 2 (Cons 3 Nil))
-firstLetters = Cons 'a' (Cons 'b' (Cons 'c' Nil))
+singleListAB = ConsA 'S' ABNil -- NOT DONE
+firstNumbers = Cons 1 (Cons 2 (Cons 3 Nil))  -- DONE
+firstLetters = Cons 'a' (Cons 'b' (Cons 'c' Nil)) -- DONE
 
 type PersonName = Name
 type Instrument = String
-
 data MusicBand = MkBand Name [(PersonName,Instrument)]
 
 guitar = "Guitar"
@@ -24,8 +23,9 @@ keyboard = "Keyboard"
 bass = "Bass"
 drums = "Percussion"
 
+roger = ("Roger Waters", bass)
 pinkFloyd = MkBand "Pink Floyd" 
-            [ ("Roger Waters", bass)
+            [ roger
               , ("Nick Mason", drums)
               , ("David Gilmour", guitar)
               , ("Richard Wright", keyboard)]
@@ -57,10 +57,9 @@ truth2 = (toAB_BList firstLetters :: ListAB Char Char) == (firstLettersAB :: Lis
 type Author = PersonName
 type Name = String
 type ISBN = Integer
-
 data Book = MkBook Name Author ISBN
 
-myFirstBook = MkBook "The biography of José Mourinho" "Some author" 2040240
+myFirstBook = MkBook "The biography of José Mourinho" "Some author" 2040240 -- DONE
 
 -- | SPJ's book
 data Tree = Leaf Int | Branch Tree Tree
