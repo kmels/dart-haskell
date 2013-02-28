@@ -74,3 +74,8 @@ puce = PUCE
 
 data Triple a b c = Triple a b c
 triple = Triple 'c' 10 "String"
+
+emptyList = []
+one = [1]
+onetwo = [1,2]
+onetwothree = [1,2,3]

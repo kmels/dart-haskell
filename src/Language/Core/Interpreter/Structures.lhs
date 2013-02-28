@@ -74,31 +74,40 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 > instance Show Value where
 >   show (Wrong s) = "Wrong " ++ s
 >   show (Num i) = show i
->   show (Fun f s) = wrapName "Fun" s
+>   show (Fun f s) = s
 >   show (Boolean b) = show b
 >   show (Rat r) = show r
 >   show (String s) = show s
 > --  show (List vs) = show vs
 >   show (Char c) = show c
 >   show (TyConApp (AlgTyCon "ghczmprim:GHC.Tuple.Z2T" _) [x,y]) = show (x,y)
->   show (TyConApp tc@(AlgTyCon n _) vals) = idName n ++ vals' where
+>   show (TyConApp tc@(AlgTyCon c _) vals@(hv:tv)) | c == "ghc-prim:GHC.Taypes.:" = show vals
+>                                          | c == "ghc-prim:GHC.Types.[]a" = show vals
+>                                          | otherwise = idName c ++ vals' where 
 >     show' tca@(TyConApp _ _) = " " ++ wrapInParenthesis (show tca) 
->     vals' = concatMap (\v -> " \n\t" ++ show v) vals
->   show (TyCon tycon) = show tycon
+>     vals' = concatMap (\v -> " " ++ show v) vals
+>   show (TyCon tycon@(AlgTyCon id _)) | idName id == "[]" = "[]"
+>                                      | otherwise = show tycon
 >   show (Pair a b) = show (a,b)
 
 > instance Show TyCon where
 >   show (AlgTyCon id []) = idName id
->   show (AlgTyCon id types) = idName id ++ " " ++ types' where
+>   show (AlgTyCon id types) = idName id ++ " :: " ++ types' where
 >     types' :: String
->     types' = concatMap (\t -> show t ++ " -> ") types
+>     types' | length types == 1 = show types 
+>            | otherwise = concatMap (\t -> show t ++ " -> ") types
 
 Take a qualified name and return only its last name. E.g. idName "main.Module.A" = "A"
 
 > idName :: Id -> String
-> idName id = drop (lastDotIndex id + 1) id where
->   isDot = ((==) '.')
->   dotIndexes = findIndices isDot
->   lastDotIndex = last . dotIndexes
+> idName id = let 
+>   name = drop (lastDotIndex id + 1) id 
+>   in case name of 
+>     ":" -> "(:)"
+>     _ -> name
+>   where
+>     isDot = ((==) '.')
+>     dotIndexes = findIndices isDot
+>     lastDotIndex = last . dotIndexes
 
 > wrapInParenthesis s = "(" ++ s ++ ")"

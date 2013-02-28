@@ -24,7 +24,7 @@ import qualified Language.Core.Interpreter.GHC.Classes as GHC.Classes
 import qualified Language.Core.Interpreter.GHC.CString as GHC.CString
 import qualified Language.Core.Interpreter.GHC.Types as GHC.Types
 import qualified Language.Core.Interpreter.GHC.Tuple as GHC.Tuple
-
+import Control.Applicative((<|>))
 import           Language.Core.Core
 import           Language.Core.Vdefg (isTmp,vdefgId,vdefgName)
 import           Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,showMname,bindId,showBind)
@@ -123,7 +123,6 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs)  = do
       h <- get 
       let 
         tyConName = qualifiedVar qcname
-        tConArgs = map Left types
         tyCons = TyCon $ AlgTyCon tyConName types
       tyCons `saveResultAs` tyConName
       return ()
@@ -189,7 +188,7 @@ evalExp e@(Appt dc@(Dcon dcon) ty) = do
   -- e.g. as in Nil :: [a], we shall ignore the type parameter
   return $ case f of
     TyCon tc@(AlgTyCon id []) -> TyCon tc -- we don't expect any further arguments
-    TyCon tc -> Fun (\g -> return $ TyConApp tc [g]) ("TyConApp " ++ show tc)
+    TyCon tc -> Fun (\g -> return $ TyConApp tc [g]) (show tc ++ showType ty)
     _ -> Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
 
 evalExp e@(Appt fun ty) = do
@@ -199,6 +198,7 @@ evalExp e@(Appt fun ty) = do
   f <- liftIO $ evalStateT (evalExp fun) heap
   return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
   
+
 evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) = let
   ap f = Fun (\x -> apply f x) "GHC.Base.$ :: Fun(a - b)"
   in return $ Fun (\f -> return (ap f)) "$" -- GHC.Base.$ :: Fun(a - b) - Fun(a - b)
@@ -232,7 +232,7 @@ evalExp e@(App function_exp argument_exp) = do
    x <- evalExp argument_exp
    --liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " = " ++ show x
    when(?watch_reduction) $ 
-     io . dodebug $ "\t Applying " ++ show f ++ " to " ++ show x
+     io . dodebug $ "\t Applying val " ++ show x ++ " to function " ++ show f
    res <- apply f x
    --liftIO . putStrLn $ "\t Applying f x  = " ++ show res
    
@@ -296,22 +296,32 @@ evalVar :: ( ?watch_reduction :: Bool
             ,?debug :: Bool) => Id -> IM Value
 evalVar id = lookupVar id >>= \v -> case v of
     Left (Thunk e) -> evalExp e
-    Right v -> return v
+    Right v -> return $ case v of
+      (TyCon tycon@(AlgTyCon n (a:args))) -> v -- TyCon $ AlgTyCon n [] -- take type arguments off
+      _ -> v
     
-lookupVar :: Id -> IM (Either Thunk Value)
+lookupVar :: (?debug :: Bool) => Id -> IM (Either Thunk Value)
 lookupVar x = do
-   --liftIO . putStrLn $ "Looking up var " ++ x
+   io . dodebug $ "Looking up var " ++ x
    env <- get
-   maybeV <- liftIO $ H.lookup env x -- looks in the heap
-   case maybeV of
-     Nothing -> 
-       let
-         zDecoded = zDecodeString x
-       in if (zDecoded /= x) then -- it is z-decoded
-            evalFails $ "Could not find " ++ x ++ " in the libraries"
-          else 
-            evalFails $ "Could not find " ++ x ++ " in the environment"
-     Just v -> return v
+   val <- liftIO $ H.lookup env x -- looks in the heap
+   lib_val <- liftIO $ H.lookup env xDecoded -- looks in the heap      
+
+   -- if val is Just a, return a. 
+   -- Otherwise if lib_val is Just a, return a
+   -- Otherwise, if lib_val is Nothing, val <|> lib_val is also Nothing, return fail
+   -- 
+   maybe fail return (val <|> lib_val) where
+   
+     fail :: IM (Either Thunk Value)
+     fail = if (xDecoded /= x) 
+            then -- it is z-decoded
+              evalFails $ "Could not find " ++ xDecoded ++ " in the libraries"
+            else 
+              evalFails $ "Could not find " ++ x ++ " in the environment"
+              
+     xDecoded :: String
+     xDecoded = zDecodeString x
 
 -- | A sort of findMaybe and ($) i.e. it returns only one maybe, the first Just found by mapping the functions to qv, or Nothing.
 
