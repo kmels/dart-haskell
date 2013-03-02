@@ -5,19 +5,21 @@
 > import qualified Data.HashTable.IO as H
 > import Language.Core.Interpreter.Structures
 > import Control.Monad.IO.Class
+> import DART.InterpreterSettings
 
 > io :: MonadIO m => IO a -> m a
 > io = liftIO 
 
-> dodebug :: (?debug :: Bool) => String -> IO ()
-> dodebug msg = if (?debug) then putStrLn msg  else return ()
+> dodebug :: (?settings :: InterpreterSettings) => String -> IO ()
+> dodebug msg = if (debug ?settings) then putStrLn (tab ++ msg)  else return () where
+>   tab = replicate 1 '\t'
 
 > dowatch msg = if (?watch_reduction) then putStrLn msg  else return ()
 
 > dodebugNoLine :: (?debug :: Bool) => String -> IO ()
 > dodebugNoLine msg = if (?debug) then putStr msg else return ()
 
-> printHeap :: (?show_tmp_variables :: Bool) => Heap -> IO ()
+> printHeap :: (?settings :: InterpreterSettings) => Heap -> IO ()
 > printHeap h = do
 >   putStrLn $ "-------------------- Heap begins --------------------" 
 >   H.mapM_ printVar h
@@ -27,7 +29,7 @@
 >     showVal (Left t) = "Thunk"
 >     showVal (Right v) = show v
 >
->     printVar (id,val) = if (?show_tmp_variables) 
+>     printVar (id,val) = if (show_tmp_variables ?settings) 
 >                         then putStrLn $ id ++ " => " ++ showVal val
 >                         else if (':' `elem` id) -- then id has a package
 >                              then putStrLn $ id ++ " => " ++ showVal val

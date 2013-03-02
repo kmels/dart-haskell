@@ -66,6 +66,8 @@ data Tree = Leaf Int | Branch Tree Tree
 leaf1 = Leaf 1
 tree10 = Branch (Leaf 10) (Leaf 20)
 tree1 = Branch (Branch (Leaf 1) (Leaf 2)) (Leaf 3)
+
+reflect (Leaf 0) = Leaf 0
 reflect (Leaf n) = Leaf n
 reflect (Branch t1 t2) = Branch (reflect t2) (reflect t1)
 
@@ -79,3 +81,5 @@ emptyList = []
 one = [1]
 onetwo = [1,2]
 onetwothree = [1,2,3]
+
+reflect1 = reflect leaf1

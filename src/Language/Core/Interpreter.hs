@@ -1,5 +1,5 @@
-
 {-# LANGUAGE ImplicitParams #-}
+{-# LANGUAGE DoAndIfThenElse #-}
 
 ----------------------------------------------------------------------------
 -- |
@@ -19,26 +19,26 @@ module Language.Core.Interpreter where
 import           Language.Core.Interpreter.Apply
 import           Language.Core.Interpreter.Structures
   
-import qualified Language.Core.Interpreter.GHC.Num as GHC.Num
-import qualified Language.Core.Interpreter.GHC.Classes as GHC.Classes
-import qualified Language.Core.Interpreter.GHC.CString as GHC.CString
-import qualified Language.Core.Interpreter.GHC.Types as GHC.Types
-import qualified Language.Core.Interpreter.GHC.Tuple as GHC.Tuple
-import Control.Applicative((<|>))
+import           Control.Applicative((<|>))
+import qualified Data.HashTable.IO as H
+import           Data.Maybe
 import           Language.Core.Core
-import           Language.Core.Vdefg (isTmp,vdefgId,vdefgName)
-import           Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,showMname,bindId,showBind)
+import qualified Language.Core.Interpreter.GHC.CString as GHC.CString
+import qualified Language.Core.Interpreter.GHC.Classes as GHC.Classes
+import qualified Language.Core.Interpreter.GHC.Num as GHC.Num
+import qualified Language.Core.Interpreter.GHC.Tuple as GHC.Tuple
+import qualified Language.Core.Interpreter.GHC.Types as GHC.Types
 import           Language.Core.TypeExtractor(extractType)
 import           Language.Core.TypeExtractor.DataTypes
-
-import qualified Data.HashTable.IO as H
+import           Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,showMname,bindId,showBind)
+import           Language.Core.Vdefg (isTmp,vdefgId,vdefgName)
 
 import           Control.Monad.State.Lazy
-
 import           DART.CmdLine
 import           DART.FileIO
 import           Data.List(find)
 import           Data.Time.Clock(getCurrentTime,diffUTCTime)
+import           DART.InterpreterSettings
 import           Text.Encoding.Z(zDecodeString)
 {-Given a module which contains a list of value definitions, *vd*, evaluate every *vd* and return a heap with their interpreted values.
 
@@ -50,11 +50,7 @@ Value definition to mapped values
 -----------------------------------------------------
 -}
 
-doEvalVdefg :: (?debug :: Bool
-               , ?show_expressions :: Bool
-               , ?show_tmp_variables :: Bool
-               , ?show_subexpressions :: Bool
-               , ?watch_reduction :: Bool ) => Vdefg -> IM Value
+doEvalVdefg :: (?settings :: InterpreterSettings) => Vdefg -> IM Value
 doEvalVdefg vdefg = do
   before <- liftIO getCurrentTime
   h <- get
@@ -64,18 +60,14 @@ doEvalVdefg vdefg = do
   let 
     id = vdefgId vdefg
     time = after `diffUTCTime` before    
-    should_print = ?debug && ?show_tmp_variables
-                   || ?debug && (not ?show_tmp_variables) && (not $ isTmp vdefg)
+    should_print = debug ?settings && show_tmp_variables ?settings
+                   || debug ?settings && (not . show_tmp_variables $ ?settings) && (not $ isTmp vdefg)
   (when should_print) $ do
     io . dodebug $ "Evaluation of " ++ (vdefgId vdefg)
     io . dodebug $ "\t.. was done in " ++ show time ++ "\n\t.. and resulted in " ++ show res
   res `saveResultAs` id
 
-evalModule :: (?debug :: Bool
-              , ?show_expressions :: Bool
-              , ?show_tmp_variables :: Bool
-              , ?show_subexpressions :: Bool
-              , ?watch_reduction :: Bool) => Module -> IM Heap
+evalModule :: (?settings :: InterpreterSettings) => Module -> IM Heap
 evalModule m@(Module name tdefs vdefgs) = do
   acknowledgeTypes m
   mapM_ doEvalVdefg vdefgs
@@ -84,11 +76,7 @@ evalModule m@(Module name tdefs vdefgs) = do
 
 -- | Given a module and a function name, we evaluate the function in that module and return the heap. 
 
-evalModuleFunction :: (?debug :: Bool
-                      , ?show_expressions :: Bool
-                      , ?show_tmp_variables :: Bool
-                      , ?show_subexpressions :: Bool
-                      , ?watch_reduction :: Bool) => Module -> String -> IM Value
+evalModuleFunction :: (?settings :: InterpreterSettings) => Module -> String -> IM Value
 evalModuleFunction m@(Module mname tdefs vdefgs) fname = 
    if null fname then 
      error $ "evalModuleFunction: function name is empty" 
@@ -109,12 +97,10 @@ evalModuleFunction m@(Module mname tdefs vdefgs) fname =
 
 -- | Given a module, recognize type constructors and put them in the heap so that we can build values for custom types afterwards. 
      
-acknowledgeTypes :: (?debug :: Bool
-                    , ?watch_reduction :: Bool) => Module -> IM ()
+acknowledgeTypes :: (?settings :: InterpreterSettings) => Module -> IM ()
 acknowledgeTypes modl@(Module _ tdefs _) = mapM_ acknowledgeType tdefs
   
-acknowledgeType :: (?debug :: Bool
-                   , ?watch_reduction :: Bool) => Tdef -> IM ()
+acknowledgeType :: (?settings :: InterpreterSettings) => Tdef -> IM ()
 acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs)  = do
   io . dodebug $ "Acknowledging type " ++ qualifiedVar qdname
   mapM_ insertTyCon cdefs where
@@ -128,7 +114,7 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs)  = do
       return ()
     
 -- | Given a module, recognize all of its value definitions, functions, and put them in the heap so that we can evaluate them when required. 
-acknowledgeVdefgs :: (?debug :: Bool) => Module -> IM ()
+acknowledgeVdefgs :: (?settings :: InterpreterSettings) => Module -> IM ()
 acknowledgeVdefgs m@(Module _ _ vdefgs) = mapM_ acknowledgeVdefg vdefgs
 
 -- | Acknowledges value definitions
@@ -139,7 +125,7 @@ acknowledgeVdefg (Rec vdefs) = mapM_ acknowledgeVdef vdefs
 acknowledgeVdef :: Vdef -> IM ()  
 acknowledgeVdef (Vdef (qvar, ty, exp)) = exp `saveThunkAs` (qualifiedVar qvar) >>= \_ -> return ()
 
-{-evalTypeCon :: (?debug :: Bool, ?watch_reduction :: Bool) => String -> Cdef -> IM Value
+{-evalTypeCon :: (?debug :: Bool, watch_reduction ?settings :: Bool) => String -> Cdef -> IM Value
 evalTypeCon finalType (Constr qcname@(_,cname) typarams types) = do
   h <- get -- get the heap
   io . dodebug $ "Building constructor for " ++ cname
@@ -155,25 +141,20 @@ evalTypeCon finalType (Constr qcname@(_,cname) typarams types) = do
         
                                              
 --The list of value definitions represents the environment
-evalVdefg :: (?debug :: Bool
-             , ?show_expressions :: Bool
-             , ?show_subexpressions :: Bool
-             , ?watch_reduction :: Bool) => Vdefg -> IM Value
+evalVdefg :: (?settings :: InterpreterSettings) => Vdefg -> IM Value
 evalVdefg (Rec (v@(Vdef _):[]) ) = evalVdefg $ Nonrec $ v
 -- More than one vdef? I haven't found a test case (TODO)
 evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented\n\t" --  ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> " VDEF; " ++ var ++ " :: " ++ showType ty ++ "\n\t"++ showExp exp) vdefs
 --evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented for value definitions :\n" ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> "\t" ++ var ++ " :: " ++ showType ty++ "\n\t\tExpression:" ++ showExp exp) vdefs
 
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
-  whenFlag (?show_expressions) $ do
+  whenFlag (show_expressions ?settings) $ do
     io . dodebug $ "\t.. expression: " ++ showExp exp ++ "\n"
   res <- evalExp exp -- result
   heap <- get 
   res `saveResultAs` (qualifiedVar qvar)
 
-evalExp :: (?debug :: Bool
-           , ?show_subexpressions :: Bool
-           , ?watch_reduction :: Bool) => Exp -> IM Value
+evalExp :: (?settings :: InterpreterSettings) => Exp -> IM Value
 
 -- | This one is a function application which has the type accompanied. We won't care about the type now, as I'm not sure how it can be used now.
 -- Appt is always (?) applied to App together with a var that represents the function call of the Appt. In the case of integer summation, this is base:GHC.Num.f#NumInt. That is why we have to ignore the first parameter when applied.
@@ -181,8 +162,8 @@ evalExp :: (?debug :: Bool
 
 evalExp e@(Appt dc@(Dcon dcon) ty) = do
   heap <- get
-  --when (?debug && ?show_subexpressions) $
-  liftIO . putStrLn $ "Evaluating subexp " ++ (qualifiedVar dcon)
+  when (debug ?settings && show_subexpressions ?settings) $
+    liftIO . dodebug $ "Evaluating subexp " ++ (qualifiedVar dcon)
   f <- liftIO $ evalStateT (evalExp dc) heap
   -- if the type constructor has type parameters but has no type arguments
   -- e.g. as in Nil :: [a], we shall ignore the type parameter
@@ -208,15 +189,20 @@ evalExp (Lam binded_var exp) = let
    bindAndEval binded_value = do 
      --liftIO $ putStrLn $ "\t getting the heap"
      heap <- get
-     --TODO, this should be inserted in an environment instead and then be deleted, (gotta change the IM type). It is now added and deleted in the heap. This assumes External Core source code doesn't have any variables shadowed
-     --liftIO $ putStrLn $ "\t binding " ++ name ++ " to " ++ show binded_value ++ " in the heap"
+     -- TODO, this should be inserted in an environment instead and then be deleted, (gotta change the IM type). It is now added and deleted in the heap. This assumes External Core source code doesn't have any variables shadowed
+     
+     when(watch_reduction ?settings) $ 
+       io . dodebug $ "\t binding " ++ name ++ " to " ++ show binded_value ++ " in the heap"
+       
      liftIO $ H.insert heap name (Right binded_value)
-     --liftIO $ putStrLn $ "\t evaluating lambda body"
+     
+     when(watch_reduction ?settings) $ 
+       io . dodebug $ "\t evaluating lambda body (exp)"
      res <- evalExp exp
      --liftIO $ putStrLn $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"
-     --liftIO $ H.delete heap name 
+     liftIO $ H.delete heap name 
      return res
-  in return $ Fun bindAndEval $ "\\" ++ bindId binded_var ++ " - exp" 
+  in return $ Fun bindAndEval $ "\\" ++ bindId binded_var ++ " -> exp"
 
 evalExp (App -- Integer,Char construction
           (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),constr))
@@ -231,7 +217,7 @@ evalExp e@(App function_exp argument_exp) = do
    --liftIO . putStrLn $ " f: " ++ showExp function_exp ++ " = " ++ show f
    x <- evalExp argument_exp
    --liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " = " ++ show x
-   when(?watch_reduction) $ 
+   when(watch_reduction ?settings) $ 
      io . dodebug $ "\t Applying val " ++ show x ++ " to function " ++ show f
    res <- apply f x
    --liftIO . putStrLn $ "\t Applying f x  = " ++ show res
@@ -245,29 +231,97 @@ evalExp e@(Var qvar) = evalVar . qualifiedVar $ qvar
 
 -- Case of
 
-evalExp (Case exp (var,_) _ alts) = do
-   var_val <- evalVar var
-   exp <- return $ find (matches var_val) alts >>= Just . altExp -- Maybe Exp
-   case exp of
-     Just e -> evalExp e
-     _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ var
+evalExp (Case exp@(Var var) (_,_) _ alts) = do
+  let qvar = qualifiedVar var
+  when (watch_reduction ?settings) $ do
+    io . dodebug $ "\t Doing case analysis for " ++ qvar
+
+  var_val <- evalVar qvar
+        
+  when (watch_reduction ?settings) $ do
+    io . dodebug $ "\t Trying to match " ++ show var_val     
+   
+  maybeAlt <- findMatch var_val alts     
+  let exp = maybeAlt >>= Just . altExp -- Maybe Exp
+  
+  case exp of
+    Just e -> do -- a matched alternative was found, in case it's a constructor, bind its arguments
+      let alt = fromJust $ maybeAlt
+      when(isAcon alt) $ var_val `bindAltVars` alt
+      res <- evalExp e
+      when(isAcon alt) $ deleteAltBindedVars alt
+      return res
+    _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ qvar
 
 evalExp (Lit lit) = evalLit lit
 
 -- Data constructors
 
 evalExp (Dcon qcon) = evalVar . qualifiedVar $ qcon
-    
--- Otherwise
-
 evalExp otherExp = return . Wrong $ " TODO: " ++ showExp otherExp
 
+-- | Binds variables to values in a case expression
+bindAltVars :: (?settings :: InterpreterSettings) => Value -> Alt -> IM ()
+bindAltVars (TyConApp (AlgTyCon _ _) vals) (Acon _ _ vbinds _) = 
+  if (length vals /= length vbinds) 
+  then error "length vals /= length vbinds"
+  else mapM_ bind (zip vals (map fst vbinds)) where
+    bind :: (Value,Id) -> IM ()
+    bind (v,i) = do
+      when (watch_reduction ?settings) $ io . dodebug $ "Binding " ++ i ++ " to " ++ show v              
+      heap <- get
+      io $ H.insert heap i (Right v)
+    
+deleteAltBindedVars :: Alt -> IM ()
+deleteAltBindedVars (Acon _ _ vbinds _) = do 
+  heap <- get
+  mapM_ (io . H.delete heap . fst) vbinds
+-- Otherwise
 
-matches :: Value -> Alt -> Bool
-val `matches` (Acon qual_dcon tbs vbs idx_exp) = False --TODO
-val `matches` (Alit lit exp) = False --TODO
-val `matches` (Adefault _) = True -- this is the default case, i.e. "_ - " 
+isAcon :: Alt -> Bool
+isAcon (Acon _ _ _ _) = True
+isAcon _ = False
 
+
+-- | Tries to find an alternative that matches a value. It returns the first match, if any.
+findMatch :: (?settings :: InterpreterSettings) => Value -> [Alt] -> IM (Maybe Alt)
+findMatch val [] = return Nothing
+findMatch val (a:alts) = do
+  matches <- val `matches` a
+  
+  if (not matches)
+  then val `findMatch` alts   
+  else return . Just $ a 
+
+matches :: (?settings :: InterpreterSettings) => Value -> Alt -> IM Bool
+(TyConApp (AlgTyCon n _) vals) `matches` (Acon qual_dcon tbs vbs idx_exp) = do
+
+  let tyconId = qualifiedVar qual_dcon
+      matches' = tyconId == n
+      
+  when(watch_reduction ?settings) $ do
+    io . dodebug $ "Trying to match value with type constructor " ++ tyconId
+    io . dodebug $ "\t.. " ++ if matches' then " matches" else " does not match"
+        
+  return $ matches'
+    
+val `matches` (Alit lit exp) = return False --TODO
+val `matches` (Adefault _) = return True -- this is the default case, i.e. "_ - " 
+(Num n) `matches` (Acon qdcon _ _ _) = do
+  when (watch_reduction ?settings) $ 
+    io . dodebug $ "Trying to match a Num value (" ++ show n ++ ") with the type constructed by " ++ qualifiedVar qdcon
+    
+  let matches' = qualifiedVar qdcon == "ghczmprim:GHCziPrim.Intzh" 
+  
+  when (watch_reduction ?settings) $ 
+    io . dodebug $ "\t.. " ++ if matches' then " matches" else " does not match"
+
+  return matches'
+  
+val `matches` alt = do
+  io . putStrLn $ "??? Matching " ++ show val ++ " with " ++ show alt
+  return False
+  
 altExp :: Alt -> Exp
 altExp (Acon _ _ _ exp) = exp
 altExp (Alit _ exp) = exp
@@ -291,16 +345,14 @@ evalLit (Literal (Lstring s) ty) = case showExtCoreType ty of
    "ghczmprim:GHC.Prim.Addrzh" -> return . String $ s
    _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghczmprim:GHC.Prim.Addrzh"
 
-evalVar :: ( ?watch_reduction :: Bool 
-            ,?show_subexpressions :: Bool
-            ,?debug :: Bool) => Id -> IM Value
+evalVar :: (?settings :: InterpreterSettings) => Id -> IM Value
 evalVar id = lookupVar id >>= \v -> case v of
     Left (Thunk e) -> evalExp e
     Right v -> return $ case v of
       (TyCon tycon@(AlgTyCon n (a:args))) -> v -- TyCon $ AlgTyCon n [] -- take type arguments off
       _ -> v
     
-lookupVar :: (?debug :: Bool) => Id -> IM (Either Thunk Value)
+lookupVar :: (?settings :: InterpreterSettings) => Id -> IM (Either Thunk Value)
 lookupVar x = do
    io . dodebug $ "Looking up var " ++ x
    env <- get
@@ -370,8 +422,7 @@ libraries = concat $ [--GHC.Num.all,
   ]
 
 -- | Loads nothing ATM, but it'll be useful
-loadLibraries :: (?watch_reduction :: Bool
-                 , ?debug :: Bool) => IM ()
+loadLibraries :: (?settings :: InterpreterSettings) => IM ()
 loadLibraries = do
   -- loadLib "lib/GHC/Tuple.hs" -- fails due to builtin syntax but good idea
   h <- get
@@ -383,6 +434,7 @@ loadLibraries = do
       io . dodebug $ "Loading " ++ f
       m <- io . readModule $ f
       acknowledgeTypes m
+      
     loadBinding :: (Id,Either Thunk Value) -> IM ()
     loadBinding (id,val) = do
       h <- get 
