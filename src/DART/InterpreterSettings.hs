@@ -29,7 +29,7 @@ interpret = InterpreterMode {
 --   , show_time = def &= groupname "DEBUG" &= help "Shows the time in which an evaluation was done (if depends flag is on)"
   , show_tmp_variables = def &= groupname "DEBUG" &= help "Shows debug messages for temporal variables (if depends flag is on)"
   , watch_reduction = def &= groupname "DEBUG" &= help "Shows debug messages for the evaluation of a value definition (shows reductions of expressions)"
-  , debug_tab_level = -1
+  , debug_tab_level = 0
   } &= summary "Reads a .hcr file and evaluates its declarations. "
 
 

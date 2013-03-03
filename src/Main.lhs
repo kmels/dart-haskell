@@ -9,6 +9,7 @@ This program reads a program in Haskell External Core (EC) syntax and evaluates 
 > import Language.Core.Core
 > import System.Environment
 > import Language.Core.Util(showType)
+> import Language.Core.Interpreter.Structures
 
 To move
 
@@ -46,17 +47,18 @@ To move
 
 >   -- Time to evaluate
 >   dodebug $ "Loading libraries "
->   heap <- H.new  -- get a heap with some predefined functions
->   (_,libs) <- runStateT (Interpreter.loadLibraries) heap
+>   s <- newState ?settings
+>   (_,libs) <- runStateT (Interpreter.loadLibraries) s
 >   case (eval args) of
 >     -- What should we eval?
 >     "" -> do  -- not specified
->       (_,heap) <- runStateT (Interpreter.evalModule module') libs
+>       (_,state) <- runStateT (Interpreter.evalModule module') libs
+>       let h = heap state
 >       when (not . show_heap $ ?settings) $ putStrLn "WARNING: You did not specify a function name to eval (flags --eval or -e), neither the flag --show-heap. That is why this program has no output"
->       when (show_heap $ ?settings) $ printHeap heap
+>       when (show_heap $ ?settings) $ printHeap h
 >     fun_name -> do -- eval fun_name
->       (result,heap) <- runStateT (module' `Interpreter.evalModuleFunction` fun_name) libs
->       when (show_heap $ ?settings) $ printHeap heap
+>       (result,state) <- runStateT (module' `Interpreter.evalModuleFunction` fun_name) libs
+>       when (show_heap $ ?settings) $ printHeap (heap state)
 >       putStrLn $ show result -- will be a Value iff fun_name is not null
 
 Decode any string encoded as Z-encoded string and print it
@@ -69,3 +71,14 @@ Decode any string encoded as Z-encoded string and print it
 
 > showVdef :: Vdef -> String
 > showVdef (Vdef ((mname,var),ty,exp)) = var ++ " :: " ++ showType ty
+
+-- | Creates an initial state
+
+> newState :: InterpreterSettings -> IO DARTState
+> newState s = do
+>   h <- H.new -- get a new heap
+>   return $ DState {
+>     heap = h
+>     , number_of_reductions = 0
+>     , settings = s
+>   }

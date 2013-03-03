@@ -71,7 +71,7 @@ evalModule :: (?settings :: InterpreterSettings) => Module -> IM Heap
 evalModule m@(Module name tdefs vdefgs) = do
   acknowledgeTypes m
   mapM_ doEvalVdefg vdefgs
-  h <- get
+  h <- gets heap
   return h
 
 -- | Given a module and a function name, we evaluate the function in that module and return the heap. 
@@ -149,9 +149,12 @@ evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implement
 
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
   whenFlag (show_expressions ?settings) $ do
-    io . dodebug $ "\t.. expression: " ++ showExp exp ++ "\n"
+    io . dodebug $ "Evaluating value definition"
+    let ?settings = increase_tab_level ?settings
+    io . dodebug $ "expression = " ++ showExp exp ++ "\n"
+  let ?settings = increase_tab_level ?settings
   res <- evalExp exp -- result
-  heap <- get 
+  h <- gets heap
   res `saveResultAs` (qualifiedVar qvar)
 
 evalExp :: (?settings :: InterpreterSettings) => Exp -> IM Value
@@ -162,7 +165,7 @@ evalExp :: (?settings :: InterpreterSettings) => Exp -> IM Value
 
 evalExp e@(Appt dc@(Dcon dcon) ty) = do
   heap <- get
-  debugSubexpression dc
+  debugSubexpression dc  
   f <- liftIO $ evalStateT (evalExp dc) heap
   -- if the type constructor has type parameters but has no type arguments
   -- e.g. as in Nil :: [a], we shall ignore the type parameter
@@ -171,10 +174,11 @@ evalExp e@(Appt dc@(Dcon dcon) ty) = do
     TyCon tc -> Fun (\g -> return $ TyConApp tc [g]) (show tc ++ showType ty)
     _ -> Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
 
-evalExp e@(Appt fun ty) = do
+evalExp e@(Appt exp ty) = do
   heap <- get
-  debugSubexpression fun
-  f <- liftIO $ evalStateT (evalExp fun) heap
+  debugSubexpression exp
+  let ?settings = increase_tab_level ?settings
+  f <- liftIO $ evalStateT (evalExp exp) heap
   return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
   
 
@@ -186,13 +190,13 @@ evalExp e@(Lam binded_var exp) = let
    name = bindId binded_var             
    bindAndEval binded_value = do 
      --liftIO $ putStrLn $ "\t getting the heap"
-     heap <- get
+     h <- gets heap
      -- TODO, this should be inserted in an environment instead and then be deleted, (gotta change the IM type). It is now added and deleted in the heap. This assumes External Core source code doesn't have any variables shadowed
      
      when(watch_reduction ?settings) $ 
        io . dodebug $ "\t binding " ++ name ++ " to " ++ show binded_value ++ " in the heap"
        
-     liftIO $ H.insert heap name (Right binded_value)
+     liftIO $ H.insert h name (Right binded_value)
      
      when(watch_reduction ?settings) $ 
        io . dodebug $ "\t evaluating lambda body (exp)"
@@ -204,7 +208,7 @@ evalExp e@(Lam binded_var exp) = let
      when(watch_reduction ?settings) $ 
        io . dodebug $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"
        
-     liftIO $ H.delete heap name 
+     liftIO $ H.delete h name 
      return res
   in do
      when (show_subexpressions ?settings) $ 
@@ -218,11 +222,14 @@ evalExp (App -- Integer,Char construction
            | constr == "Czh" = evalLit lit
            | otherwise = return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
 
-evalExp e@(App function_exp argument_exp) = do 
+evalExp e@(App function_exp argument_exp) = do
+  io . dodebug $ "Evaluating function application"
   debugSubexpression e
+  let ?settings = increase_tab_level ?settings
   f <- evalExp function_exp
    --liftIO . putStrLn $ " f: " ++ showExp function_exp ++ " = " ++ show f
   x <- evalExp argument_exp
+  let ?settings = decrease_tab_level ?settings
    --liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " = " ++ show x
   when(watch_reduction ?settings) $ 
     io . dodebug $ "\t Applying val " ++ show x ++ " to function " ++ show f
@@ -284,13 +291,13 @@ bindAltVars t v = io . putStrLn $ " Don't know how to bind values " ++ show t ++
 bindTo :: (?settings :: InterpreterSettings) => Id -> Value -> IM ()
 bindTo i v = do
   when (watch_reduction ?settings) $ io . dodebug $ "Binding " ++ show i ++ " to " ++ show v              
-  heap <- get
-  io $ H.insert heap i (Right v)
+  h <- gets heap
+  io $ H.insert h i (Right v)
               
 deleteAltBindedVars :: Alt -> IM ()
 deleteAltBindedVars (Acon _ _ vbinds _) = do 
-  heap <- get
-  mapM_ (io . H.delete heap . fst) vbinds
+  h <- gets heap
+  mapM_ (io . H.delete h . fst) vbinds
 -- Otherwise
 
 isAcon :: Alt -> Bool
@@ -376,9 +383,9 @@ evalVar id = lookupVar id >>= \v -> case v of
 lookupVar :: (?settings :: InterpreterSettings) => Id -> IM (Either Thunk Value)
 lookupVar x = do
    debugM $ "Looking up var " ++ x
-   env <- get
-   val <- liftIO $ H.lookup env x -- looks for a variable in the heap
-   lib_val <- liftIO $ H.lookup env xDecoded -- looks for a GHC lib variable in the heap    
+   h <- gets heap
+   val <- liftIO $ H.lookup h x -- looks for a variable in the heap
+   lib_val <- liftIO $ H.lookup h xDecoded -- looks for a GHC lib variable in the heap    
 
    -- if val is Just a, return a. 
    -- Otherwise if lib_val is Just a, return a
@@ -401,14 +408,14 @@ evalFails = return . Right . Wrong
 
 saveResultAs :: Value -> Id -> IM Value
 val `saveResultAs` qvar = do
-  heap <- get
-  io $ H.insert heap qvar (Right val)
+  h <- gets heap
+  io $ H.insert h qvar (Right val)
   return val
 
 saveThunkAs :: Exp -> Id -> IM Thunk
 exp `saveThunkAs` qvar = do
-  heap <- get
-  io $ H.insert heap qvar (Left thunk)
+  h <- gets heap
+  io $ H.insert h qvar (Left thunk)
   return thunk where
     thunk = Thunk exp
 
@@ -450,7 +457,7 @@ loadLibraries = do
       
     loadBinding :: (Id,Either Thunk Value) -> IM ()
     loadBinding (id,val) = do
-      h <- get 
+      h <- gets heap
       io . dodebug $ "Loading " ++ id
       io $ H.insert h id val
-  
+

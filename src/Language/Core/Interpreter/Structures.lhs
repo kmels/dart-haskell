@@ -15,6 +15,7 @@
 
 > module Language.Core.Interpreter.Structures where
 > import Data.List(findIndices)
+> import DART.InterpreterSettings
 
 This is an interpreter for External Core
 
@@ -31,13 +32,15 @@ For the heap, we use the package [hashtables](http://hackage.haskell.org/package
 
 > type Heap = H.CuckooHashTable Id (Either Thunk Value)
 
-We'll also need to keep track of the declared types and their constructors, for which we'll also use a hashtable, where a type is identified by its qualified name.
+Define a monad IM (for Interpreter Monad) where we keep a value of type DARTState containing state variables such as the heap and settings such as the number of reduction for debugging purposes. 
 
-> -- type Types = H.CuckooHashTable Id Type
+> data DARTState = DState {
+>   heap :: Heap,
+>   number_of_reductions :: !Int -- when an expression is evaluated, this value increments by 1
+>   , settings :: InterpreterSettings
+> }
 
-Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadler, The essence of Functional Programming](http://homepages.inf.ed.ac.uk/wadler/topics/monads.html).
-
-> type IM = StateT Heap IO 
+> type IM = StateT DARTState IO 
 
 > -- DARTState = { heap :: Heap, types ::  
 

@@ -48,7 +48,7 @@ Inspired by Prelude.when
 
 > debugSubexpression :: (?settings :: InterpreterSettings) => Exp -> IM ()
 > debugSubexpression e = when (show_subexpressions ?settings) $ 
->                        io . dodebug $ "Evaluating subexpression " ++ showExp e
+>                        io . dodebug $ "Sub-expression: " ++ showExp e
 
 If we are in the IM Monad, we might want to watch expressions being reduced as they are interpreted. 
 
