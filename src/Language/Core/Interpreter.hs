@@ -173,7 +173,7 @@ evalExp e@(Appt dc@(Dcon dcon) ty) = do
   return $ case f of
     TyCon tc@(AlgTyCon id []) -> TyCon tc -- we don't expect any further arguments
     TyCon tc -> Fun (\g -> return $ TyConApp tc [g]) (show tc ++ showType ty)
-    _ -> Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " to g"
+    _ -> Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
 
 {-evalExp e@(Appt exp ty) = do
   heap <- get
@@ -236,6 +236,7 @@ evalExp e@(App function_exp argument_exp) = do
   debugSubexpression e
   increaseIndentation
   f <- evalExp function_exp
+  decreaseIndentation
    --liftIO . putStrLn $ " f: " ++ showExp function_exp ++ " = " ++ show f
   x <- evalExp argument_exp
   decreaseIndentation
