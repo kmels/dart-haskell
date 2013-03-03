@@ -63,9 +63,9 @@ myFirstBook = MkBook "The biography of José Mourinho" "Some author" 2040240 -- 
 
 -- | SPJ's book
 data Tree = Leaf Int | Branch Tree Tree
-leaf1 = Leaf 1
-tree10 = Branch (Leaf 10) (Leaf 20)
-tree1 = Branch (Branch (Leaf 1) (Leaf 2)) (Leaf 3)
+leaf1 = Leaf 1 -- DONE
+tree10 = Branch (Leaf 10) (Leaf 20) -- DONE
+tree1 = Branch (Branch (Leaf 1) (Leaf 2)) (Leaf 3) -- DONE
 
 reflect (Leaf 0) = Leaf 0
 reflect (Leaf n) = Leaf n
@@ -82,4 +82,5 @@ one = [1]
 onetwo = [1,2]
 onetwothree = [1,2,3]
 
-reflect1 = reflect leaf1
+reflect1 = reflect leaf1 -- DONE
+reflect2 = reflect tree10 -- DONE

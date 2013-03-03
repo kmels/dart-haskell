@@ -5,11 +5,11 @@ import Language.Core.Core
 import Language.Core.Interpreter.Apply
 
 unpackCString = (id, Right val) where
-  id = "ghczmprim:GHC.CString.unpackCStringzh"
+  id = "ghc-prim:GHC.CString.unpackCString#"
   val = Fun return "unpackString# = id"
 
 unpackCStringUtf8 = (id,Right val) where
-  id = "ghczmprim:GHC.CString.unpackCStringUtf8zh"
+  id = "ghc-prim:GHC.CString.unpackCStringUtf8#"
   val = Fun return "unpackStringUtf8# = id"
   
 evalVar _ = Nothing

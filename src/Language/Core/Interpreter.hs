@@ -345,7 +345,7 @@ altExp (Adefault exp) = exp
 evalLit :: Lit -> IM Value
 evalLit (Literal (Lint i) ty) = case showExtCoreType ty of
    "ghc-prim:GHC.Prim.Int#" -> return . Num $ i 
-   "integer-gmp:[\"GHC\",\"Integer\"].Type.Integer" -> return . Num $ i 
+   "integer-gmp:GHC.Integer.Type.Integer" -> return . Num $ i 
    _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghc-prim:GHCziPrim.Int#"
 
 evalLit (Literal (Lrational r) ty) = case showExtCoreType ty of
@@ -353,11 +353,11 @@ evalLit (Literal (Lrational r) ty) = case showExtCoreType ty of
   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "Rational"
 
 evalLit (Literal (Lchar c) ty) = case showExtCoreType ty of
-  "ghc-prim:GHC.Prim.Charzh" -> return . Char $ c 
+  "ghc-prim:GHC.Prim.Char#" -> return . Char $ c 
   _ -> return . Wrong $ showExtCoreType ty ++ "ghc-prim:GHC.Prim.Char#" ++ "Char"
 
 evalLit (Literal (Lstring s) ty) = case showExtCoreType ty of
-   "ghc-prim:GHC.Prim.Addrzh" -> return . String $ s
+   "ghc-prim:GHC.Prim.Addr#" -> return . String $ s
    _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghc-prim:GHC.Prim.Addr#"
 
 evalVar :: (?settings :: InterpreterSettings) => Id -> IM Value
