@@ -37,6 +37,7 @@ Define a monad IM (for Interpreter Monad) where we keep a value of type DARTStat
 > data DARTState = DState {
 >   heap :: Heap,
 >   number_of_reductions :: !Int -- when an expression is evaluated, this value increments by 1
+>   , tab_indentation :: !Int -- useful in debug to know how many tabs we shoud prepend
 >   , settings :: InterpreterSettings
 > }
 

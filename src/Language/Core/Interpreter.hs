@@ -54,7 +54,7 @@ doEvalVdefg :: (?settings :: InterpreterSettings) => Vdefg -> IM Value
 doEvalVdefg vdefg = do
   before <- liftIO getCurrentTime
   h <- get
-  io . dodebug $ "Evaluating " ++ (vdefgId vdefg)
+  debugM $ "Evaluating " ++ (vdefgId vdefg)
   res <- evalVdefg vdefg             
   after <- liftIO getCurrentTime
   let 
@@ -63,8 +63,8 @@ doEvalVdefg vdefg = do
     should_print = debug ?settings && show_tmp_variables ?settings
                    || debug ?settings && (not . show_tmp_variables $ ?settings) && (not $ isTmp vdefg)
   (when should_print) $ do
-    io . dodebug $ "Evaluation of " ++ (vdefgId vdefg)
-    io . dodebug $ "\t.. was done in " ++ show time ++ "\n\t.. and resulted in " ++ show res
+    debugM $ "Evaluation of " ++ (vdefgId vdefg)
+    debugM $ "\t.. was done in " ++ show time ++ "\n\t.. and resulted in " ++ show res
   res `saveResultAs` id
 
 evalModule :: (?settings :: InterpreterSettings) => Module -> IM Heap
@@ -83,7 +83,7 @@ evalModuleFunction m@(Module mname tdefs vdefgs) fname =
    else case maybeVdefg of
      Nothing -> return . Wrong $  "Could not find function " ++ fname ++ " in " ++ show mname
      Just vdefg -> do
-       io . dodebug $ "Found definition of " ++ fname
+       debugM $ "Found definition of " ++ fname
        acknowledgeTypes m
        acknowledgeVdefgs m
        --let show_exps = ?show_expressions 
@@ -102,7 +102,7 @@ acknowledgeTypes modl@(Module _ tdefs _) = mapM_ acknowledgeType tdefs
   
 acknowledgeType :: (?settings :: InterpreterSettings) => Tdef -> IM ()
 acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs)  = do
-  io . dodebug $ "Acknowledging type " ++ qualifiedVar qdname
+  debugM $ "Acknowledging type " ++ qualifiedVar qdname
   mapM_ insertTyCon cdefs where
     insertTyCon :: Cdef -> IM ()
     insertTyCon tcon@(Constr qcname tbinds' types) = do
@@ -128,9 +128,9 @@ acknowledgeVdef (Vdef (qvar, ty, exp)) = exp `saveThunkAs` (qualifiedVar qvar) >
 {-evalTypeCon :: (?debug :: Bool, watch_reduction ?settings :: Bool) => String -> Cdef -> IM Value
 evalTypeCon finalType (Constr qcname@(_,cname) typarams types) = do
   h <- get -- get the heap
-  io . dodebug $ "Building constructor for " ++ cname
+  debugM $ "Building constructor for " ++ cname
   constructor <- return . evalTypeCon' $ types
-  io . dodebug $ "Built constructor value " ++ show constructor
+  debugM $ "Built constructor value " ++ show constructor
   return constructor where 
     mkConDesc :: [Ty] -> String
     mkConDesc (ty:[]) = cname ++ " :: " ++ (showType ty) ++ " ->" ++ finalType
@@ -148,10 +148,10 @@ evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implement
 --evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented for value definitions :\n" ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> "\t" ++ var ++ " :: " ++ showType ty++ "\n\t\tExpression:" ++ showExp exp) vdefs
 
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
-  whenFlag (show_expressions ?settings) $ do
-    io . dodebug $ "Evaluating value definition"
+  when (show_expressions ?settings) $ do    
+    debugMStep $ "Evaluating value definition" 
     let ?settings = increase_tab_level ?settings
-    io . dodebug $ "expression = " ++ showExp exp ++ "\n"
+    debugM $ "expression = " ++ showExp exp ++ "\n"
   let ?settings = increase_tab_level ?settings
   res <- evalExp exp -- result
   h <- gets heap
@@ -194,25 +194,25 @@ evalExp e@(Lam binded_var exp) = let
      -- TODO, this should be inserted in an environment instead and then be deleted, (gotta change the IM type). It is now added and deleted in the heap. This assumes External Core source code doesn't have any variables shadowed
      
      when(watch_reduction ?settings) $ 
-       io . dodebug $ "\t binding " ++ name ++ " to " ++ show binded_value ++ " in the heap"
+       debugM $ "\t binding " ++ name ++ " to " ++ show binded_value ++ " in the heap"
        
      liftIO $ H.insert h name (Right binded_value)
      
      when(watch_reduction ?settings) $ 
-       io . dodebug $ "\t evaluating lambda body (exp)"
+       debugM $ "\t evaluating lambda body (exp)"
        
      let ?settings = increase_tab_level ?settings
      res <- evalExp exp     
      let ?settings = decrease_tab_level ?settings
      
      when(watch_reduction ?settings) $ 
-       io . dodebug $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"
+       debugM $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"
        
      liftIO $ H.delete h name 
      return res
   in do
      when (show_subexpressions ?settings) $ 
-       io . dodebug $ "Evaluating subexpression " ++ showExp e
+       debugM $ "Evaluating subexpression " ++ showExp e
      return $ Fun bindAndEval $ "\\" ++ bindId binded_var ++ " -> exp"
 
 evalExp (App -- Integer,Char construction
@@ -223,7 +223,7 @@ evalExp (App -- Integer,Char construction
            | otherwise = return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
 
 evalExp e@(App function_exp argument_exp) = do
-  io . dodebug $ "Evaluating function application"
+  debugM $ "Evaluating function application"
   debugSubexpression e
   let ?settings = increase_tab_level ?settings
   f <- evalExp function_exp
@@ -232,7 +232,7 @@ evalExp e@(App function_exp argument_exp) = do
   let ?settings = decrease_tab_level ?settings
    --liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " = " ++ show x
   when(watch_reduction ?settings) $ 
-    io . dodebug $ "\t Applying val " ++ show x ++ " to function " ++ show f
+    debugM $ "\t Applying val " ++ show x ++ " to function " ++ show f
   res <- apply f x
    --liftIO . putStrLn $ "\t Applying f x  = " ++ show res
    
@@ -249,7 +249,7 @@ evalExp (Case exp@(Var var) vbind@(vbind_var,_) _ alts) = do
   let qvar = qualifiedVar var
     
   when (watch_reduction ?settings) $ do
-    io . dodebug $ "\tDoing case analysis for " ++ qvar
+    debugM $ "\tDoing case analysis for " ++ qvar
   
   let ?settings = increase_tab_level ?settings
   
@@ -290,7 +290,7 @@ bindAltVars t v = io . putStrLn $ " Don't know how to bind values " ++ show t ++
     
 bindTo :: (?settings :: InterpreterSettings) => Id -> Value -> IM ()
 bindTo i v = do
-  when (watch_reduction ?settings) $ io . dodebug $ "Binding " ++ show i ++ " to " ++ show v              
+  when (watch_reduction ?settings) $ debugM $ "Binding " ++ show i ++ " to " ++ show v              
   h <- gets heap
   io $ H.insert h i (Right v)
               
@@ -322,8 +322,8 @@ matches :: (?settings :: InterpreterSettings) => Value -> Alt -> IM Bool
       matches' = tyconId == n
       
   when(watch_reduction ?settings) $ do
-    io . dodebug $ "Trying to match value with type constructor " ++ tyconId
-    io . dodebug $ "\t.. " ++ if matches' then " matches" else " does not match"
+    debugM $ "Trying to match value with type constructor " ++ tyconId
+    debugM $ "\t.. " ++ if matches' then " matches" else " does not match"
         
   return $ matches'
     
@@ -331,12 +331,12 @@ val `matches` (Alit lit exp) = return False --TODO
 val `matches` (Adefault _) = return True -- this is the default case, i.e. "_ - " 
 (Num n) `matches` (Acon qdcon _ _ _) = do
   when (watch_reduction ?settings) $ 
-    io . dodebug $ "Trying to match a Num value (" ++ show n ++ ") with the type constructed by " ++ qualifiedVar qdcon
+    debugM $ "Trying to match a Num value (" ++ show n ++ ") with the type constructed by " ++ qualifiedVar qdcon
     
   let matches' = qualifiedVar qdcon == "ghc-prim:GHC.Types.I#" 
   
   when (watch_reduction ?settings) $ 
-    io . dodebug $ "\t.. " ++ if matches' then " matches" else " does not match"
+    debugM $ "\t.. " ++ if matches' then " matches" else " does not match"
 
   return matches'
   
@@ -451,13 +451,13 @@ loadLibraries = do
   where
     loadLib :: FilePath -> IM ()
     loadLib f = do
-      io . dodebug $ "Loading " ++ f
+      debugM $ "Loading " ++ f
       m <- io . readModule $ f
       acknowledgeTypes m
       
     loadBinding :: (Id,Either Thunk Value) -> IM ()
     loadBinding (id,val) = do
       h <- gets heap
-      io . dodebug $ "Loading " ++ id
+      debugM $ "Loading " ++ id
       io $ H.insert h id val
 

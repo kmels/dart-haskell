@@ -9,9 +9,12 @@
 > import Control.Monad(when)
 > import Language.Core.Util(showExp)
 > import Language.Core.Core -- Exp
+> import Control.Monad.State(gets)
 
 > io :: MonadIO m => IO a -> m a
 > io = liftIO 
+
+-- Prints a debug message with a new line at the end
 
 > dodebug :: (?settings :: InterpreterSettings) => String -> IO ()
 > dodebug msg = if (debug ?settings) then putStrLn (tab msg ++ msg)  else return () where
@@ -57,3 +60,8 @@ If the flag --watch-reduction was specified, prints a debug message.
 > watchReduction :: (?settings :: InterpreterSettings) => String -> IM ()
 > watchReduction msg | watch_reduction ?settings = debugM msg
 >                    | otherwise = return ()
+
+-- | Prints the reduction number
+
+> prependStep :: IM () 
+> prependStep = gets number_of_reductions >>= io . dodebug . show
