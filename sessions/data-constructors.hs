@@ -18,13 +18,14 @@ type PersonName = Name
 type Instrument = String
 data MusicBand = MkBand Name [(PersonName,Instrument)]
 
+-- DONE
 guitar = "Guitar"
 keyboard = "Keyboard"
 bass = "Bass"
 drums = "Percussion"
 
-roger = ("Roger Waters", bass)
-pinkFloyd = MkBand "Pink Floyd" 
+roger = ("Roger Waters", bass)  -- DONE
+pinkFloyd = MkBand "Pink Floyd"  -- DONE, needs pretty printing
             [ roger
               , ("Nick Mason", drums)
               , ("David Gilmour", guitar)
@@ -67,20 +68,20 @@ leaf1 = Leaf 1 -- DONE
 tree10 = Branch (Leaf 10) (Leaf 20) -- DONE
 tree1 = Branch (Branch (Leaf 1) (Leaf 2)) (Leaf 3) -- DONE
 
-reflect (Leaf 0) = Leaf 0
-reflect (Leaf n) = Leaf n
-reflect (Branch t1 t2) = Branch (reflect t2) (reflect t1)
+reflect (Leaf 0) = Leaf 0 -- DONE
+reflect (Leaf n) = Leaf n -- DONE
+reflect (Branch t1 t2) = Branch (reflect t2) (reflect t1) -- DONE
 
-data Color = VERMILLION | PUCE | LAVENDER
+data Color = VERMILLION | PUCE | LAVENDER -- DONE
 puce = PUCE
 
-data Triple a b c = Triple a b c
-triple = Triple 'c' 10 "String"
+data Triple a b c = Triple a b c -- DONE
+triple = Triple 'c' 10 "String" -- DONE
 
 emptyList = []
-one = [1]
-onetwo = [1,2]
-onetwothree = [1,2,3]
+one = [1] -- DONE, needs pretty printing
+onetwo = [1,2] -- DONE, needs pretty printing
+onetwothree = [1,2,3] -- DONE, needs pretty printing
 
 reflect1 = reflect leaf1 -- DONE
 reflect2 = reflect tree10 -- DONE
