@@ -22,15 +22,15 @@ module Language.Core.Vdefg where
 
 import Language.Core.Core
 import Language.Core.Util
-
+import DART.InterpreterSettings
 import Text.Encoding.Z -- DELETE
 
 -- | Let's create some data types for type safety purposes. First, lambda abstraction (function application)
 
 data FunctionApplication = FunApp String String Exp
 
-instance Show FunctionApplication where
-  show (FunApp t1 t2 exp) = ":: " ++ t1 ++ " -> " ++ t2 ++ " = " ++ showExp exp
+--instance Show FunctionApplication where
+--  show (FunApp t1 t2 exp) = ":: " ++ t1 ++ " -> " ++ t2 ++ " = " ++ showExp exp
 
 -- | Extract an expression from a value definition
 

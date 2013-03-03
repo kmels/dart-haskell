@@ -30,7 +30,7 @@ import qualified Language.Core.Interpreter.GHC.Tuple as GHC.Tuple
 import qualified Language.Core.Interpreter.GHC.Types as GHC.Types
 import           Language.Core.TypeExtractor(extractType)
 import           Language.Core.TypeExtractor.DataTypes
-import           Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,showMname,bindId,showBind)
+import           Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,bindId,showBind)
 import           Language.Core.Vdefg (isTmp,vdefgId,vdefgName)
 
 import           Control.Monad.State.Lazy
@@ -81,7 +81,7 @@ evalModuleFunction m@(Module mname tdefs vdefgs) fname =
    if null fname then 
      error $ "evalModuleFunction: function name is empty" 
    else case maybeVdefg of
-     Nothing -> return . Wrong $  "Could not find function " ++ fname ++ " in " ++ showMname (Just mname)
+     Nothing -> return . Wrong $  "Could not find function " ++ fname ++ " in " ++ show mname
      Just vdefg -> do
        io . dodebug $ "Found definition of " ++ fname
        acknowledgeTypes m
@@ -162,8 +162,7 @@ evalExp :: (?settings :: InterpreterSettings) => Exp -> IM Value
 
 evalExp e@(Appt dc@(Dcon dcon) ty) = do
   heap <- get
-  when (debug ?settings && show_subexpressions ?settings) $
-    liftIO . dodebug $ "Evaluating subexp " ++ (qualifiedVar dcon)
+  debugSubexpression dc
   f <- liftIO $ evalStateT (evalExp dc) heap
   -- if the type constructor has type parameters but has no type arguments
   -- e.g. as in Nil :: [a], we shall ignore the type parameter
@@ -174,8 +173,7 @@ evalExp e@(Appt dc@(Dcon dcon) ty) = do
 
 evalExp e@(Appt fun ty) = do
   heap <- get
-  --when (?debug && ?show_subexpressions) $
-  --  liftIO . putStrLn $ "Evaluating " ++ qualifiedVar qvar
+  debugSubexpression fun
   f <- liftIO $ evalStateT (evalExp fun) heap
   return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
   
@@ -184,8 +182,8 @@ evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) = let
   ap f = Fun (\x -> apply f x) "GHC.Base.$ :: Fun(a - b)"
   in return $ Fun (\f -> return (ap f)) "$" -- GHC.Base.$ :: Fun(a - b) - Fun(a - b)
 
-evalExp (Lam binded_var exp) = let
-   name = bindId binded_var
+evalExp e@(Lam binded_var exp) = let  
+   name = bindId binded_var             
    bindAndEval binded_value = do 
      --liftIO $ putStrLn $ "\t getting the heap"
      heap <- get
@@ -198,48 +196,62 @@ evalExp (Lam binded_var exp) = let
      
      when(watch_reduction ?settings) $ 
        io . dodebug $ "\t evaluating lambda body (exp)"
-     res <- evalExp exp
-     --liftIO $ putStrLn $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"
+       
+     let ?settings = increase_tab_level ?settings
+     res <- evalExp exp     
+     let ?settings = decrease_tab_level ?settings
+     
+     when(watch_reduction ?settings) $ 
+       io . dodebug $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"
+       
      liftIO $ H.delete heap name 
      return res
-  in return $ Fun bindAndEval $ "\\" ++ bindId binded_var ++ " -> exp"
+  in do
+     when (show_subexpressions ?settings) $ 
+       io . dodebug $ "Evaluating subexpression " ++ showExp e
+     return $ Fun bindAndEval $ "\\" ++ bindId binded_var ++ " -> exp"
 
 evalExp (App -- Integer,Char construction
           (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),constr))
           (Lit lit) 
          ) | constr == "Izh" = evalLit lit
            | constr == "Czh" = evalLit lit
-           | otherwise = return . Wrong $ " Found unidentified constructor" ++ constr
+           | otherwise = return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
 
 evalExp e@(App function_exp argument_exp) = do 
-   --liftIO . putStrLn $ "Evaluating subexpression " ++ showExp e
-   f <- evalExp function_exp
+  debugSubexpression e
+  f <- evalExp function_exp
    --liftIO . putStrLn $ " f: " ++ showExp function_exp ++ " = " ++ show f
-   x <- evalExp argument_exp
+  x <- evalExp argument_exp
    --liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " = " ++ show x
-   when(watch_reduction ?settings) $ 
-     io . dodebug $ "\t Applying val " ++ show x ++ " to function " ++ show f
-   res <- apply f x
+  when(watch_reduction ?settings) $ 
+    io . dodebug $ "\t Applying val " ++ show x ++ " to function " ++ show f
+  res <- apply f x
    --liftIO . putStrLn $ "\t Applying f x  = " ++ show res
    
    --liftIO . putStrLn $ "Evaluating subexpression " ++ showExp e ++ " = " ++ show res
-   return res
+  return res
 
 -- Variables 
 
-evalExp e@(Var qvar) = evalVar . qualifiedVar $ qvar
+evalExp e@(Var qvar) = debugSubexpression e >>= \_ -> evalVar . qualifiedVar $ qvar
 
 -- Case of
 
-evalExp (Case exp@(Var var) (_,_) _ alts) = do
+evalExp (Case exp@(Var var) vbind@(vbind_var,_) _ alts) = do
   let qvar = qualifiedVar var
+    
   when (watch_reduction ?settings) $ do
-    io . dodebug $ "\t Doing case analysis for " ++ qvar
-
+    io . dodebug $ "\tDoing case analysis for " ++ qvar
+  
+  let ?settings = increase_tab_level ?settings
+  
+  -- (too much) debugSubexpression exp 
   var_val <- evalVar qvar
+  watchReduction $ "\t Trying  " ++ show var_val     
+  vbind_var `bindTo` var_val
         
-  when (watch_reduction ?settings) $ do
-    io . dodebug $ "\t Trying to match " ++ show var_val     
+  watchReduction $ "\t Trying to match " ++ show var_val     
    
   maybeAlt <- findMatch var_val alts     
   let exp = maybeAlt >>= Just . altExp -- Maybe Exp
@@ -265,13 +277,16 @@ bindAltVars :: (?settings :: InterpreterSettings) => Value -> Alt -> IM ()
 bindAltVars (TyConApp (AlgTyCon _ _) vals) (Acon _ _ vbinds _) = 
   if (length vals /= length vbinds) 
   then error "length vals /= length vbinds"
-  else mapM_ bind (zip vals (map fst vbinds)) where
-    bind :: (Value,Id) -> IM ()
-    bind (v,i) = do
-      when (watch_reduction ?settings) $ io . dodebug $ "Binding " ++ i ++ " to " ++ show v              
-      heap <- get
-      io $ H.insert heap i (Right v)
+  else mapM_ (uncurry bindTo) ((map fst vbinds) `zip` vals)
+bindAltVars val@(Num n) (Acon _ _ [(var,_)] _) = var `bindTo` val
+bindAltVars t v = io . putStrLn $ " Don't know how to bind values " ++ show t ++ " to " ++ show v
     
+bindTo :: (?settings :: InterpreterSettings) => Id -> Value -> IM ()
+bindTo i v = do
+  when (watch_reduction ?settings) $ io . dodebug $ "Binding " ++ show i ++ " to " ++ show v              
+  heap <- get
+  io $ H.insert heap i (Right v)
+              
 deleteAltBindedVars :: Alt -> IM ()
 deleteAltBindedVars (Acon _ _ vbinds _) = do 
   heap <- get
@@ -311,7 +326,7 @@ val `matches` (Adefault _) = return True -- this is the default case, i.e. "_ - 
   when (watch_reduction ?settings) $ 
     io . dodebug $ "Trying to match a Num value (" ++ show n ++ ") with the type constructed by " ++ qualifiedVar qdcon
     
-  let matches' = qualifiedVar qdcon == "ghczmprim:GHCziPrim.Intzh" 
+  let matches' = qualifiedVar qdcon == "ghc-prim:GHC.Types.I#" 
   
   when (watch_reduction ?settings) $ 
     io . dodebug $ "\t.. " ++ if matches' then " matches" else " does not match"
@@ -329,35 +344,41 @@ altExp (Adefault exp) = exp
 
 evalLit :: Lit -> IM Value
 evalLit (Literal (Lint i) ty) = case showExtCoreType ty of
-   "ghczmprim:GHC.Prim.Intzh" -> return . Num $ i 
-   "integerzmgmp:[\"GHC\",\"Integer\"].Type.Integer" -> return . Num $ i 
-   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghczmprim:GHCziPrim.Intzh"
+   "ghc-prim:GHC.Prim.Int#" -> return . Num $ i 
+   "integer-gmp:[\"GHC\",\"Integer\"].Type.Integer" -> return . Num $ i 
+   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghc-prim:GHCziPrim.Int#"
 
 evalLit (Literal (Lrational r) ty) = case showExtCoreType ty of
   "Rational" -> return . Rat $ r
   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "Rational"
 
 evalLit (Literal (Lchar c) ty) = case showExtCoreType ty of
-  "ghczmprim:GHC.Prim.Charzh" -> return . Char $ c 
-  _ -> return . Wrong $ showExtCoreType ty ++ "ghczmprim:GHC.Prim.Charzh" ++ "Char"
+  "ghc-prim:GHC.Prim.Charzh" -> return . Char $ c 
+  _ -> return . Wrong $ showExtCoreType ty ++ "ghc-prim:GHC.Prim.Char#" ++ "Char"
 
 evalLit (Literal (Lstring s) ty) = case showExtCoreType ty of
-   "ghczmprim:GHC.Prim.Addrzh" -> return . String $ s
-   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghczmprim:GHC.Prim.Addrzh"
+   "ghc-prim:GHC.Prim.Addrzh" -> return . String $ s
+   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghc-prim:GHC.Prim.Addr#"
 
 evalVar :: (?settings :: InterpreterSettings) => Id -> IM Value
 evalVar id = lookupVar id >>= \v -> case v of
-    Left (Thunk e) -> evalExp e
+    Left (Thunk e) -> do      
+      debugM $ "Variable " ++ id ++ " is a Thunk, evaluating"
+      debugSubexpression e
+      let ?settings = increase_tab_level ?settings
+      r <- evalExp e
+      let ?settings = decrease_tab_level ?settings
+      return r
     Right v -> return $ case v of
       (TyCon tycon@(AlgTyCon n (a:args))) -> v -- TyCon $ AlgTyCon n [] -- take type arguments off
       _ -> v
     
 lookupVar :: (?settings :: InterpreterSettings) => Id -> IM (Either Thunk Value)
 lookupVar x = do
-   io . dodebug $ "Looking up var " ++ x
+   debugM $ "Looking up var " ++ x
    env <- get
-   val <- liftIO $ H.lookup env x -- looks in the heap
-   lib_val <- liftIO $ H.lookup env xDecoded -- looks in the heap      
+   val <- liftIO $ H.lookup env x -- looks for a variable in the heap
+   lib_val <- liftIO $ H.lookup env xDecoded -- looks for a GHC lib variable in the heap    
 
    -- if val is Just a, return a. 
    -- Otherwise if lib_val is Just a, return a

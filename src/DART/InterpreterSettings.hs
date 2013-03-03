@@ -31,3 +31,14 @@ interpret = InterpreterMode {
   , watch_reduction = def &= groupname "DEBUG" &= help "Shows debug messages for the evaluation of a value definition (shows reductions of expressions)"
   , debug_tab_level = -1
   } &= summary "Reads a .hcr file and evaluates its declarations. "
+
+
+increase_tab_level :: InterpreterSettings -> InterpreterSettings
+increase_tab_level s = 
+  s { debug_tab_level = c + 1 } where c = debug_tab_level s
+  
+
+decrease_tab_level :: InterpreterSettings -> InterpreterSettings
+decrease_tab_level s = 
+  s { debug_tab_level = c - 1 } where c = debug_tab_level s
+

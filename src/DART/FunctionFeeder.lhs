@@ -28,8 +28,8 @@ And particular useful combinators
 > import Language.Core.Util(showExtCoreType,showExp)
 > import Debug.Trace
 
-> feedFunction :: FunctionApplication -> Maybe GeneralType
+>{- feedFunction :: FunctionApplication -> Maybe GeneralType
 > feedFunction (FunApp i r exp) = let
 >   gtype = extractZDecodedType $ (i ++ r) --reify
 >   in gtype >>= \type' -> case type' of 
->     g@(Lambda (LambdaAbstraction p1 p2)) -> trace ("\t\tDEBUG -- Reified type: " ++ show g ++ "\n\t\tDEBUG -- Z-decoded Expression: "++ (zDecodeString . showExp $ exp)) $ Just g
+>     g@(Lambda (LambdaAbstraction p1 p2)) -> trace ("\t\tDEBUG -- Reified type: " ++ show g ++ "\n\t\tDEBUG -- Z-decoded Expression: "++ (zDecodeString . showExp $ exp)) $ Just g -}

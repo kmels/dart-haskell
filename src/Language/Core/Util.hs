@@ -1,4 +1,5 @@
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE FlexibleInstances #-}
 
 ----------------------------------------------------------------------------
@@ -16,15 +17,17 @@
 
 module Language.Core.Util where
 
+import DART.InterpreterSettings
 import Language.Core.Core
-
--- | Pretty print a Ty (from extcore) where a function from [Int] to Int is printed as:
--- `ghc-prim:GHC.Prim.(->)ghc-prim:GHC.Types.[]ghc-prim:GHC.Types.Intghc-prim:GHC.Types.Int`
--- This representation is used to reify types thorugh Language.Core.TypeExtractor
+import Language.Core.Printer
+import Text.Encoding.Z
+-- | Pretty prints a Ty (from extcore) where a function from of type `[Int] -> Int` is printed as:
+-- "ghc-prim:GHC.Prim.(->)ghc-prim:GHC.Types.[]ghc-prim:GHC.Types.Intghc-prim:GHC.Types.Int"
+-- This representation is used to reify types thorugh Language.Core.TypeExtractor.
 
 showExtCoreType :: Ty -> String
 showExtCoreType (Tvar t) = t
-showExtCoreType (Tcon (mname,t2)) = showMname mname ++ "." ++ t2
+showExtCoreType (Tcon qcon) = qualifiedVar qcon
 showExtCoreType (Tapp t1 t2) = showExtCoreType t1 ++ showExtCoreType t2
 showExtCoreType _ = "UNKNOWN"
 
@@ -38,7 +41,7 @@ showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),"ZMZN")) = "[]"
 -- a primitive type from GHC
 showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),primitiveType)) = primitiveType 
 showType (Tcon (Just (M ((P "integerzmgmp"), ["GHC","Integer"], "Type")),"Integer")) = "Integer"
-showType (Tcon (mname,t2)) = wrapName "Tcon" $ showMname mname ++ "." ++ t2
+showType (Tcon qcon@(mname,t2)) = qualifiedVar qcon
 -- a type constructor applied to a type parameter e.g. a list
 showType (Tapp tc@(Tcon _) innerType') = 
   let 
@@ -56,24 +59,27 @@ showType (Tapp ta@(Tapp tc@(Tcon _) ty2) ty1) = let
     
 showType (Tapp t1 t2) = wrapName "Tapp" $ showType t1 ++ " " ++ showType t2
 showType _ = "showType, TODO"
-
-showMname :: Maybe AnMname -> String
-showMname Nothing = ""
-showMname (Just (M ((P packageName),[],s2))) = packageName ++ ":" ++ s2
-showMname (Just (M ((P packageName),[s1],s2))) = packageName ++ ":" ++ s1 ++ "." ++ s2
-showMname (Just (M ((P packageName),ss,s2))) = packageName ++ ":" ++ show ss ++ "." ++ s2
-
 wrapName s r = s ++ "(" ++ r ++ ")"
 
-showExp :: Exp -> String
-showExp (Var (mname,variable)) = wrapName "var" $ showMname mname ++ "." ++ variable
-showExp (Dcon (mname,dcon)) = wrapName "dataConstructor" $ showMname mname ++ "." ++ dcon
+-- | Given an Exp from extcore, pretty prints it
+showExp :: (?settings :: InterpreterSettings) => Exp -> String
+showExp (Var qvar) = zDecodeString . snd $ qvar
+showExp (Dcon qcon) = zDecodeString . snd $ qcon
 showExp (Lit lit) = showLit lit
 showExp (App exp1 exp2) = wrapName "app" $ showExp exp1 ++ "," ++ showExp exp2
 showExp (Appt exp typ) = wrapName "appt" $ showExp exp ++ "," ++ showType typ --e.g. >= Int
 showExp (Lam bind exp) = "\n\t\\" ++ showBind bind ++ " -> " ++ showExp exp
 showExp (Let vdefg exp) = wrapName "let" $ showVdefg vdefg ++ showExp exp
-showExp (Case exp (vbind_var,vbind_ty) ty alts) = "\n\t\tcase \n\t\t\t" ++ showExp exp ++ "\n\tof " ++vbind_var ++ "::" ++ showType vbind_ty ++ ".." ++ showType ty ++ concatMap (\alt -> "\n\t" ++ showAlt alt) alts
+showExp (Case exp (vbind_var,vbind_ty) ty alts) = "case " ++ 
+                                                  showExp exp ++ " of " ++ 
+                                                  vbind_var ++ "::" ++ showType vbind_ty ++
+                                                  "\n" ++ concatMap (showAlt') alts
+  where 
+    showAlt' :: Alt -> String
+    showAlt' = let
+      ?settings = increase_tab_level ?settings
+      in appendNewLine . tab . showAlt -- ++ "\n" ++ "\t\t" -- tab . newline . showAlt1
+      
 showExp (Cast exp ty) = wrapName "case" $ showExp exp ++ showType ty
 showExp (Note msg exp) = wrapName "note" $ msg ++ showExp exp
 showExp (External str ty) = wrapName "external" $ str ++ showType ty
@@ -86,21 +92,28 @@ showCoreLit (Lchar c) = show c
 showCoreLit (Lstring s) = s
 
 showBind :: Bind -> String
-showBind (Vb (var,ty)) = wrapName "Bind" $ var ++ "::" ++ showType ty
+showBind (Vb (var,ty)) = var -- wrapName "Bind" $ var ++ "::" ++ showType ty
 showBind (Tb tb@(tvar,kind)) = showTbind tb
 
-showVdefg :: Vdefg -> String
+showVdefg :: (?settings :: InterpreterSettings) => Vdefg -> String
 showVdefg (Rec vdefs) = wrapName "Rec" $ concatMap showVdef vdefs
---showVdefg (Nonrec (Vdef ((mname,var),ty,exp) )) = "Nonrec\n\t\t..qual_mname: " ++ show mname ++ "\n\t\t..var: " ++ show var ++ "\n\t\t..ty: " ++ show ty ++ "\n\t\t..exp: " 
 showVdefg (Nonrec vdef) = wrapName "Nonrec" $ showVdef vdef
 
-showVdef :: Vdef -> String
-showVdef (Vdef ((mname,var),ty,exp)) = wrapName "Vdef" $ showMname mname ++ var ++ showType ty ++ showExp exp
+showVdef :: (?settings :: InterpreterSettings) => Vdef -> String
+showVdef (Vdef (qvar@(mname,var),ty,exp)) = qualifiedVar qvar ++ 
+                                            "::" ++ showType ty ++ 
+                                            " = " ++ showExp exp
 
-showAlt :: Alt -> String
-showAlt (Adefault exp) = wrapName "Adefault" $ showExp exp
-showAlt (Alit lit exp) = wrapName "ALit" $ showLit lit ++ showExp exp
-showAlt (Acon (mname,dcon) tbinds vbinds exp) = wrapName "Acon" $ showMname mname ++ ", " ++ dcon ++ ", " ++ concatMap (\tb -> showTbind tb ++ ",") tbinds ++ concatMap (\vb ->showVbind vb ++ ",") vbinds ++ showExp exp
+showAlt :: (?settings :: InterpreterSettings) => Alt -> String
+showAlt (Adefault exp) = wrapName "_ -> " $ showExp exp
+showAlt (Alit lit exp) = showLit lit ++ " -> " ++ showExp exp
+
+showAlt (Acon qcon tbinds vbinds exp) = snd qcon  ++
+                                        concatMap (space . (wrapName "tbind") . fst) tbinds ++ " " ++ 
+                                        concatMap (space . (wrapName "vbind") . fst) vbinds ++
+                                        " -> " ++ showExp exp
+
+-- wrapName "Acon" $ showMname mname ++ ", " ++ dcon ++ ", " ++ concatMap (\tb -> showTbind tb ++ ",") tbinds ++ concatMap (\vb ->showVbind vb ++ ",") vbinds ++ showExp exp
 
 showTbind :: (Tvar,Kind) -> String
 showTbind (tvar,kind) = tvar ++ " :: " ++ showKind kind
@@ -127,11 +140,17 @@ showLit (Literal coreLit ty) =
 
 qualifiedVar :: Qual Var -> String
 qualifiedVar (Nothing,var) = var
-qualifiedVar (mname,var) = showMname mname ++ "." ++ var
+qualifiedVar (Just mname,var) = zDecodeString $ show mname ++ "." ++ var
 
 bindId :: Bind -> Id
 bindId (Vb (var,ty)) = var
 bindId (Tb (tvar,kind)) = tvar
+
+{-
+instance Show AnMname where 
+  show (M ((P packageName),[],s2)) = packageName ++ ":" ++ s2
+  show (M ((P packageName),[s1],s2)) = packageName ++ ":" ++ s1 ++ "." ++ s2
+  show (M ((P packageName),ss,s2)) = packageName ++ ":" ++ show ss ++ "." ++ s2
 
 instance Show Cdef where
   show (Constr (_,dcon) tbinds types) = 
@@ -151,10 +170,14 @@ instance Show Cdef where
 instance Show Ty where show = showExtCoreType
                        
 instance Show Kind where show = showKind
-                         
-{-instance Show Tdef where 
-  show (Data qtcon@(_,tcon) tbinds cdefs) = (show . qualifiedVar) qtcon ++ " ..\n\tType parameters:\n" ++ tbinds' ++ "\tType constructors:\n" ++ cdefs' where
-     tbinds' = concatMap (\tb -> "\t\t" ++ showTbind tb ++ "\n") tbinds
-     cdefs' = concatMap (\cd -> "\t\t" ++ show cd ++ " -> " ++ tcon ++ "\n") cdefs
+
+instance Show Exp where
+        show = showExp
+
 -}
 
+space = (++) " "
+newline = (++) "\n"
+appendNewLine = flip (++) "\n"
+tab :: (?settings :: InterpreterSettings) => String -> String
+tab = (++) (replicate (debug_tab_level ?settings) '\t')

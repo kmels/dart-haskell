@@ -6,13 +6,19 @@
 > import Language.Core.Interpreter.Structures
 > import Control.Monad.IO.Class
 > import DART.InterpreterSettings
+> import Control.Monad(when)
+> import Language.Core.Util(showExp)
+> import Language.Core.Core -- Exp
 
 > io :: MonadIO m => IO a -> m a
 > io = liftIO 
 
 > dodebug :: (?settings :: InterpreterSettings) => String -> IO ()
-> dodebug msg = if (debug ?settings) then putStrLn (tab ++ msg)  else return () where
->   tab = replicate 1 '\t'
+> dodebug msg = if (debug ?settings) then putStrLn (tab msg ++ msg)  else return () where
+>   tab _ = replicate (debug_tab_level ?settings) '\t'
+
+> debugM :: (?settings :: InterpreterSettings) => String -> IM ()
+> debugM = io . dodebug
 
 > dowatch msg = if (?watch_reduction) then putStrLn msg  else return ()
 
@@ -40,3 +46,14 @@ Inspired by Prelude.when
 > whenFlag              :: (MonadIO m) => Bool -> IO () -> m ()
 > whenFlag p s          =  if p then io s else return ()
 
+> debugSubexpression :: (?settings :: InterpreterSettings) => Exp -> IM ()
+> debugSubexpression e = when (show_subexpressions ?settings) $ 
+>                        io . dodebug $ "Evaluating subexpression " ++ showExp e
+
+If we are in the IM Monad, we might want to watch expressions being reduced as they are interpreted. 
+
+If the flag --watch-reduction was specified, prints a debug message.
+
+> watchReduction :: (?settings :: InterpreterSettings) => String -> IM ()
+> watchReduction msg | watch_reduction ?settings = debugM msg
+>                    | otherwise = return ()

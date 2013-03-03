@@ -19,7 +19,7 @@
 This is an interpreter for External Core
 
 > import Language.Core.Core
-> import Language.Core.Util(showType,showExtCoreType,showExp,showMname,wrapName)
+> import Language.Core.Util(showType,showExtCoreType,showExp,wrapName)
 
 > import           Control.Monad.State
 > import           Control.Monad.Primitive
@@ -39,10 +39,7 @@ Define a monad IM (for Interpreter Monad), inspired by the *M* monad in [P. Wadl
 
 > type IM = StateT Heap IO 
 
-> -- DARTState = { heap :: Heap, types :: 
-
-> instance Show Exp where
->          show = showExp 
+> -- DARTState = { heap :: Heap, types ::  
 
 > data Value = Wrong String
 >            | Num Integer
