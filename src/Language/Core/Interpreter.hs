@@ -65,7 +65,7 @@ doEvalVdefg vdefg = do
                    || debug ?settings && (not . show_tmp_variables $ ?settings) && (not $ isTmp vdefg)
   (when should_print) $ do
     debugM $ "Evaluation of " ++ (vdefgId vdefg)
-    debugM $ "\t.. was done in " ++ show time ++ "\n\t.. and resulted in " ++ show res
+    debugM $ "\t.. done in " ++ show time ++ "\n\t.. and resulted in " ++ show res
   res `saveResultAs` id
 
 evalModule :: (?settings :: InterpreterSettings) => Module -> IM Heap
@@ -154,6 +154,7 @@ evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
     debugM $ "Expression: " ++ showExp exp
   increaseIndentation
   res <- evalExp exp -- result
+  decreaseIndentation
   h <- gets heap
   res `saveResultAs` (qualifiedVar qvar)
 
@@ -168,6 +169,7 @@ evalExp e@(Appt dc@(Dcon dcon) ty) = do
   debugMStep $ "Evaluating typed function application"
   debugSubexpression dc
   f <- liftIO $ evalStateT (evalExp dc) heap
+  decreaseIndentation
   -- if the type constructor has type parameters but has no type arguments
   -- e.g. as in Nil :: [a], we shall ignore the type parameter
   return $ case f of
@@ -175,20 +177,13 @@ evalExp e@(Appt dc@(Dcon dcon) ty) = do
     TyCon tc -> Fun (\g -> return $ TyConApp tc [g]) (show tc ++ showType ty)
     _ -> Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
 
-{-evalExp e@(Appt exp ty) = do
-  heap <- get
-  debugMStep $ "Evaluating typed function application"
-  debugSubexpression exp
-  increaseIndentation
-  f <- liftIO $ evalStateT (evalExp exp) heap
-  return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g" -}
-
 evalExp e@(Appt exp ty) = do
   h <- gets heap
   debugMStep $ "Evaluating typed function application"
   debugSubexpression e
   increaseIndentation
   f <- evalExp exp
+  decreaseIndentation
   return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
 
 evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) = let
@@ -236,7 +231,7 @@ evalExp e@(App function_exp argument_exp) = do
   debugSubexpression e
   increaseIndentation
   f <- evalExp function_exp
-  decreaseIndentation
+  
    --liftIO . putStrLn $ " f: " ++ showExp function_exp ++ " = " ++ show f
   x <- evalExp argument_exp
   decreaseIndentation
@@ -244,9 +239,6 @@ evalExp e@(App function_exp argument_exp) = do
   when(watch_reduction ?settings) $ 
     debugM $ "Applying " ++ show x ++ " to " ++ show f
   res <- apply f x
-   --liftIO . putStrLn $ "\t Applying f x  = " ++ show res
-   
-   --liftIO . putStrLn $ "Evaluating subexpression " ++ showExp e ++ " = " ++ show res
   return res
 
 -- Variables 
