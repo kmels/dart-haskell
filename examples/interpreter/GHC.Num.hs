@@ -17,11 +17,11 @@ twice :: Int -> Int --TODO, remove type signature
 twice n = n * 2
 
 -- Computed with Num operations
-numberTen = plusOneInt 9
+numberTen = plusOneInt 9 -- DONE
 numberEleven = plusOneInt numberTen
-numberTwenty = twice $ numberTen
-numberTwentyTwo = twice numberEleven
-numberFourtyTwo = twice $ (twice 5) * 4 + 1
+numberTwenty = twice $ numberTen -- DONE
+numberTwentyTwo = twice numberEleven -- DONE
+numberFourtyTwo = twice $ (twice 5) * 2 + 1 -- DONE
 
 -- Predicates
 

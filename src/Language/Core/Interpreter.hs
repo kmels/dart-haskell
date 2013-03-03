@@ -396,15 +396,6 @@ lookupVar x = do
      xDecoded :: String
      xDecoded = zDecodeString x
 
--- | A sort of findMaybe and ($) i.e. it returns only one maybe, the first Just found by mapping the functions to qv, or Nothing.
-
-callEvalVar :: [(Qual Var -> Maybe Value)] -> Qual Var -> Maybe Value
-callEvalVar [] qv = Nothing
-callEvalVar (eqv:eqvs) qv = 
-   case eqv qv of
-     v@(Just value) -> v
-     _ -> callEvalVar eqvs qv
-
 evalFails :: String -> IM (Either Thunk Value)
 evalFails = return . Right . Wrong
 
@@ -435,10 +426,11 @@ apply f m = return . Wrong $ "Applying " ++ show f ++ " with argument " ++ show 
 
 -- | List of library functions
 libraries :: [(Id,Either Thunk Value)]
-libraries = concat $ [--GHC.Num.all,
-  --GHC.Classes.all,
-  GHC.CString.all,
-  GHC.Types.all
+libraries = concat $ [
+  GHC.Num.all
+  , GHC.Classes.all
+  , GHC.CString.all
+  , GHC.Types.all
   , GHC.Tuple.all
   ]
 

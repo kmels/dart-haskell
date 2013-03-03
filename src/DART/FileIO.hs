@@ -17,10 +17,14 @@ import Language.Core.ParseGlue
 
 readHcrFile :: FilePath -> IO String
 readHcrFile filepath = case takeExtension filepath of
-  ".hcr" -> readFile filepath
+  ".hcr" -> do
+    putStrLn $ "Reading " ++ filepath
+    readFile filepath
   ".hs" -> do
     currentDir <- getCurrentDirectory
     let pathToFile = currentDir </> filepath
+    putStrLn $ "Compiling " ++ pathToFile
+    putStrLn $ "in " ++ currentDir
     inp <- [cmd|ghc --make -fext-core #{pathToFile} |] 
     readHcrFile $ dropExtension pathToFile ++ ".hcr"
   ".lhs" -> do
