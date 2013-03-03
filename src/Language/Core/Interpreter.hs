@@ -166,7 +166,7 @@ evalExp :: (?settings :: InterpreterSettings) => Exp -> IM Value
 
 evalExp e@(Appt dc@(Dcon dcon) ty) = do
   heap <- get
-  debugMStep $ "Evaluating typed function application"
+  debugMStep $ "Evaluating typed function application {"
   debugSubexpression dc
   f <- liftIO $ evalStateT (evalExp dc) heap
   decreaseIndentation
@@ -179,7 +179,7 @@ evalExp e@(Appt dc@(Dcon dcon) ty) = do
 
 evalExp e@(Appt exp ty) = do
   h <- gets heap
-  debugMStep $ "Evaluating typed function application"
+  debugMStep $ "Evaluating typed function application { "
   debugSubexpression e
   increaseIndentation
   f <- evalExp exp
@@ -227,7 +227,7 @@ evalExp (App -- Integer,Char construction
            | otherwise = return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
 
 evalExp e@(App function_exp argument_exp) = do
-  debugMStep $ "Evaluating function application"
+  debugMStep $ "Evaluating function application {"
   debugSubexpression e
   increaseIndentation
   f <- evalExp function_exp
@@ -237,7 +237,7 @@ evalExp e@(App function_exp argument_exp) = do
   decreaseIndentation
    --liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " = " ++ show x
   when(watch_reduction ?settings) $ 
-    debugM $ "Applying " ++ show x ++ " to " ++ show f
+    debugM $ "Applying " ++ show x ++ " to " ++ show f ++ " }"
   res <- apply f x
   return res
 

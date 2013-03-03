@@ -21,7 +21,7 @@ debugMStep msg = prependStep >> debugM msg
 -- | Prints the reduction number
 prependStep :: IM () 
 prependStep = gets number_of_reductions >>= -- get the number
-              debugMNLNT . flip (++) "." . show -- preceed the number and print it
+              debugMNLNT . flip (++) "." . show -- preceed the number, print it
               >> modify increase_number_of_reductions -- and then, increase the number
 
 -- | Prints a debug message with a new line at the end
@@ -45,8 +45,8 @@ debugMNT msg = do
 debugMNLNT :: String -> IM ()
 debugMNLNT msg = do 
   s <- gets settings
-  when (debug s) $ io . putStr $ msg
-        
+  when (debug s) $ io . putStr $ msg      
+          
 -- | Prints a debug message without a new line at the end
 -- with a prepended tab
 debugMNL :: String -> IM ()
