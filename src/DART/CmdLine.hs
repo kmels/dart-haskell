@@ -2,15 +2,15 @@
 
 module DART.CmdLine where
 
+import           Control.Monad(when)
+import           Control.Monad.IO.Class
+import           Control.Monad.State(gets)
+import           DART.InterpreterSettings
 import qualified Data.HashTable.IO as H
-import Language.Core.Interpreter.Structures
-import Control.Monad.IO.Class
-import DART.InterpreterSettings
-import Control.Monad(when)
-import Language.Core.Util(showExp)
-import Language.Core.Core -- Exp
-import Control.Monad.State(gets)
-
+import           Language.Core.Core -- Exp
+import           Language.Core.Interpreter.Structures
+import           Language.Core.Util(showExp)
+import Control.Monad.State.Class(modify)
 io :: MonadIO m => IO a -> m a
 io = liftIO 
 
@@ -20,7 +20,9 @@ debugMStep msg = prependStep >> debugM msg
   
 -- | Prints the reduction number
 prependStep :: IM () 
-prependStep = gets number_of_reductions >>= debugMNL . flip (++) ".\t" . show
+prependStep = gets number_of_reductions >>= -- get the number
+              debugMNLNT . flip (++) "." . show -- preceed the number and print it
+              >> modify increase_number_of_reductions -- and then, increase the number
 
 -- | Prints a debug message with a new line at the end
 debugM :: String -> IM ()
@@ -38,7 +40,13 @@ debugMNT msg = do
   s <- gets settings
   when (debug s) $
     io . putStrLn $ msg
-    
+
+-- | Prints a debug message without a new line at the end
+debugMNLNT :: String -> IM ()
+debugMNLNT msg = do 
+  s <- gets settings
+  when (debug s) $ io . putStr $ msg
+        
 -- | Prints a debug message without a new line at the end
 -- with a prepended tab
 debugMNL :: String -> IM ()

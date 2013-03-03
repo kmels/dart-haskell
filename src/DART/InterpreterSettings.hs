@@ -33,12 +33,7 @@ interpret = InterpreterMode {
   } &= summary "Reads a .hcr file and evaluates its declarations. "
 
 
-increase_tab_level :: InterpreterSettings -> InterpreterSettings
-increase_tab_level s = 
-  s { debug_tab_level = c + 1 } where c = debug_tab_level s
-  
-
-decrease_tab_level :: InterpreterSettings -> InterpreterSettings
-decrease_tab_level s = 
-  s { debug_tab_level = c - 1 } where c = debug_tab_level s
-
+increase_debug_tab_level :: InterpreterSettings -> InterpreterSettings
+increase_debug_tab_level s = s { debug_tab_level = debug_tab_level s + 1 } 
+decrease_debug_tab_level :: InterpreterSettings -> InterpreterSettings
+decrease_debug_tab_level s = s { debug_tab_level = debug_tab_level s - 1 } 

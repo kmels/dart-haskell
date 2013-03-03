@@ -14,27 +14,28 @@ category:            Language
 build-type:          Simple
 cabal-version:       >=1.8
 
-tested-with:         GHC==6.4.2, GHC==7.6.1, GHC==7.6.2
+tested-with:         
+                     GHC==6.4.2,
+                     GHC==7.6.1,
+                     GHC==7.6.2
 
 executable dart-haskell
   main-is:           Main.hs
   other-modules:        
-                    DART.FunctionFeeder
-                    DART.FileIO
-                    DART.InterpreterSettings
-                    DART.CmdLine
-                    DART.MkRandomValue
-                    Language.Core.Util
-                    Language.Core.Interpreter.Structures
-                    Language.Core.Interpreter.Apply
-                    Language.Core.Interpreter.GHC.Classes
-                    Language.Core.Interpreter.GHC.CString
-                    Language.Core.Interpreter.GHC.Num
-                    Language.Core.Interpreter.GHC.Tuple
-                    Language.Core.Interpreter.GHC.Types
-                    Language.Core.Interpreter
-                    Language.Core.TypeExtractor
-                    Language.Core.TypeExtractor.DataTypes
+                    DART.FunctionFeeder,
+                    DART.FileIO,
+                    DART.InterpreterSettings,
+                    DART.CmdLine,
+                    DART.MkRandomValue,
+                    Language.Core.Util,
+                    Language.Core.Interpreter.Structures,
+                    Language.Core.Interpreter.Apply,
+                    Language.Core.Interpreter.GHC.CString,
+                    Language.Core.Interpreter.GHC.Tuple,
+                    Language.Core.Interpreter.GHC.Types,
+                    Language.Core.Interpreter,
+                    Language.Core.TypeExtractor,
+                    Language.Core.TypeExtractor.DataTypes,
                     Language.Core.Vdefg
   build-depends:
                     ghc >= 7.4.2 ,     

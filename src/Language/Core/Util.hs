@@ -77,7 +77,7 @@ showExp (Case exp (vbind_var,vbind_ty) ty alts) = "case " ++
   where 
     showAlt' :: Alt -> String
     showAlt' = let
-      ?settings = increase_tab_level ?settings
+      ?settings = increase_debug_tab_level ?settings
       in appendNewLine . tab . showAlt -- ++ "\n" ++ "\t\t" -- tab . newline . showAlt1
       
 showExp (Cast exp ty) = wrapName "case" $ showExp exp ++ showType ty
@@ -181,3 +181,4 @@ newline = (++) "\n"
 appendNewLine = flip (++) "\n"
 tab :: (?settings :: InterpreterSettings) => String -> String
 tab = (++) (replicate (debug_tab_level ?settings) '\t')
+

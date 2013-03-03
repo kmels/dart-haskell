@@ -40,6 +40,7 @@ import           Data.List(find)
 import           Data.Time.Clock(getCurrentTime,diffUTCTime)
 import           DART.InterpreterSettings
 import           Text.Encoding.Z(zDecodeString)
+
 {-Given a module which contains a list of value definitions, *vd*, evaluate every *vd* and return a heap with their interpreted values.
 
 Value definition to mapped values
@@ -149,10 +150,9 @@ evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implement
 
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
   when (show_expressions ?settings) $ do    
-    debugMStep $ "Evaluating value definition" 
-    let ?settings = increase_tab_level ?settings
-    debugM $ "expression = " ++ showExp exp ++ "\n"
-  let ?settings = increase_tab_level ?settings
+    debugMStep $ "Evaluating value definition"     
+    debugM $ "Expression: " ++ showExp exp
+  increaseIndentation
   res <- evalExp exp -- result
   h <- gets heap
   res `saveResultAs` (qualifiedVar qvar)
@@ -165,7 +165,8 @@ evalExp :: (?settings :: InterpreterSettings) => Exp -> IM Value
 
 evalExp e@(Appt dc@(Dcon dcon) ty) = do
   heap <- get
-  debugSubexpression dc  
+  debugMStep $ "Evaluating typed function application"
+  debugSubexpression dc
   f <- liftIO $ evalStateT (evalExp dc) heap
   -- if the type constructor has type parameters but has no type arguments
   -- e.g. as in Nil :: [a], we shall ignore the type parameter
@@ -174,13 +175,21 @@ evalExp e@(Appt dc@(Dcon dcon) ty) = do
     TyCon tc -> Fun (\g -> return $ TyConApp tc [g]) (show tc ++ showType ty)
     _ -> Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
 
-evalExp e@(Appt exp ty) = do
+{-evalExp e@(Appt exp ty) = do
   heap <- get
+  debugMStep $ "Evaluating typed function application"
   debugSubexpression exp
-  let ?settings = increase_tab_level ?settings
+  increaseIndentation
   f <- liftIO $ evalStateT (evalExp exp) heap
+  return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g" -}
+
+evalExp e@(Appt exp ty) = do
+  h <- gets heap
+  debugMStep $ "Evaluating typed function application"
+  debugSubexpression e
+  increaseIndentation
+  f <- evalExp exp
   return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
-  
 
 evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) = let
   ap f = Fun (\x -> apply f x) "GHC.Base.$ :: Fun(a - b)"
@@ -201,9 +210,9 @@ evalExp e@(Lam binded_var exp) = let
      when(watch_reduction ?settings) $ 
        debugM $ "\t evaluating lambda body (exp)"
        
-     let ?settings = increase_tab_level ?settings
-     res <- evalExp exp     
-     let ?settings = decrease_tab_level ?settings
+     increaseIndentation
+     res <- evalExp exp
+     decreaseIndentation
      
      when(watch_reduction ?settings) $ 
        debugM $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"
@@ -223,13 +232,13 @@ evalExp (App -- Integer,Char construction
            | otherwise = return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
 
 evalExp e@(App function_exp argument_exp) = do
-  debugM $ "Evaluating function application"
+  debugMStep $ "Evaluating function application"
   debugSubexpression e
-  let ?settings = increase_tab_level ?settings
+  increaseIndentation
   f <- evalExp function_exp
    --liftIO . putStrLn $ " f: " ++ showExp function_exp ++ " = " ++ show f
   x <- evalExp argument_exp
-  let ?settings = decrease_tab_level ?settings
+  decreaseIndentation
    --liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " = " ++ show x
   when(watch_reduction ?settings) $ 
     debugM $ "\t Applying val " ++ show x ++ " to function " ++ show f
@@ -241,7 +250,7 @@ evalExp e@(App function_exp argument_exp) = do
 
 -- Variables 
 
-evalExp e@(Var qvar) = debugSubexpression e >>= \_ -> evalVar . qualifiedVar $ qvar
+evalExp e@(Var qvar) = evalVar . qualifiedVar $ qvar
 
 -- Case of
 
@@ -251,7 +260,7 @@ evalExp (Case exp@(Var var) vbind@(vbind_var,_) _ alts) = do
   when (watch_reduction ?settings) $ do
     debugM $ "\tDoing case analysis for " ++ qvar
   
-  let ?settings = increase_tab_level ?settings
+  increaseIndentation
   
   -- (too much) debugSubexpression exp 
   var_val <- evalVar qvar
@@ -372,9 +381,9 @@ evalVar id = lookupVar id >>= \v -> case v of
     Left (Thunk e) -> do      
       debugM $ "Variable " ++ id ++ " is a Thunk, evaluating"
       debugSubexpression e
-      let ?settings = increase_tab_level ?settings
+      increaseIndentation
       r <- evalExp e
-      let ?settings = decrease_tab_level ?settings
+      decreaseIndentation
       return r
     Right v -> return $ case v of
       (TyCon tycon@(AlgTyCon n (a:args))) -> v -- TyCon $ AlgTyCon n [] -- take type arguments off
@@ -461,3 +470,13 @@ loadLibraries = do
       debugM $ "Loading " ++ id
       io $ H.insert h id val
 
+
+increaseIndentation :: IM ()
+increaseIndentation = get >>= put . increase_indentation
+decreaseIndentation :: IM ()
+decreaseIndentation = get >>= put . decrease_indentation
+
+increase_indentation :: DARTState -> DARTState
+increase_indentation s = s { tab_indentation  = tab_indentation s + 1 }
+decrease_indentation :: DARTState -> DARTState
+decrease_indentation s = s { tab_indentation  = tab_indentation s - 1 }

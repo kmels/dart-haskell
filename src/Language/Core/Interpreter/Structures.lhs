@@ -30,20 +30,21 @@ For the heap, we use the package [hashtables](http://hackage.haskell.org/package
 > import qualified Data.HashTable.IO as H
 > import qualified Data.HashTable.ST.Cuckoo as C
 
-> type Heap = H.CuckooHashTable Id (Either Thunk Value)
-
-Define a monad IM (for Interpreter Monad) where we keep a value of type DARTState containing state variables such as the heap and settings such as the number of reduction for debugging purposes. 
-
 > data DARTState = DState {
->   heap :: Heap,
->   number_of_reductions :: !Int -- when an expression is evaluated, this value increments by 1
->   , tab_indentation :: !Int -- useful in debug to know how many tabs we shoud prepend
->   , settings :: InterpreterSettings
+>  heap :: Heap,
+>  number_of_reductions :: !Int -- when an expression is evaluated, this value increments by 1
+>  , tab_indentation :: !Int -- useful in debug to know how many tabs we shoud prepend
+>  , settings :: InterpreterSettings
 > }
 
-> type IM = StateT DARTState IO 
+> increase_number_of_reductions :: DARTState -> DARTState
+> increase_number_of_reductions s = s { number_of_reductions = number_of_reductions s + 1 }
 
-> -- DARTState = { heap :: Heap, types ::  
+> type Heap = H.CuckooHashTable Id (Either Thunk Value)
+
+-- | Define a monad IM (for Interpreter Monad) where we keep a value of type DARTState containing state variables such as the heap and settings such as the number of reduction for debugging purposes. 
+
+> type IM = StateT DARTState IO 
 
 > data Value = Wrong String
 >            | Num Integer
