@@ -68,7 +68,7 @@ showExp (Dcon qcon) = zDecodeString . snd $ qcon
 showExp (Lit lit) = showLit lit
 showExp (App exp1 exp2) = wrapName "app" $ showExp exp1 ++ "," ++ showExp exp2
 showExp (Appt exp typ) = wrapName "appt" $ showExp exp ++ "," ++ showType typ --e.g. >= Int
-showExp (Lam bind exp) = "\n\t\\" ++ showBind bind ++ " -> " ++ showExp exp
+showExp (Lam bind exp) = "\\" ++ showBind bind ++ " -> " ++ showExp exp
 showExp (Let vdefg exp) = wrapName "let" $ showVdefg vdefg ++ showExp exp
 showExp (Case exp (vbind_var,vbind_ty) ty alts) = "case " ++ 
                                                   showExp exp ++ " of " ++ 

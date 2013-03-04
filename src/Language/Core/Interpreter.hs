@@ -51,18 +51,19 @@ Value definition to mapped values
 -----------------------------------------------------
 -}
 
-doEvalVdefg :: (?settings :: InterpreterSettings) => Vdefg -> IM Value
+doEvalVdefg :: Vdefg -> IM Value
 doEvalVdefg vdefg = do
   before <- liftIO getCurrentTime
-  h <- get
+  h <- gets heap
+  sttgs <- gets settings
   debugM $ "Evaluating " ++ (vdefgId vdefg)
   res <- evalVdefg vdefg             
   after <- liftIO getCurrentTime
   let 
     id = vdefgId vdefg
     time = after `diffUTCTime` before    
-    should_print = debug ?settings && show_tmp_variables ?settings
-                   || debug ?settings && (not . show_tmp_variables $ ?settings) && (not $ isTmp vdefg)
+    should_print = debug sttgs && show_tmp_variables sttgs
+                   || debug sttgs && show_tmp_variables sttgs && (not $ isTmp vdefg)
   (when should_print) $ do
     debugM $ "Evaluation of " ++ (vdefgId vdefg)
     debugM $ "\t.. done in " ++ show time ++ "\n\t.. and resulted in " ++ show res
@@ -128,23 +129,23 @@ acknowledgeVdef (Vdef (qvar, ty, exp)) = exp `saveThunkAs` (qualifiedVar qvar) >
 
 -- | Evaluate a value definition, which can be either recursive or not recursive
 
-evalVdefg :: (?settings :: InterpreterSettings) => Vdefg -> IM Value
+evalVdefg :: Vdefg -> IM Value
 evalVdefg (Rec (v@(Vdef _):[]) ) = do
   evalVdefg $ Nonrec $ v
 -- More than one vdef? I haven't found a test case (TODO)
 evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented\n\t" 
 
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
-  when (show_expressions ?settings) $ do    
-    debugMStep $ "Evaluating value definition"     
-    debugM $ "Expression: " ++ showExp exp
+  whenFlag show_expressions $ do    
+    debugMStep $ "Evaluating value definition"
+    indentExp exp >>= debugM . (++) "Expression: " 
   increaseIndentation
   res <- evalExp exp -- result
   decreaseIndentation
   h <- gets heap
   res `saveResultAs` (qualifiedVar qvar)
 
-evalExp :: (?settings :: InterpreterSettings) => Exp -> IM Value
+evalExp :: Exp -> IM Value
 
 -- | This one is a function application which has the type accompanied. We won't care about the type now, as I'm not sure how it can be used now.
 -- Appt is always (?) applied to App together with a var that represents the function call of the Appt. In the case of integer summation, this is base:GHC.Num.f#NumInt. That is why we have to ignore the first parameter when applied.
@@ -176,34 +177,27 @@ evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) = let
   ap f = Fun (\x -> apply f x) "GHC.Base.$ :: Fun(a - b)"
   in return $ Fun (\f -> return (ap f)) "$" -- GHC.Base.$ :: Fun(a - b) - Fun(a - b)
 
-evalExp e@(Lam binded_var exp) = let  
-   name = bindId binded_var             
-   bindAndEval binded_value = do 
-     --liftIO $ putStrLn $ "\t getting the heap"
-     h <- gets heap
-     -- TODO, this should be inserted in an environment instead and then be deleted, (gotta change the IM type). It is now added and deleted in the heap. This assumes External Core source code doesn't have any variables shadowed
+evalExp e@(Lam binded_var exp) = do
+  whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
+  return $ Fun bindAndEval $ "\\" ++ bindId binded_var ++ " -> exp" where
+       name = bindId binded_var
      
-     when(watch_reduction ?settings) $ 
-       debugM $ "\t binding " ++ name ++ " to " ++ show binded_value ++ " in the heap"
-       
-     liftIO $ H.insert h name (Right binded_value)
+       -- binds binded_var to value and evaluates the lambda body (exp)
+       bindAndEval :: Value -> IM Value
+       bindAndEval binded_value = do 
+         h <- gets heap
+         -- binded value is now added and deleted in the heap. This assumes External Core source code doesn't have any shadowed variables
      
-     when(watch_reduction ?settings) $ 
-       debugM $ "\t evaluating lambda body (exp)"
-       
-     increaseIndentation
-     res <- evalExp exp
-     decreaseIndentation
+         --watchReductionM $ "binding " ++ name ++ " to " ++ show binded_value ++ " in the heap"
+         name `bindTo` binded_value
      
-     when(watch_reduction ?settings) $ 
-       debugM $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"
-       
-     liftIO $ H.delete h name 
-     return res
-  in do
-     when (show_subexpressions ?settings) $ 
-       debugM $ "Evaluating subexpression " ++ showExp e
-     return $ Fun bindAndEval $ "\\" ++ bindId binded_var ++ " -> exp"
+         watchReductionM $ "\t evaluating lambda body (exp)"       
+         increaseIndentation
+         res <- evalExp exp
+         decreaseIndentation     
+         watchReductionM $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"       
+         liftIO $ H.delete h name 
+         return res
 
 evalExp (App -- Integer,Char construction
           (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),constr))
@@ -216,6 +210,8 @@ evalExp e@(App function_exp argument_exp) = do
   debugMStep $ "Evaluating function application {"
   debugSubexpression e
   increaseIndentation
+  s <- gets settings
+  let ?settings = s
   f <- evalExp function_exp
   
    --liftIO . putStrLn $ " f: " ++ showExp function_exp ++ " = " ++ show f
@@ -240,8 +236,7 @@ evalExp (Case exp vbind@(vbind_var,_) _ alts) = do
   -- (too verbose) debugSubexpression exp 
   var_val <- evalExp exp
   vbind_var `bindTo` var_val
-  when (watch_reduction ?settings) $ do
-    debugM $ "\tDoing case analysis for " ++ show vbind_var
+  watchReductionM $ "\tDoing case analysis for " ++ show vbind_var
     
   maybeAlt <- findMatch var_val alts     
   let exp = maybeAlt >>= Just . altExp -- Maybe Exp
@@ -263,10 +258,12 @@ evalExp (Dcon qcon) = evalVar . qualifiedVar $ qcon
 
 -- Otherwise
 
-evalExp otherExp = return . Wrong $ " TODO: {" ++ showExp otherExp ++ "}\nPlease submit a bug report"
+evalExp otherExp = do
+  expStr <- indentExp otherExp
+  return . Wrong $ " TODO: {" ++ expStr ++ "}\nPlease submit a bug report"
 
 -- | Binds variables to values in a case expression
-bindAltVars :: (?settings :: InterpreterSettings) => Value -> Alt -> IM ()
+bindAltVars :: Value -> Alt -> IM ()
 bindAltVars (TyConApp (AlgTyCon _ _) vals) (Acon _ _ vbinds _) = 
   if (length vals /= length vbinds) 
   then error "length vals /= length vbinds"
@@ -274,9 +271,9 @@ bindAltVars (TyConApp (AlgTyCon _ _) vals) (Acon _ _ vbinds _) =
 bindAltVars val@(Num n) (Acon _ _ [(var,_)] _) = var `bindTo` val
 bindAltVars t v = io . putStrLn $ " Don't know how to bind values " ++ show t ++ " to " ++ show v
     
-bindTo :: (?settings :: InterpreterSettings) => Id -> Value -> IM ()
+bindTo :: Id -> Value -> IM ()
 bindTo i v = do
-  when (watch_reduction ?settings) $ debugM $ "Binding " ++ show i ++ " to " ++ show v              
+  watchReductionM $ "Binding " ++ show i ++ " to " ++ show v              
   h <- gets heap
   io $ H.insert h i (Right v)
               
@@ -292,7 +289,7 @@ isAcon _ = False
 
 
 -- | Tries to find an alternative that matches a value. It returns the first match, if any.
-findMatch :: (?settings :: InterpreterSettings) => Value -> [Alt] -> IM (Maybe Alt)
+findMatch :: Value -> [Alt] -> IM (Maybe Alt)
 findMatch val [] = return Nothing
 findMatch val (a:alts) = do
   matches <- val `matches` a
@@ -301,31 +298,30 @@ findMatch val (a:alts) = do
   then val `findMatch` alts   
   else return . Just $ a 
 
-matches :: (?settings :: InterpreterSettings) => Value -> Alt -> IM Bool
+matches :: Value -> Alt -> IM Bool
 (TyConApp (AlgTyCon n _) vals) `matches` (Acon qual_dcon tbs vbs idx_exp) = do
 
   let tyconId = qualifiedVar qual_dcon
       matches' = tyconId == n
       
-  when(watch_reduction ?settings) $ do
-    debugM $ "Trying to match value with type constructor " ++ tyconId
-    debugM $ "\t.. " ++ if matches' then " matches" else " does not match"
+  watchReductionM $ 
+    "Trying to match value with type constructor " ++ tyconId ++ 
+    "\t.. " ++ if matches' then " matches" else " does not match"
         
   return $ matches'
     
 val `matches` (Alit lit exp) = return False --TODO
 val `matches` (Adefault _) = return True -- this is the default case, i.e. "_ - " 
 (Num n) `matches` (Acon qdcon _ _ _) = do
-  when (watch_reduction ?settings) $ 
-    debugM $ "Trying to match a Num value (" ++ show n ++ ") with the type constructed by " ++ qualifiedVar qdcon
-    
+  watchReductionM $ "Trying to match a Num value (" ++ show n ++ ") with the type constructed by " ++ qualifiedVar qdcon    
   let matches' = qualifiedVar qdcon == "ghc-prim:GHC.Types.I#" 
   
-  when (watch_reduction ?settings) $ 
-    debugM $ "\t.. " ++ if matches' then " matches" else " does not match"
+  watchReductionM $ "\t.. " ++ if matches' then " matches" else " does not match"
 
   return matches'
   
+(Boolean False) `matches` (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.False"
+(Boolean True) `matches` (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.True"
 val `matches` alt = do
   io . putStrLn $ "??? Matching " ++ show val ++ " with " ++ show alt
   return False
@@ -353,7 +349,7 @@ evalLit (Literal (Lstring s) ty) = case showExtCoreType ty of
    "ghc-prim:GHC.Prim.Addr#" -> return . String $ s
    _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghc-prim:GHC.Prim.Addr#"
 
-evalVar :: (?settings :: InterpreterSettings) => Id -> IM Value
+evalVar :: Id -> IM Value
 evalVar id = lookupVar id >>= \v -> case v of
     Left (Thunk e) -> do      
       debugM $ "Variable " ++ id ++ " is a Thunk, evaluating"
@@ -366,7 +362,7 @@ evalVar id = lookupVar id >>= \v -> case v of
       (TyCon tycon@(AlgTyCon n (a:args))) -> v -- TyCon $ AlgTyCon n [] -- take type arguments off
       _ -> v
     
-lookupVar :: (?settings :: InterpreterSettings) => Id -> IM (Either Thunk Value)
+lookupVar :: Id -> IM (Either Thunk Value)
 lookupVar x = do
    debugM $ "Looking up var " ++ x
    h <- gets heap

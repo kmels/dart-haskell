@@ -84,7 +84,13 @@ debugSubexpression e = do
 
 -- | If we are in the IM Monad, we might want to watch expressions being reduced as they are interpreted. 
 -- If the flag --watch-reduction was specified, prints a debug message.
-watchReduction :: (?settings :: InterpreterSettings) => String -> IM ()
-watchReduction msg | watch_reduction ?settings = debugM msg
-                   | otherwise = return ()
+watchReductionM :: String -> IM ()
+watchReductionM msg = whenFlag watch_reduction $ debugM msg
 
+whenFlag :: (InterpreterSettings -> Bool) -> IM () -> IM ()
+whenFlag f a = do
+  sttgs <- gets settings
+  when (f sttgs) $ a
+  
+indentExp :: Exp -> IM String
+indentExp e = gets settings >>= \s -> let ?settings = s in return $ showExp e

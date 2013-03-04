@@ -34,4 +34,4 @@ hundredOne = intListLength [1..101]
 take' :: Int -> [Int] -> [Int]
 take' n _      | n <= 0 =  []
 take' _ []              =  []
-take' n (x:xs)          =  x : take (n-1) xs
+take' n (x:xs)          =  x : take' (n-1) xs
