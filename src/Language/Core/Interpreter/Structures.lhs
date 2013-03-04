@@ -14,7 +14,9 @@
 > {-# LANGUAGE FlexibleInstances #-}
 
 > module Language.Core.Interpreter.Structures where
+
 > import Data.List(findIndices)
+> import Data.Char (isUpper)
 > import DART.InterpreterSettings
 
 This is an interpreter for External Core
@@ -76,6 +78,8 @@ For the heap, we use the package [hashtables](http://hackage.haskell.org/package
 > instance Show Value where
 >   show (Wrong s) = "Wrong " ++ s
 >   show (Num i) = show i
+>   show (Fun f ('$':s)) = drop (lastUpperIndex s) s where -- monomophied function, cut from the last upper case
+>     lastUpperIndex = last . findIndices isUpper
 >   show (Fun f s) = s
 >   show (Boolean b) = show b
 >   show (Rat r) = show r
