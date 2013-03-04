@@ -11,6 +11,7 @@ import           Language.Core.Core -- Exp
 import           Language.Core.Interpreter.Structures
 import           Language.Core.Util(showExp)
 import Control.Monad.State.Class(modify)
+
 io :: MonadIO m => IO a -> m a
 io = liftIO 
 
@@ -78,9 +79,7 @@ printHeap h = do
 debugSubexpression :: Exp -> IM ()
 debugSubexpression e = do
   s <- gets settings  
-  when (show_subexpressions s) $ 
-    let ?settings = s 
-    in debugM $ "Sub-expression: " ++ showExp e
+  whenFlag show_subexpressions $ indentExp e >>= debugM . (++) "Sub-expression: "
 
 -- | If we are in the IM Monad, we might want to watch expressions being reduced as they are interpreted. 
 -- If the flag --watch-reduction was specified, prints a debug message.
@@ -93,4 +92,4 @@ whenFlag f a = do
   when (f sttgs) $ a
   
 indentExp :: Exp -> IM String
-indentExp e = gets settings >>= \s -> let ?settings = s in return $ showExp e
+indentExp e = gets tab_indentation >>= \ti -> let ?tab_indentation = ti in return $ showExp e

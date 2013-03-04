@@ -62,7 +62,7 @@ showType _ = "showType, TODO"
 wrapName s r = s ++ "(" ++ r ++ ")"
 
 -- | Given an Exp from extcore, pretty prints it
-showExp :: (?settings :: InterpreterSettings) => Exp -> String
+showExp :: (?tab_indentation :: Int) => Exp -> String
 showExp (Var qvar) = zDecodeString . snd $ qvar
 showExp (Dcon qcon) = zDecodeString . snd $ qcon
 showExp (Lit lit) = showLit lit
@@ -77,7 +77,7 @@ showExp (Case exp (vbind_var,vbind_ty) ty alts) = "case " ++
   where 
     showAlt' :: Alt -> String
     showAlt' = let
-      ?settings = increase_debug_tab_level ?settings
+      ?tab_indentation = ?tab_indentation + 1
       in appendNewLine . tab . showAlt -- ++ "\n" ++ "\t\t" -- tab . newline . showAlt1
       
 showExp (Cast exp ty) = wrapName "case" $ showExp exp ++ showType ty
@@ -95,16 +95,16 @@ showBind :: Bind -> String
 showBind (Vb (var,ty)) = var -- wrapName "Bind" $ var ++ "::" ++ showType ty
 showBind (Tb tb@(tvar,kind)) = showTbind tb
 
-showVdefg :: (?settings :: InterpreterSettings) => Vdefg -> String
+showVdefg :: (?tab_indentation :: Int) => Vdefg -> String
 showVdefg (Rec vdefs) = wrapName "Rec" $ concatMap showVdef vdefs
 showVdefg (Nonrec vdef) = wrapName "Nonrec" $ showVdef vdef
 
-showVdef :: (?settings :: InterpreterSettings) => Vdef -> String
+showVdef :: (?tab_indentation :: Int) => Vdef -> String
 showVdef (Vdef (qvar@(mname,var),ty,exp)) = qualifiedVar qvar ++ 
                                             "::" ++ showType ty ++ 
                                             " = " ++ showExp exp
 
-showAlt :: (?settings :: InterpreterSettings) => Alt -> String
+showAlt :: (?tab_indentation :: Int) => Alt -> String
 showAlt (Adefault exp) = wrapName "_ -> " $ showExp exp
 showAlt (Alit lit exp) = showLit lit ++ " -> " ++ showExp exp
 
@@ -179,6 +179,6 @@ instance Show Exp where
 space = (++) " "
 newline = (++) "\n"
 appendNewLine = flip (++) "\n"
-tab :: (?settings :: InterpreterSettings) => String -> String
-tab = (++) (replicate (debug_tab_level ?settings) '\t')
+tab :: (?tab_indentation :: Int) => String -> String
+tab = (++) (replicate ?tab_indentation '\t')
 
