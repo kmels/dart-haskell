@@ -126,27 +126,13 @@ acknowledgeVdefg (Rec vdefs) = mapM_ acknowledgeVdef vdefs
 acknowledgeVdef :: Vdef -> IM ()  
 acknowledgeVdef (Vdef (qvar, ty, exp)) = exp `saveThunkAs` (qualifiedVar qvar) >>= \_ -> return ()
 
-{-evalTypeCon :: (?debug :: Bool, watch_reduction ?settings :: Bool) => String -> Cdef -> IM Value
-evalTypeCon finalType (Constr qcname@(_,cname) typarams types) = do
-  h <- get -- get the heap
-  debugM $ "Building constructor for " ++ cname
-  constructor <- return . evalTypeCon' $ types
-  debugM $ "Built constructor value " ++ show constructor
-  return constructor where 
-    mkConDesc :: [Ty] -> String
-    mkConDesc (ty:[]) = cname ++ " :: " ++ (showType ty) ++ " ->" ++ finalType
-    mkConDesc (ty:tys)= cname ++ " :: " ++ (showType ty) ++ " ->" ++ show (Constr (Nothing,"") [] tys) ++ " -> " ++ finalType
-    
-    evalTypeCon' :: [Ty] -> Value -- TyCon-}
-    
-        
-                                             
---The list of value definitions represents the environment
+-- | Evaluate a value definition, which can be either recursive or not recursive
+
 evalVdefg :: (?settings :: InterpreterSettings) => Vdefg -> IM Value
-evalVdefg (Rec (v@(Vdef _):[]) ) = evalVdefg $ Nonrec $ v
+evalVdefg (Rec (v@(Vdef _):[]) ) = do
+  evalVdefg $ Nonrec $ v
 -- More than one vdef? I haven't found a test case (TODO)
-evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented\n\t" --  ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> " VDEF; " ++ var ++ " :: " ++ showType ty ++ "\n\t"++ showExp exp) vdefs
---evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented for value definitions :\n" ++ concatMap (\(Vdef ((mname,var),ty,exp)) -> "\t" ++ var ++ " :: " ++ showType ty++ "\n\t\tExpression:" ++ showExp exp) vdefs
+evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented\n\t" 
 
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
   when (show_expressions ?settings) $ do    
@@ -247,21 +233,16 @@ evalExp e@(Var qvar) = evalVar . qualifiedVar $ qvar
 
 -- Case of
 
-evalExp (Case exp@(Var var) vbind@(vbind_var,_) _ alts) = do
-  let qvar = qualifiedVar var
+evalExp (Case exp vbind@(vbind_var,_) _ alts) = do
+  --let qvar = qualifiedVar var      
     
-  when (watch_reduction ?settings) $ do
-    debugM $ "\tDoing case analysis for " ++ qvar
-  
-  increaseIndentation
-  
-  -- (too much) debugSubexpression exp 
-  var_val <- evalVar qvar
-  watchReduction $ "\t Trying  " ++ show var_val     
+  increaseIndentation  
+  -- (too verbose) debugSubexpression exp 
+  var_val <- evalExp exp
   vbind_var `bindTo` var_val
-        
-  watchReduction $ "\t Trying to match " ++ show var_val     
-   
+  when (watch_reduction ?settings) $ do
+    debugM $ "\tDoing case analysis for " ++ show vbind_var
+    
   maybeAlt <- findMatch var_val alts     
   let exp = maybeAlt >>= Just . altExp -- Maybe Exp
   
@@ -272,14 +253,17 @@ evalExp (Case exp@(Var var) vbind@(vbind_var,_) _ alts) = do
       res <- evalExp e
       when(isAcon alt) $ deleteAltBindedVars alt
       return res
-    _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ qvar
+    _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
 
 evalExp (Lit lit) = evalLit lit
 
 -- Data constructors
 
 evalExp (Dcon qcon) = evalVar . qualifiedVar $ qcon
-evalExp otherExp = return . Wrong $ " TODO: " ++ showExp otherExp
+
+-- Otherwise
+
+evalExp otherExp = return . Wrong $ " TODO: {" ++ showExp otherExp ++ "}\nPlease submit a bug report"
 
 -- | Binds variables to values in a case expression
 bindAltVars :: (?settings :: InterpreterSettings) => Value -> Alt -> IM ()
