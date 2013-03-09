@@ -28,6 +28,7 @@ executable dart-haskell
                     DART.CmdLine,
                     DART.MkRandomValue,
                     Language.Core.Util,
+                    Language.Core.Interpreter.Libraries
                     Language.Core.Interpreter.Structures,
                     Language.Core.Interpreter.Apply,
                     Language.Core.Interpreter.GHC.CString,

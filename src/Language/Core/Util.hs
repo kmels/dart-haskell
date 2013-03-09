@@ -142,9 +142,9 @@ qualifiedVar :: Qual Var -> String
 qualifiedVar (Nothing,var) = var
 qualifiedVar (Just mname,var) = zDecodeString $ show mname ++ "." ++ var
 
-bindId :: Bind -> Id
-bindId (Vb (var,ty)) = var
-bindId (Tb (tvar,kind)) = tvar
+bindVarName :: Bind -> Id
+bindVarName (Vb (var,ty)) = var
+bindVarName (Tb (tvar,kind)) = tvar
 
 {-
 instance Show AnMname where 

@@ -12,16 +12,20 @@ cons = (id,Right val) where
   -- type parameters 
   typeArgs :: [Ty]
   typeArgs = [Tvar "a", Tvar "[a]"]
-  val = TyCon $ AlgTyCon id typeArgs
+  typeConstructor :: TyCon
+  typeConstructor = AlgTyCon id typeArgs
+  val = TyConApp typeConstructor []
 
 listConstructor :: (Id,Either Thunk Value) -- ([]) :: [a], kind * -> *
-listConstructor = (id,Right val) where
+listConstructor = (id,Right $ TyConApp typeConstructor []) where
   id = "ghc-prim:GHC.Types.[]"
   -- type parameters 
   typeArgs :: [Ty]
   typeArgs = [Tvar "a"]
-  val = TyCon $ AlgTyCon id typeArgs
+  typeConstructor :: TyCon  
+  typeConstructor = AlgTyCon id typeArgs
   
+
 all :: [(Id, Either Thunk Value)]
 all = [ cons
         , listConstructor 

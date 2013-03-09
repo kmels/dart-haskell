@@ -12,9 +12,6 @@ import           Language.Core.Interpreter.Structures
 import           Language.Core.Util(showExp)
 import Control.Monad.State.Class(modify)
 
-io :: MonadIO m => IO a -> m a
-io = liftIO 
-
 -- | Prints a debug message with the number of the current reduction prepended
 debugMStep :: String -> IM ()
 debugMStep msg = prependStep >> debugM msg
@@ -59,9 +56,9 @@ debugMNL msg = do
     in io . putStr $ (tab ++ msg) 
             
 printHeap :: (?settings :: InterpreterSettings) => Heap -> IO ()
-printHeap h = do
+printHeap heap = do
   putStrLn $ "-------------------- Heap begins --------------------" 
-  H.mapM_ printVar h
+  H.mapM_ printVar heap
   putStrLn $ "-------------------- Heap ends --------------------" 
   where
     showVal :: Either Thunk Value -> String
@@ -69,9 +66,9 @@ printHeap h = do
     showVal (Right v) = show v
     
     printVar (id,val) = if (show_tmp_variables ?settings) 
-                        then putStrLn $ id ++ " => " ++ showVal val
-                        else if (':' `elem` id) -- then id has a package
-                             then putStrLn $ id ++ " => " ++ showVal val
+                        then putStrLn $ show id ++ " => " ++ showVal val
+                        else if (':' `elem` show id) -- then id has a package
+                             then putStrLn $ show id ++ " => " ++ showVal val
                              else return ()
 
 -- | If we are in the IM Monad, we might want to print expressions being reduced as they are interpreted. 

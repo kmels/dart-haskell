@@ -8,7 +8,11 @@ module Lists (
 
 data List a = Nil | Cons a (List a)
 
-first5nats = [1,2,3,4,5]
+first5nats = [1,2,3,four,five]
+four :: Int
+four = 4
+five :: (Num a) => a
+five = 5
 first3nats = take' 3 first5nats
 
 naturals = [0..]
@@ -27,7 +31,7 @@ intListLength :: [Int] -> Int
 intListLength [] = 0
 intListLength (x:xs) = intListLength xs + 1
 
-four = intListLength [0,1,2,3]
+four' = intListLength [0,1,2,3]
 hundred = intListLength $ take 100 [1..]
 hundredOne = intListLength [1..101]
 

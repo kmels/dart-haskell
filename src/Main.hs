@@ -25,7 +25,8 @@ import DART.MkRandomValue
 import Data.Maybe
 import Language.Core.Vdefg
 import DART.FunctionFeeder
-import qualified Language.Core.Interpreter as Interpreter
+import qualified Language.Core.Interpreter as I
+import qualified Language.Core.Interpreter.Libraries as Libs
 import Language.Core.Interp
 import Control.Monad.State.Lazy
 import qualified Data.HashTable.IO as H
@@ -44,6 +45,7 @@ newState s = do
   h <- io H.new -- get a new heap
   return $ DState {
     heap = h
+    , heap_count = 0
     , number_of_reductions = 0
     , tab_indentation = 0
     , settings = s
@@ -61,17 +63,18 @@ processModule = do
   
   debugM $ "Loading libraries "
   let ?settings = settgs
-  (_,libs) <- io $ runStateT (Interpreter.loadLibraries) st
-  
+  (env,mem) <- io $ runStateT (I.loadLibrary Libs.ghc_base) st
+
   case (eval settgs) of
     -- What should we eval?
     "" -> do  -- not specified
-      (_,state) <- io $ runStateT (Interpreter.evalModule module') libs
+      (_,state) <- io $ runStateT (I.evalModule module' env) mem
       let h = heap state
       when (not . show_heap $ ?settings) $ io . putStrLn $ "WARNING: You did not specify a function name to eval (flags --eval or -e), neither the flag --show-heap. That is why this program has no output"
       when (show_heap $ ?settings) $ io . printHeap $ h
     fun_name -> do -- eval fun_name
-      (result,state) <- io $ runStateT (module' `Interpreter.evalModuleFunction` fun_name) libs
+      io $ putStrLn $ " LIBS: " ++ show env
+      (result,state) <- io $ runStateT (I.evalModuleFunction module' fun_name env) mem
       when (show_heap $ ?settings) $ io . printHeap $ (heap state)
       io . putStrLn $ show result -- will be a Value iff fun_name is not null
 

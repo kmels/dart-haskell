@@ -85,3 +85,7 @@ onetwothree = [1,2,3] -- DONE, needs pretty printing
 
 reflect1 = reflect leaf1 -- DONE
 reflect2 = reflect tree10 -- DONE
+
+-- Problem 1: Types as values in lambda abstractions (
+-- Problem 2: Laziness is broken...
+-- Problem 3: Load GHC's libraries that don't depend on primitives, to which grade?

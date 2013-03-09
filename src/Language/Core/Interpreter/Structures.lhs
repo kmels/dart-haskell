@@ -13,7 +13,17 @@
 
 > {-# LANGUAGE FlexibleInstances #-}
 
-> module Language.Core.Interpreter.Structures where
+> module Language.Core.Interpreter.Structures(
+>   io
+>   , idName
+>   , increase_number_of_reductions
+>   , DARTState(..)
+>   , Heap, Env, HeapAddress, HeapReference
+>   , IM
+>   , Thunk (..), TyCon (..) , Value(..)
+>   , Language.Core.Core.Id
+>   , module Control.Monad.State
+> ) where
 
 > import Data.List(findIndices)
 > import Data.Char (isUpper)
@@ -34,6 +44,7 @@ For the heap, we use the package [hashtables](http://hackage.haskell.org/package
 
 > data DARTState = DState {
 >  heap :: Heap,
+>  heap_count :: Int, -- The number of values that have been in the heap
 >  number_of_reductions :: !Int -- when an expression is evaluated, this value increments by 1
 >  , tab_indentation :: !Int -- useful in debug to know how many tabs we shoud prepend
 >  , settings :: InterpreterSettings
@@ -42,7 +53,10 @@ For the heap, we use the package [hashtables](http://hackage.haskell.org/package
 > increase_number_of_reductions :: DARTState -> DARTState
 > increase_number_of_reductions s = s { number_of_reductions = number_of_reductions s + 1 }
 
-> type Heap = H.CuckooHashTable Id (Either Thunk Value)
+> type Heap = H.CuckooHashTable HeapAddress (Either Thunk Value)
+> type HeapAddress = Int
+> type Env = [(Id,HeapAddress )]
+> type HeapReference = (Id,HeapAddress)
 
 -- | Define a monad IM (for Interpreter Monad) where we keep a value of type DARTState containing state variables such as the heap and settings such as the number of reduction for debugging purposes. 
 
@@ -54,14 +68,18 @@ For the heap, we use the package [hashtables](http://hackage.haskell.org/package
 >            | Boolean Bool
 >            | Char Char
 >            | String String
->            | Fun (Value -> IM Value) Description
+>            | Fun (HeapAddress -> IM Value) Description
 >            -- |  List [Value]
->            | Pair Value Value
->            | TyConApp TyCon [Value]
->            | TyCon TyCon -- so that we can store type constructors in the heap
+>            | Pair (Either Thunk Value) (Either Thunk Value) --HERE
+>            | TyConApp TyCon [Either Thunk Value] -- a type constructor application to some values
+>            | Pointer HeapAddress
 
-> data Thunk = Thunk Exp 
+> data Thunk = Thunk Exp
 > instance Show Thunk where show _ = "Thunk"
+
+cons = TyConApp (AlgTyCon "Cons" [a]) [1,Nil]
+
+FIX THIS (DataCon)
 
 > data TyCon = AlgTyCon Id [Ty] -- if Left, then this tycon expects at least one value of type Ty; if Value, this TyCon replaced a Ty for a Value
 > --data DataCon = MkDataCon Id [Value] --when a TyCon has no Lefts, we shall create a data con
@@ -92,8 +110,6 @@ For the heap, we use the package [hashtables](http://hackage.haskell.org/package
 >                                          | otherwise = idName c ++ vals' where 
 >     show' tca@(TyConApp _ _) = " " ++ wrapInParenthesis (show tca) 
 >     vals' = concatMap (\v -> " " ++ show v) vals
->   show (TyCon tycon@(AlgTyCon id _)) | idName id == "[]" = "[]"
->                                      | otherwise = show tycon
 >   show (Pair a b) = show (a,b)
 
 > instance Show TyCon where
@@ -117,3 +133,6 @@ Take a qualified name and return only its last name. E.g. idName "main.Module.A"
 >     lastDotIndex = last . dotIndexes
 
 > wrapInParenthesis s = "(" ++ s ++ ")"
+
+> io :: MonadIO m => IO a -> m a
+> io = liftIO

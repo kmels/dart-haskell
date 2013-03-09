@@ -23,14 +23,9 @@ import           Control.Applicative((<|>))
 import qualified Data.HashTable.IO as H
 import           Data.Maybe
 import           Language.Core.Core
-import qualified Language.Core.Interpreter.GHC.CString as GHC.CString
-import qualified Language.Core.Interpreter.GHC.Classes as GHC.Classes
-import qualified Language.Core.Interpreter.GHC.Num as GHC.Num
-import qualified Language.Core.Interpreter.GHC.Tuple as GHC.Tuple
-import qualified Language.Core.Interpreter.GHC.Types as GHC.Types
 import           Language.Core.TypeExtractor(extractType)
 import           Language.Core.TypeExtractor.DataTypes
-import           Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,bindId,showBind)
+import           Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,bindVarName,showBind)
 import           Language.Core.Vdefg (isTmp,vdefgId,vdefgName)
 
 import           Control.Monad.State.Lazy
@@ -51,13 +46,13 @@ Value definition to mapped values
 -----------------------------------------------------
 -}
 
-doEvalVdefg :: Vdefg -> IM Value
-doEvalVdefg vdefg = do
+doEvalVdefg :: Vdefg -> Env -> IM HeapReference
+doEvalVdefg vdefg env = do
   before <- liftIO getCurrentTime
   h <- gets heap
   sttgs <- gets settings
   debugM $ "Evaluating " ++ (vdefgId vdefg)
-  res <- evalVdefg vdefg             
+  (heapRef,res) <- evalVdefg vdefg env
   after <- liftIO getCurrentTime
   let 
     id = vdefgId vdefg
@@ -67,31 +62,33 @@ doEvalVdefg vdefg = do
   (when should_print) $ do
     debugM $ "Evaluation of " ++ (vdefgId vdefg)
     debugM $ "\t.. done in " ++ show time ++ "\n\t.. and resulted in " ++ show res
-  res `saveResultAs` id
+  
+  return heapRef
 
-evalModule :: (?settings :: InterpreterSettings) => Module -> IM Heap
-evalModule m@(Module name tdefs vdefgs) = do
-  acknowledgeTypes m
-  mapM_ doEvalVdefg vdefgs
+evalModule :: (?settings :: InterpreterSettings) => Module -> Env -> IM Heap
+evalModule m@(Module name tdefs vdefgs) libs_env = do
+  tycons_env <- acknowledgeTypes m
+  vdefs_env <- acknowledgeVdefgs m
+  let env = tycons_env ++ vdefs_env ++ libs_env  
+  heap_refs <- mapM (flip doEvalVdefg env) vdefgs
   h <- gets heap
   return h
 
 -- | Given a module and a function name, we evaluate the function in that module and return the heap. 
 
-evalModuleFunction :: (?settings :: InterpreterSettings) => Module -> String -> IM Value
-evalModuleFunction m@(Module mname tdefs vdefgs) fname = 
+evalModuleFunction :: (?settings :: InterpreterSettings) => Module -> String -> Env -> IM Value
+evalModuleFunction m@(Module mname tdefs vdefgs) fname libs = 
    if null fname then 
      error $ "evalModuleFunction: function name is empty" 
    else case maybeVdefg of
      Nothing -> return . Wrong $  "Could not find function " ++ fname ++ " in " ++ show mname
      Just vdefg -> do
        debugM $ "Found definition of " ++ fname
-       acknowledgeTypes m
-       acknowledgeVdefgs m
-       --let show_exps = ?show_expressions 
-       --_ <- let ?show_expressions = False in evalModule m
-       --let ?show_expressions = show_exps in doEvalVdefg vdefg
-       doEvalVdefg vdefg
+       tycons_env <- acknowledgeTypes m
+       vdefs_env <- acknowledgeVdefgs m
+       let env = (tycons_env ++ vdefs_env ++ libs)
+       heap_ref@(_,address) <- doEvalVdefg vdefg env  -- ++ libs)
+       evalHeapAddress address env
    where
      fnames = map vdefgName vdefgs -- [String]
      fnames_vdefgs = zip fnames vdefgs 
@@ -99,189 +96,151 @@ evalModuleFunction m@(Module mname tdefs vdefgs) fname =
 
 -- | Given a module, recognize type constructors and put them in the heap so that we can build values for custom types afterwards. 
      
-acknowledgeTypes :: (?settings :: InterpreterSettings) => Module -> IM ()
-acknowledgeTypes modl@(Module _ tdefs _) = mapM_ acknowledgeType tdefs
+acknowledgeTypes :: (?settings :: InterpreterSettings) => Module -> IM Env
+acknowledgeTypes modl@(Module _ tdefs _) = mapM acknowledgeType tdefs >>= return . concat
   
-acknowledgeType :: (?settings :: InterpreterSettings) => Tdef -> IM ()
-acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs)  = do
-  debugM $ "Acknowledging type " ++ qualifiedVar qdname
-  mapM_ insertTyCon cdefs where
-    insertTyCon :: Cdef -> IM ()
+-- | Given a data type or a newtype definition, memorize their type constructors,
+-- create an environment variable for each of them and return an environment that holds
+-- all the created heap references
+acknowledgeType :: (?settings :: InterpreterSettings) => Tdef -> IM Env
+acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) = 
+  do
+    debugM $ "Acknowledging type " ++ qualifiedVar qdname
+    mapM insertTyCon cdefs
+  where  
+    insertTyCon :: Cdef -> IM HeapReference
     insertTyCon tcon@(Constr qcname tbinds' types) = do
-      h <- get 
+      h <- get       
       let 
         tyConName = qualifiedVar qcname
-        tyCons = TyCon $ AlgTyCon tyConName types
-      tyCons `saveResultAs` tyConName
-      return ()
+        tyCon = AlgTyCon tyConName types        
+      memorize (mkVal $ TyConApp tyCon []) (tyConName)
     
 -- | Given a module, recognize all of its value definitions, functions, and put them in the heap so that we can evaluate them when required. 
-acknowledgeVdefgs :: (?settings :: InterpreterSettings) => Module -> IM ()
-acknowledgeVdefgs m@(Module _ _ vdefgs) = mapM_ acknowledgeVdefg vdefgs
+acknowledgeVdefgs :: (?settings :: InterpreterSettings) => Module -> IM Env
+acknowledgeVdefgs m@(Module _ _ vdefgs) = mapM acknowledgeVdefg vdefgs >>= return . concat
 
 -- | Acknowledges value definitions
-acknowledgeVdefg  :: Vdefg -> IM ()
-acknowledgeVdefg (Nonrec vdef) = acknowledgeVdef vdef
-acknowledgeVdefg (Rec vdefs) = mapM_ acknowledgeVdef vdefs
+acknowledgeVdefg  :: Vdefg -> IM Env
+acknowledgeVdefg (Nonrec vdef) = sequence [acknowledgeVdef vdef]
+acknowledgeVdefg (Rec vdefs) = mapM acknowledgeVdef vdefs
 
-acknowledgeVdef :: Vdef -> IM ()  
-acknowledgeVdef (Vdef (qvar, ty, exp)) = exp `saveThunkAs` (qualifiedVar qvar) >>= \_ -> return ()
+acknowledgeVdef :: Vdef -> IM HeapReference
+acknowledgeVdef (Vdef (qvar, ty, exp)) = memorize (mkThunk exp) (qualifiedVar qvar)
 
 -- | Evaluate a value definition, which can be either recursive or not recursive
 
-evalVdefg :: Vdefg -> IM Value
-evalVdefg (Rec (v@(Vdef _):[]) ) = do
-  evalVdefg $ Nonrec $ v
+evalVdefg :: Vdefg -> Env -> IM (HeapReference,Value)
+evalVdefg (Rec (v@(Vdef _):[]) ) env = do
+  evalVdefg (Nonrec v) env
 -- More than one vdef? I haven't found a test case (TODO)
-evalVdefg (Rec vdefs) = return . Wrong $ "TODO: Recursive eval not yet implemented\n\t" 
+evalVdefg (Rec vdefs) env = return $ (,) ("",0) (Wrong "TODO: Recursive eval not yet implemented\n\t" )
 
-evalVdefg (Nonrec (Vdef (qvar, ty, exp))) = do
+evalVdefg (Nonrec (Vdef (qvar, ty, exp))) env = do
   whenFlag show_expressions $ do    
     debugMStep $ "Evaluating value definition"
     indentExp exp >>= debugM . (++) "Expression: " 
   increaseIndentation
-  res <- evalExp exp -- result
+  res <- evalExp exp env  -- result
   decreaseIndentation
+  
   h <- gets heap
-  res `saveResultAs` (qualifiedVar qvar)
+  
+  heap_ref <- memorize (mkVal res) (qualifiedVar qvar)
+  return $ (heap_ref,res)
 
-evalExp :: Exp -> IM Value
+evalExp :: Exp -> Env -> IM Value
 
--- | This one is a function application which has the type accompanied. We won't care about the type now, as I'm not sure how it can be used now.
--- Appt is always (?) applied to App together with a var that represents the function call of the Appt. In the case of integer summation, this is base:GHC.Num.f#NumInt. That is why we have to ignore the first parameter when applied.
--- If Appt is being applied to another appt, then we ignore another level of parameters. This is the case of function application, namely ($) :: (a - b) - a - b
-
-evalExp e@(Appt dc@(Dcon dcon) ty) = do
-  heap <- get
-  debugMStep $ "Evaluating typed function application {"
-  debugSubexpression dc
-  f <- liftIO $ evalStateT (evalExp dc) heap
-  decreaseIndentation
-  -- if the type constructor has type parameters but has no type arguments
-  -- e.g. as in Nil :: [a], we shall ignore the type parameter
-  return $ case f of
-    TyCon tc@(AlgTyCon id []) -> TyCon tc -- we don't expect any further arguments
-    TyCon tc -> Fun (\g -> return $ TyConApp tc [g]) (show tc ++ showType ty)
-    _ -> Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
-
-evalExp e@(Appt exp ty) = do
+-- | A function application which has the type annotation which we will essentially ignore.
+evalExp e@(Appt exp ty) env = do
   h <- gets heap
   debugMStep $ "Evaluating typed function application { "
   debugSubexpression e
-  increaseIndentation
-  f <- evalExp exp
-  decreaseIndentation
-  return $ Fun (\g -> apply f g) $ "\\"++"g -> apply " ++ show f ++ " g"
+  f <- evalExpI exp env  
+  return $ Fun (\g_adr -> apply f g_adr env) $ "\\"++"g -> apply " ++ show f ++ " g"
 
-evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) = let
-  ap f = Fun (\x -> apply f x) "GHC.Base.$ :: Fun(a - b)"
-  in return $ Fun (\f -> return (ap f)) "$" -- GHC.Base.$ :: Fun(a - b) - Fun(a - b)
+evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = let
+  applyFun :: Value -> IM Value  
+  applyFun (Fun f dsc) = return $ Fun f ("($) " ++ dsc)
+  applyFun _ = return $ Wrong "($), Applying something that is not a function"
+  
+  -- takes a function `f` and returns a function `g` that applies `f` to its argument 
+  ap f_adr = evalHeapAddress f_adr env >>= applyFun  
+  in return $ Fun ap "($) :: (a -> b) -> a -> b"
 
-evalExp e@(Lam binded_var exp) = do
+evalExp e@(Lam binded_var exp) env = do
   whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
-  return $ Fun bindAndEval $ "\\" ++ bindId binded_var ++ " -> exp" where
-       name = bindId binded_var
-     
-       -- binds binded_var to value and evaluates the lambda body (exp)
-       bindAndEval :: Value -> IM Value
-       bindAndEval binded_value = do 
-         h <- gets heap
-         -- binded value is now added and deleted in the heap. This assumes External Core source code doesn't have any shadowed variables
-     
-         --watchReductionM $ "binding " ++ name ++ " to " ++ show binded_value ++ " in the heap"
-         name `bindTo` binded_value
-     
-         watchReductionM $ "\t evaluating lambda body (exp)"       
-         increaseIndentation
-         res <- evalExp exp
-         decreaseIndentation     
-         watchReductionM $ "\t deleting binded value for " ++ bindId binded_var ++ " in the heap"       
-         liftIO $ H.delete h name 
-         return res
+  return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp" 
+  where     
+    var_name = bindVarName binded_var
+    applyFun :: HeapAddress -> IM Value
+    applyFun address = watchReductionM "\t evaluating lambda body (exp)" >>
+                       evalExpI exp ((var_name,address):env)
 
 evalExp (App -- Integer,Char construction
           (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),constr))
           (Lit lit) 
-         ) | constr == "Izh" = evalLit lit
-           | constr == "Czh" = evalLit lit
-           | otherwise = return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
+        ) env | constr == "Izh" = evalLit lit
+              | constr == "Czh" = evalLit lit
+              | otherwise = return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
 
-evalExp e@(App function_exp argument_exp) = do
+evalExp e@(App function_exp argument_exp) env = do
   debugMStep $ "Evaluating function application {"
-  debugSubexpression e
-  increaseIndentation
+  debugSubexpression e >> increaseIndentation
   s <- gets settings
   let ?settings = s
-  f <- evalExp function_exp
   
-   --liftIO . putStrLn $ " f: " ++ showExp function_exp ++ " = " ++ show f
-  x <- evalExp argument_exp
+  f <- evalExp function_exp env
+  heap_reference@(_,arg_address) <- mkHeapReference argument_exp
   decreaseIndentation
-   --liftIO . putStrLn $ " x: " ++ showExp argument_exp ++ " = " ++ show x
-  when(watch_reduction ?settings) $ 
-    debugM $ "Applying " ++ show x ++ " to " ++ show f ++ " }"
-  res <- apply f x
+
+  res <- apply f arg_address env -- Note1: the address is paassed 
   return res
 
--- Variables 
-
-evalExp e@(Var qvar) = evalVar . qualifiedVar $ qvar
+-- Qualified variables that should be in the environment
+evalExp e@(Var qvar) env = mkPointer (qualifiedVar qvar) env >>= flip evalPointer env
+evalExp (Dcon qcon) env = mkPointer (qualifiedVar qcon) env >>= flip evalPointer env
 
 -- Case of
 
-evalExp (Case exp vbind@(vbind_var,_) _ alts) = do
+evalExp (Case exp vbind@(vbind_var,_) _ alts) env = do
   --let qvar = qualifiedVar var      
     
-  increaseIndentation  
-  -- (too verbose) debugSubexpression exp 
-  var_val <- evalExp exp
-  vbind_var `bindTo` var_val
+  increaseIndentation
+  heap_reference@(id,address) <- memorize (mkThunk exp) vbind_var
+  exp_value <- evalHeapAddress address env
+
   watchReductionM $ "\tDoing case analysis for " ++ show vbind_var
-    
-  maybeAlt <- findMatch var_val alts     
+  maybeAlt <- findMatch exp_value alts
   let exp = maybeAlt >>= Just . altExp -- Maybe Exp
   
   case exp of
     Just e -> do -- a matched alternative was found, in case it's a constructor, bind its arguments
       let alt = fromJust $ maybeAlt
-      when(isAcon alt) $ var_val `bindAltVars` alt
-      res <- evalExp e
-      when(isAcon alt) $ deleteAltBindedVars alt
+      -- TODO IN ENVIRONMENT when(isAcon alt) $ var_val `bindAltVars` alt
+      res <- evalExp e (heap_reference:env)
+      -- when(isAcon alt) $ deleteAltBindedVars alt
       return res
     _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
 
-evalExp (Lit lit) = evalLit lit
-
--- Data constructors
-
-evalExp (Dcon qcon) = evalVar . qualifiedVar $ qcon
+evalExp (Lit lit) _ = evalLit lit
 
 -- Otherwise
 
-evalExp otherExp = do
+evalExp otherExp _ = do
   expStr <- indentExp otherExp
   return . Wrong $ " TODO: {" ++ expStr ++ "}\nPlease submit a bug report"
 
--- | Binds variables to values in a case expression
-bindAltVars :: Value -> Alt -> IM ()
-bindAltVars (TyConApp (AlgTyCon _ _) vals) (Acon _ _ vbinds _) = 
-  if (length vals /= length vbinds) 
-  then error "length vals /= length vbinds"
-  else mapM_ (uncurry bindTo) ((map fst vbinds) `zip` vals)
-bindAltVars val@(Num n) (Acon _ _ [(var,_)] _) = var `bindTo` val
-bindAltVars t v = io . putStrLn $ " Don't know how to bind values " ++ show t ++ " to " ++ show v
-    
-bindTo :: Id -> Value -> IM ()
-bindTo i v = do
-  watchReductionM $ "Binding " ++ show i ++ " to " ++ show v              
-  h <- gets heap
-  io $ H.insert h i (Right v)
-              
-deleteAltBindedVars :: Alt -> IM ()
-deleteAltBindedVars (Acon _ _ vbinds _) = do 
-  h <- gets heap
-  mapM_ (io . H.delete h . fst) vbinds
--- Otherwise
+-- -- | Binds variables to values in a case expression
+-- bindAltVars :: Value -> Alt -> IM ()
+-- bindAltVars (TyConApp (AlgTyCon _ _) vals) (Acon _ _ vbinds _) = 
+--   if (length vals /= length vbinds) 
+--   then error "length vals /= length vbinds"
+--   else mapM_ (uncurry memorize) ((map fst vbinds) `zip` vals)
+-- bindAltVars val@(Num n) (Acon _ _ [(var,_)] _) = var `bindTo` val
+-- bindAltVars t v = io . putStrLn $ " Don't know how to bind values " ++ show t ++ " to " ++ show v
+
+
 
 isAcon :: Alt -> Bool
 isAcon (Acon _ _ _ _) = True
@@ -349,100 +308,83 @@ evalLit (Literal (Lstring s) ty) = case showExtCoreType ty of
    "ghc-prim:GHC.Prim.Addr#" -> return . String $ s
    _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghc-prim:GHC.Prim.Addr#"
 
-evalVar :: Id -> IM Value
-evalVar id = lookupVar id >>= \v -> case v of
-    Left (Thunk e) -> do      
-      debugM $ "Variable " ++ id ++ " is a Thunk, evaluating"
-      debugSubexpression e
-      increaseIndentation
-      r <- evalExp e
-      decreaseIndentation
-      return r
-    Right v -> return $ case v of
-      (TyCon tycon@(AlgTyCon n (a:args))) -> v -- TyCon $ AlgTyCon n [] -- take type arguments off
-      _ -> v
-    
-lookupVar :: Id -> IM (Either Thunk Value)
-lookupVar x = do
-   debugM $ "Looking up var " ++ x
-   h <- gets heap
-   val <- liftIO $ H.lookup h x -- looks for a variable in the heap
-   lib_val <- liftIO $ H.lookup h xDecoded -- looks for a GHC lib variable in the heap    
-
-   -- if val is Just a, return a. 
-   -- Otherwise if lib_val is Just a, return a
-   -- Otherwise, if lib_val is Nothing, val <|> lib_val is also Nothing, return fail
-   -- 
-   maybe fail return (val <|> lib_val) where
-   
-     fail :: IM (Either Thunk Value)
-     fail = if (xDecoded /= x) 
-            then -- it is z-decoded
-              evalFails $ "Could not find " ++ xDecoded ++ " in the libraries"
-            else 
-              evalFails $ "Could not find " ++ x ++ " in the environment"
-              
-     xDecoded :: String
-     xDecoded = zDecodeString x
+-- | Loads nothing ATM, but it'll be useful
+loadLibrary :: (?settings :: InterpreterSettings) => [(Id, Either Thunk Value)] -> IM Env
+loadLibrary funs = mapM (uncurry $ flip memorize) funs
 
 evalFails :: String -> IM (Either Thunk Value)
 evalFails = return . Right . Wrong
 
-saveResultAs :: Value -> Id -> IM Value
-val `saveResultAs` qvar = do
+-- | Creates a variable name
+mkVarName :: IM String
+mkVarName = gets heap_count >>= return . (++) "dartTmp" . show 
+  
+-- | Stores a value/thunk in memory, returns the given name with the address where
+-- it was stored
+memorize :: Either Thunk Value -> Id -> IM HeapReference
+memorize val id  = do
+  -- Find the an allocation address
+  hc <- gets heap_count
+  let address = hc + 1
+  modify (\st -> st { heap_count = address })
+  
+  -- Put the value in the heap
   h <- gets heap
-  io $ H.insert h qvar (Right val)
-  return val
+  io $ H.insert h address val
+  debugM $ "Memorized " ++ id ++ " in " ++ show address 
+  return (id,address)
 
-saveThunkAs :: Exp -> Id -> IM Thunk
-exp `saveThunkAs` qvar = do
-  h <- gets heap
-  io $ H.insert h qvar (Left thunk)
-  return thunk where
-    thunk = Thunk exp
+-- | Creates new variable for the expression, memorizes it and returns a heap reference
+mkHeapReference :: Exp -> IM HeapReference
+mkHeapReference exp = mkVarName >>= memorize (mkThunk exp)
 
-apply :: Value -> Value -> IM Value
-apply fun@(Fun f _) v = f v
---apply tc@(AlgTyCon name []) v = return . Wrong $ "[], Applying " ++ show tc ++ " with argument " ++ show v
-apply (TyCon tc@(AlgTyCon name (t:types))) v = return $ TyConApp tc' [v] where
-  tc' :: TyCon
-  tc' = AlgTyCon name types
-apply (TyConApp tc@(AlgTyCon name (t:types)) vals) v = return $ TyConApp tc' (vals ++ [v]) where          
-  tc' :: TyCon
-  tc' = AlgTyCon name types
-apply w@(Wrong _) _ = return w
-apply f m = return . Wrong $ "Applying " ++ show f ++ " with argument " ++ show m
+-- | Does the same as evalExp but indents and deindents for debugging output purposes
+evalExpI :: Exp -> Env -> IM Value
+evalExpI exp env = do
+  increaseIndentation
+  res <- evalExp exp env
+  decreaseIndentation
+  return res
 
--- | List of library functions
-libraries :: [(Id,Either Thunk Value)]
-libraries = concat $ [
-  GHC.Num.all
-  , GHC.Classes.all
-  , GHC.CString.all
-  , GHC.Types.all
-  , GHC.Tuple.all
-  ]
+evalThunk :: Env -> Thunk -> IM Value
+evalThunk env (Thunk exp) = evalExp exp env
+    
+-- | Given a Pointer HeapAddress, eval a Thunk if necessary to return a Value represented
+-- by the address 
+evalPointer :: Value -> Env -> IM Value
+evalPointer (Pointer address) env = evalHeapAddress address env
+evalPointer e@(Wrong s) _ = return e
+evalPointer _ _ = return . Wrong $ "evalPointer: The impossible happened"
 
--- | Loads nothing ATM, but it'll be useful
-loadLibraries :: (?settings :: InterpreterSettings) => IM ()
-loadLibraries = do
-  -- loadLib "lib/GHC/Tuple.hs" -- fails due to builtin syntax but good idea
-  h <- get
-  mapM_ loadBinding libraries
-  return ()
+-- | Looks for the address in the heap, evals a thunk if necessary to return a value
+evalHeapAddress :: HeapAddress -> Env -> IM Value
+evalHeapAddress address env = lookupMem address >>= either (evalThunk env) return
+
+mkThunk :: Exp -> Either Thunk Value
+mkThunk = Left . Thunk
+
+mkVal :: Value -> Either Thunk Value
+mkVal = Right
+
+-- | Function application
+apply :: Value -> HeapAddress -> Env -> IM Value
+apply (Fun f _) address _ = f address
+    
+apply (TyConApp (AlgTyCon name (ty:tys)) vals) address env = 
+  -- Applies a (possibly applied) type constructor that expects appliedValue of type ty.
+  -- The type constructor that we are applying has |vals| applied values
+  -- Returns a new type constructor that will take |tys| more values
+  do 
+    val <- evalHeapAddress address env
+    return $ TyConApp newTyCon (mkAppValues val)
   where
-    loadLib :: FilePath -> IM ()
-    loadLib f = do
-      debugM $ "Loading " ++ f
-      m <- io . readModule $ f
-      acknowledgeTypes m
-      
-    loadBinding :: (Id,Either Thunk Value) -> IM ()
-    loadBinding (id,val) = do
-      h <- gets heap
-      debugM $ "Loading " ++ id
-      io $ H.insert h id val
-
+    newTyCon :: TyCon
+    newTyCon = AlgTyCon name tys -- expects one value less
+    mkAppValues :: Value -> [Either Thunk Value]
+    mkAppValues v = vals ++ [Right v] -- :: records the (just) applied value *as a pointer*
+  
+apply w@(Wrong _) _ _ = return w
+apply f x _ = return . Wrong $ "Applying " ++ show f ++ " with argument " ++ show x
 
 increaseIndentation :: IM ()
 increaseIndentation = get >>= put . increase_indentation
