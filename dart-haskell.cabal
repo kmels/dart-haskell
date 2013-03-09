@@ -28,18 +28,20 @@ executable dart-haskell
                     DART.CmdLine,
                     DART.MkRandomValue,
                     Language.Core.Util,
-                    Language.Core.Interpreter.Libraries
+                    Language.Core.Interpreter,
                     Language.Core.Interpreter.Structures,
                     Language.Core.Interpreter.Apply,
-                    Language.Core.Interpreter.GHC.CString,
-                    Language.Core.Interpreter.GHC.Tuple,
-                    Language.Core.Interpreter.GHC.Types,
-                    Language.Core.Interpreter,
+                    Language.Core.Interpreter.Libraries,
+                    Language.Core.Interpreter.Libraries.GHC.Classes
+                    Language.Core.Interpreter.Libraries.GHC.CString,
+                    Language.Core.Interpreter.Libraries.GHC.Num,
+                    Language.Core.Interpreter.Libraries.GHC.Tuple,
+                    Language.Core.Interpreter.Libraries.GHC.Types,
                     Language.Core.TypeExtractor,
                     Language.Core.TypeExtractor.DataTypes,
                     Language.Core.Vdefg
   build-depends:
-                    ghc >= 7.4.2 ,     
+                    ghc >= 7.6.1 ,     
                     -- ghc-7.4.2
                     -- base == 4.5.*, bytestring == 0.9.*, containers ==0.4.*, directory >= 1.1, unix ==2.5.*, extcore >= 1.0 <= 1.0.2
                     -- ghc-7.6.1

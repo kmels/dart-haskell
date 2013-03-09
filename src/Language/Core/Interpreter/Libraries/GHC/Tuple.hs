@@ -1,4 +1,4 @@
-module Language.Core.Interpreter.GHC.Tuple where
+module Language.Core.Interpreter.Libraries.GHC.Tuple where
 
 import Language.Core.Core
 import Language.Core.Interpreter.Structures

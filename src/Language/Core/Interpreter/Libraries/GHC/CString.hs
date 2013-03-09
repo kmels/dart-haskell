@@ -1,4 +1,4 @@
-module Language.Core.Interpreter.GHC.CString where
+module Language.Core.Interpreter.Libraries.GHC.CString where
 
 import Language.Core.Interpreter.Structures
 import Language.Core.Core

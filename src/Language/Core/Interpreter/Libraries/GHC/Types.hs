@@ -1,4 +1,4 @@
-module Language.Core.Interpreter.GHC.Types where
+module Language.Core.Interpreter.Libraries.GHC.Types where
 
 import Language.Core.Interpreter.Structures
 import Language.Core.Util

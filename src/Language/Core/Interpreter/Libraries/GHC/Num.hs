@@ -1,4 +1,4 @@
-module Language.Core.Interpreter.GHC.Num where
+module Language.Core.Interpreter.Libraries.GHC.Num where
 
 import Language.Core.Core
 import Language.Core.Interpreter(evalHeapAddress)

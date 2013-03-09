@@ -365,9 +365,13 @@ evalPointer (Pointer address) env = evalHeapAddress address env
 evalPointer e@(Wrong s) _ = return e
 evalPointer _ _ = return . Wrong $ "evalPointer: The impossible happened"
 
--- | Looks for the address in the heap, evals a thunk if necessary to return a value
+-- | Given an environment, looks for the address in the heap, evals a thunk using the given environment if necessary to return a value
 evalHeapAddress :: HeapAddress -> Env -> IM Value
 evalHeapAddress address env = lookupMem address >>= either (evalThunk env) return
+
+-- | Looks for the address in the heap, evals a thunk if necessary to return a value
+evalAddr :: HeapAddress -> IM Value
+evalAddr address = evalHeapAddress address []
 
 mkThunk :: Exp -> Either Thunk Value
 mkThunk = Left . Thunk
