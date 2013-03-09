@@ -68,9 +68,10 @@ processModule = do
   case (eval settgs) of
     -- What should we eval?
     "" -> do  -- not specified
-      (_,state) <- io $ runStateT (I.evalModule module' env) mem
+      (vals,state) <- io $ runStateT (I.evalModule module' env) mem
       let h = heap state
-      when (not . show_heap $ ?settings) $ io . putStrLn $ "WARNING: You did not specify a function name to eval (flags --eval or -e), neither the flag --show-heap. That is why this program has no output"
+      io . putStrLn $ "WARNING: You did not specify a function name to eval (flags --eval or -e), that's why I evaluated all values"
+      io $ mapM_ (putStrLn . show) vals
       when (show_heap $ ?settings) $ io . printHeap $ h
     fun_name -> do -- eval fun_name
       io $ putStrLn $ " LIBS: " ++ show env

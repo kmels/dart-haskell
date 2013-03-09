@@ -11,7 +11,7 @@
 -- Stability   :  stable
 --
 --
--- An interpreter for external core expressions
+-- Interprets External Core expressions non-strictly
 -----------------------------------------------------------------------------
 
 module Language.Core.Interpreter where
@@ -36,6 +36,8 @@ import           Data.Time.Clock(getCurrentTime,diffUTCTime)
 import           DART.InterpreterSettings
 import           Text.Encoding.Z(zDecodeString)
 
+-- data & control
+import Data.List(intersectBy)
 {-Given a module which contains a list of value definitions, *vd*, evaluate every *vd* and return a heap with their interpreted values.
 
 Value definition to mapped values
@@ -65,14 +67,21 @@ doEvalVdefg vdefg env = do
   
   return heapRef
 
-evalModule :: (?settings :: InterpreterSettings) => Module -> Env -> IM Heap
+evalModule :: (?settings :: InterpreterSettings) => Module -> Env -> IM [(Id, Value)]
 evalModule m@(Module name tdefs vdefgs) libs_env = do
+  -- recognize type and value definitions
   tycons_env <- acknowledgeTypes m
   vdefs_env <- acknowledgeVdefgs m
-  let env = tycons_env ++ vdefs_env ++ libs_env  
-  heap_refs <- mapM (flip doEvalVdefg env) vdefgs
-  h <- gets heap
-  return h
+  
+  -- time to evaluate, set an environment and evaluate only those defs that are not temp
+  let 
+    env = tycons_env ++ vdefs_env ++ libs_env
+    exposed_vdefgs = filter (not . isTmp) vdefgs    
+  heap_refs <- mapM (flip doEvalVdefg env) exposed_vdefgs
+  
+  -- lookup values in memory
+  vals <- mapM (flip (evalHeapAddress . snd) []) heap_refs --fun_heap_refs
+  return $ zip (map fst heap_refs) vals
 
 -- | Given a module and a function name, we evaluate the function in that module and return the heap. 
 
