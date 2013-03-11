@@ -37,6 +37,7 @@ executable dart-haskell
                     Language.Core.Interpreter.Libraries.GHC.Num,
                     Language.Core.Interpreter.Libraries.GHC.Tuple,
                     Language.Core.Interpreter.Libraries.GHC.Types,
+                    Language.Core.Interpreter.Libraries.GHC.Real,
                     Language.Core.TypeExtractor,
                     Language.Core.TypeExtractor.DataTypes,
                     Language.Core.Vdefg

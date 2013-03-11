@@ -15,12 +15,21 @@ import Control.Monad.State.Class(modify)
 -- | Prints a debug message with the number of the current reduction prepended
 debugMStep :: String -> IM ()
 debugMStep msg = prependStep >> debugM msg
-  
+
+-- | Prints a debug message that indicates the end of the current reduction
+-- it increases then the step
+debugMStepEnd :: IM ()
+debugMStepEnd = debugM "}" -- append the number, print it
+                
 -- | Prints the reduction number
 prependStep :: IM () 
 prependStep = gets number_of_reductions >>= -- get the number
               debugMNLNT . flip (++) "." . show -- preceed the number, print it
               >> modify increase_number_of_reductions -- and then, increase the number
+              
+-- | Prepends a new line
+prependNewLn :: String -> String
+prependNewLn = flip (++) "\n"
 
 -- | Prints a debug message with a new line at the end
 debugM :: String -> IM ()
@@ -40,6 +49,7 @@ debugMNT msg = do
     io . putStrLn $ msg
 
 -- | Prints a debug message without a new line at the end
+-- and without a prepended type
 debugMNLNT :: String -> IM ()
 debugMNLNT msg = do 
   s <- gets settings
@@ -65,11 +75,7 @@ printHeap heap = do
     showVal (Left t) = "Thunk"
     showVal (Right v) = show v
     
-    printVar (id,val) = if (show_tmp_variables ?settings) 
-                        then putStrLn $ show id ++ " => " ++ showVal val
-                        else if (':' `elem` show id) -- then id has a package
-                             then putStrLn $ show id ++ " => " ++ showVal val
-                             else return ()
+    printVar (id,val) = putStrLn $ show id ++ " => " ++ showVal val
 
 -- | If we are in the IM Monad, we might want to print expressions being reduced as they are interpreted. 
 -- If the flag --show-subexpressions was specified, shows the given expression

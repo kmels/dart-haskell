@@ -8,6 +8,8 @@ module FirstOrderFunctions (
   -- predicates on Nums
   , isTenEven
   , isHundredLargerThanZero
+  , tenIsEven
+  , tautology1
   ) where
 
 -- Operatinons on Num
@@ -30,3 +32,7 @@ isHundredLargerThanZero = 100 >= 2
 
 isEven n = n `mod` 2 == 0
 
+
+tenIsEven = 10 `mod` 2 == 0
+
+tautology1 = 10 == 10

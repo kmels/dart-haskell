@@ -2,26 +2,18 @@ module Language.Core.Interpreter.Libraries.GHC.Classes where
 
 import Language.Core.Interpreter.Structures
 import Language.Core.Core
+import Language.Core.Interpreter.Libraries.Monomophy(monomophy_2)
 import Language.Core.Interpreter.Apply
-import Language.Core.Interpreter(evalAddr)
+import Language.Core.Interpreter(evalId)
 
 -- | (==)
-
-monomophy_2 :: HeapAddress -> (Value -> Value -> IM Value) -> IM Value
-monomophy_2 tyclass_adr f_callback = do
-  tyclass_val <- evalAddr tyclass_adr -- e.g. Var("zdfNumInt") => Fun(f :: (Num a) -> Int) "Int"
-  let 
-    tyclass_show = show tyclass_val  
-    f_unary tcv x = return $ Fun (\y -> evalAddr y >>= f_callback x) (show tcv ++ " Unary")
-    f_binary = Fun (\x -> evalAddr x >>= f_unary tyclass_val) (show tyclass_val ++ " Binary")
-  return $ f_binary
 
 equals :: (Id, Either Thunk Value)
 equals = (id, Right val) where
    id = "ghc-prim:GHC.Classes.==" 
 --   eq_2 tcf x = Fun (\y -> evalAddr y >>= valEq x) ("(==) :: " ++ show tcf ++ " -> a -> Bool")
 --   monomophy tcf = Fun (\x -> return $ eq_2 tcf x) ("(==) :: " ++ show tcf ++ " -> a -> Bool")
-   val = Fun (\tcf -> monomophy_2 tcf valEq) "polymorphic (==)"
+   val = Fun (monomophy_2 valEq) "polymorphic (==)"
 
 valEq :: Value -> Value -> IM Value
 valEq v w = return . Boolean $ (==) v w
