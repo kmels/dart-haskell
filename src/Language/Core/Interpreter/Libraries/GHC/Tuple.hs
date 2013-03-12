@@ -4,19 +4,14 @@ import Language.Core.Core
 import Language.Core.Interpreter.Structures
 import Language.Core.Interpreter.Apply
 import Language.Core.Util
--- (,)
 
--- tupleConstructor :: Env -> (Id, Either Thunk Value)
--- tupleConstructor env = (id, Right val) where
---   id = "ghc-prim:GHC.Tuple.(,)"
---   mkPair :: Id -> Id -> IM Value
---   mkPair xid yid = do
---     x <- lookupId xid env
---     y <- lookupId yid env
---     return $ Pair x y
---   tuple xid = Fun (mkPair xid) "(,) :: a -> b -> (a,b)"
---   val = Fun (return . tuple) "(,) :: a -> b -> (a,b)"
+tupleConstructor :: (Id, Either Thunk Value)
+tupleConstructor = (id, Right $ Fun (\i e -> lookupId i e >>= mkPair) "(,)") 
+  where
+    id = "ghc-prim:GHC.Tuple.(,)"
+    mkPair :: (Either Thunk Value) -> IM Value
+    mkPair x = return $ Fun (\i e -> lookupId i e >>= return . (Pair x)) "unary(,)"  
 
--- all :: [Env -> (Id, Either Thunk Value)]
--- all = [ tupleConstructor 
---       ]
+all :: [(Id, Either Thunk Value)]
+all = [ tupleConstructor 
+      ]

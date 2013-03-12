@@ -29,6 +29,6 @@ ghc_base = concat $ [
    , GHC.Classes.all
    , GHC.CString.all
    , GHC.Types.all
---   , GHC.Tuple.all
+   , GHC.Tuple.all
    , GHC.Real.all
   ]

@@ -108,7 +108,8 @@ instance Show Value where
   show (Fun f s) = s  
 --  show (List vs) = show vs  
   show (TyConApp (AlgTyCon "ghczmprim:GHC.Tuple.Z2T" _) [x,y]) = show (x,y)
-  show (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) []) = show "[]"
+  show (TyConApp (AlgTyCon "ghc-prim:GHC.Types.[]" _) []) = "[]"
+--  show (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) []) = "[]"
   show (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) appliedVals) = showList appliedVals
   show (TyConApp tc []) = show tc 
   show (TyConApp tc@(AlgTyCon c _) vals@(hv:tv)) | c == "ghc-prim:GHC.Taypes.:" = show vals  
