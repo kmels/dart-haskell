@@ -28,7 +28,7 @@ all = [ mod'
 -- | The polymorphic modulo function
 -- mod :: Integral a => a -> a -> a
 mod' :: (Id, Either Thunk Value)
-mod' = (id, Right $ Fun (monomophy_2 modulo) "polymorphic(+)") 
+mod' = (id, Right $ Fun (monomophy_2 "mod" modulo) "polymorphic(mod)") 
   where
     id = "base:GHC.Real.mod"
     modulo :: Value -> Value -> IM Value

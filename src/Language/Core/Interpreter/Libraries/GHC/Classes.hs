@@ -13,7 +13,7 @@ equals = (id, Right val) where
    id = "ghc-prim:GHC.Classes.==" 
 --   eq_2 tcf x = Fun (\y -> evalAddr y >>= valEq x) ("(==) :: " ++ show tcf ++ " -> a -> Bool")
 --   monomophy tcf = Fun (\x -> return $ eq_2 tcf x) ("(==) :: " ++ show tcf ++ " -> a -> Bool")
-   val = Fun (monomophy_2 valEq) "polymorphic (==)"
+   val = Fun (monomophy_2 "(==)" valEq) "polymorphic(==)"
 
 valEq :: Value -> Value -> IM Value
 valEq v w = return . Boolean $ (==) v w

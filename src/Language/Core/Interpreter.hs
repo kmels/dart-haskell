@@ -18,6 +18,7 @@ module Language.Core.Interpreter where
 
 import           Language.Core.Interpreter.Apply
 import           Language.Core.Interpreter.Acknowledge(acknowledgeTypes,acknowledgeVdefgs)
+import           Language.Core.Interpreter.Util(return')
 import           Language.Core.Interpreter.Structures
   
 import           Control.Applicative((<|>))
@@ -150,11 +151,7 @@ evalExp e@(App function_exp argument_exp) env = do
   return res
 
 -- | A function application which has the type annotation which we will essentially ignore.
-evalExp e@(Appt exp ty) env = do
-  h <- gets heap
-  debugMStep $ "Evaluating typed function application {"
-  f <- evalExpI exp env
-  return $ Fun (return' f) $ "\\"++"g -> apply " ++ show f ++ " g"
+evalExp e@(Appt exp ty) env = evalExp exp env
 
 evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = let
   applyFun :: Value -> IM Value  
@@ -319,14 +316,13 @@ evalHeapAddress address env = lookupMem address >>= either (evalThunk env) retur
 
 -- | Looks for the address in the heap, evals a thunk if necessary to return a value
 evalId :: Id -> Env -> IM Value
-evalId i e = debugM ("Evaluating id " ++ show i) >> lookupId i e >>= either (evalThunk e) return
+evalId i e = lookupId i e >>= either (evalThunk e) return
 
 -- | Function application
 apply :: Value -> Id -> Env -> IM Value
 apply (Fun f d) id env = do
-  debugM $ "Applying id " ++ id ++ " to function " ++ d
   res <- f id env
-  debugM $ "Res: " ++ show res
+  debugM $ "apply " ++ d ++ " to " ++ id ++ " => " ++ show res 
   return res
     
 apply (TyConApp (AlgTyCon name (ty:tys)) vals) id env = 
@@ -354,10 +350,3 @@ increase_indentation :: DARTState -> DARTState
 increase_indentation s = s { tab_indentation  = tab_indentation s + 1 }
 decrease_indentation :: DARTState -> DARTState
 decrease_indentation s = s { tab_indentation  = tab_indentation s - 1 }
-
-printENV env = debugM $ "Env: " ++ concatMap (\c -> show (fst c) ++ ",") env
-
--- | A function that ignores its parameters and returns a value
--- the parenthesis in the signature have no effects and are only here to understand better 
-return' :: Value -> (Id -> Env -> IM Value)
-return' v = \_ -> \_ -> return v
