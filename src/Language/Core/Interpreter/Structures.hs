@@ -32,6 +32,7 @@ import           Control.Monad.Primitive
 import           Control.Monad.State
 import           Data.Char (isUpper)
 import           Data.Either(partitionEithers,rights)
+import           Data.List(intersperse)
 import           Data.List(findIndices)
 import           Prelude hiding (showList)
 -- DART
@@ -107,18 +108,8 @@ instance Show Value where
     lastUpperIndex = last . findIndices isUpper
   show (Fun f s) = s  
 --  show (List vs) = show vs  
-  show (TyConApp (AlgTyCon "ghczmprim:GHC.Tuple.Z2T" _) [x,y]) = show (x,y)
-  show (TyConApp (AlgTyCon "ghc-prim:GHC.Types.[]" _) []) = "[]"
---  show (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) []) = "[]"
-  show (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) appliedVals) = showList appliedVals
-  show (TyConApp tc []) = show tc 
-  show (TyConApp tc@(AlgTyCon c _) vals@(hv:tv)) | c == "ghc-prim:GHC.Taypes.:" = show vals  
-                                                 | c == "ghc-prim:GHC.Types.[]" = show vals
-                                                 | otherwise = idName c ++ vals' where 
-    show' tca@(TyConApp _ _) = " " ++ wrapInParenthesis (show tca) 
-    vals' = concatMap (\v -> " " ++ show v) vals  
+  show (TyConApp tc vals) = showTyConApp tc vals
   show (Pointer address) = "Pointer to " ++ show address
-
 
 instance Show TyCon where
   show (AlgTyCon id []) = idName id
@@ -187,3 +178,28 @@ showList elems = case partitionEithers elems of
     showTail (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) ((Right th):(Right tt):[])) = "," ++ show th ++ showTail tt
     showTail (TyConApp (AlgTyCon "ghc-prim:GHC.Types.[]" _) []) = ""
     showTail xs = "????\t\t\t" ++ show xs ++ " \t\t\t"
+
+showTyConApp :: TyCon -> [Either Thunk Value] -> String
+-- lists
+showTyConApp (AlgTyCon "ghc-prim:GHC.Types.[]" []) [] = "[]"
+showTyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) cns = showList cns
+-- tuples
+showTyConApp (AlgTyCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = show (x,y)
+-- otherwise
+showTyConApp (AlgTyCon tycon_name []) vals = idName tycon_name ++ " " ++ showVals vals
+showTyConApp (AlgTyCon tycon_name _) vals = idName tycon_name ++ " " ++ showVals vals
+
+showVals :: [Either Thunk Value] -> String
+showVals vs = case partitionEithers vs of
+  ([],vals) -> concatMap (\val -> show val ++ " ") vals
+  (tnks,vals) -> concatMap (\tnk -> show tnk ++ " ") tnks ++ " ; " ++ concatMap (\val -> show val ++ " ") vals
+
+
+  
+--  show (TyConApp tc []) = show tc 
+    
+    
+    --      | c == "ghc-prim:GHC.Types.:" = showList vals
+    --                                              | otherwise = idName c ++ vals' where 
+    -- show' tca@(TyConApp _ _) = " " ++ wrapInParenthesis (show tca) 
+    -- vals' = concatMap (\v -> " " ++ show v) vals  
