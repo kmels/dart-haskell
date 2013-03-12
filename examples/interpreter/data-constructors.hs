@@ -31,6 +31,9 @@ pinkFloyd = MkBand "Pink Floyd"  -- DONE, needs pretty printing
               , ("David Gilmour", guitar)
               , ("Richard Wright", keyboard)]
 
+
+pfMembers = ["Roger","David","Richard","Nick"]
+
 data ListAB a b = ConsA a (ListAB a b)
                 | ConsB b (ListAB a b)
                 | ABNil deriving (Show,Eq)

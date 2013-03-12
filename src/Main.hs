@@ -74,7 +74,6 @@ processModule = do
       io $ mapM_ (putStrLn . show) vals
       when (show_heap $ ?settings) $ io . printHeap $ h
     fun_name -> do -- eval fun_name
-      io $ putStrLn $ " LIBS: " ++ show env
       (result,state) <- io $ runStateT (I.evalModuleFunction module' fun_name env) mem
       when (show_heap $ ?settings) $ io . printHeap $ (heap state)
       io . putStrLn $ show result -- will be a Value iff fun_name is not null

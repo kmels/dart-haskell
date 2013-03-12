@@ -28,11 +28,12 @@ module Language.Core.Interpreter.Structures(
 ) where
 
 -- Prelude and control
-import           Data.List(findIndices)
-import           Data.Char (isUpper)
-import           Control.Monad.State
 import           Control.Monad.Primitive
-
+import           Control.Monad.State
+import           Data.Char (isUpper)
+import           Data.Either(partitionEithers,rights)
+import           Data.List(findIndices)
+import           Prelude hiding (showList)
 -- DART
 import           DART.InterpreterSettings
 -- Language.Core
@@ -97,21 +98,26 @@ instance Eq Value where
 instance Show Value where
   show (Wrong s) = "Wrong " ++ s
   show (Num i) = show i
+  show (Rat r) = show r
+  show (Boolean b) = show b  
+  show (Char c) = show c
+  show (String s) = show s
+  show (Pair a b) = show (a,b)
   show (Fun f ('$':s)) = drop (lastUpperIndex s) s where -- monomophied function, cut from the last upper case
     lastUpperIndex = last . findIndices isUpper
-  show (Fun f s) = s
-  show (Boolean b) = show b
-  show (Rat r) = show r
-  show (String s) = show s
---  show (List vs) = show vs
-  show (Char c) = show c
+  show (Fun f s) = s  
+--  show (List vs) = show vs  
   show (TyConApp (AlgTyCon "ghczmprim:GHC.Tuple.Z2T" _) [x,y]) = show (x,y)
-  show (TyConApp tc@(AlgTyCon c _) vals@(hv:tv)) | c == "ghc-prim:GHC.Taypes.:" = show vals
-                                         | c == "ghc-prim:GHC.Types.[]a" = show vals
-                                         | otherwise = idName c ++ vals' where 
+  show (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) []) = show "[]"
+  show (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) appliedVals) = showList appliedVals
+  show (TyConApp tc []) = show tc 
+  show (TyConApp tc@(AlgTyCon c _) vals@(hv:tv)) | c == "ghc-prim:GHC.Taypes.:" = show vals  
+                                                 | c == "ghc-prim:GHC.Types.[]" = show vals
+                                                 | otherwise = idName c ++ vals' where 
     show' tca@(TyConApp _ _) = " " ++ wrapInParenthesis (show tca) 
-    vals' = concatMap (\v -> " " ++ show v) vals
-  show (Pair a b) = show (a,b)
+    vals' = concatMap (\v -> " " ++ show v) vals  
+  show (Pointer address) = "Pointer to " ++ show address
+
 
 instance Show TyCon where
   show (AlgTyCon id []) = idName id
@@ -169,3 +175,14 @@ mkVarName = gets heap_count >>= return . (++) "dartTmp" . show
 
 increase_number_of_reductions :: DARTState -> DARTState
 increase_number_of_reductions s = s { number_of_reductions = number_of_reductions s + 1 }
+
+showList :: [Either Thunk Value] -> String
+showList elems = case partitionEithers elems of
+  ([],[]) -> "" -- no thunks, no vals
+  ([],(head:t:[])) -> "[" ++ show head ++ showTail t ++ "]" -- no thunks
+  _ -> show elems
+  where
+    showTail :: Value -> String    
+    showTail (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) ((Right th):(Right tt):[])) = "," ++ show th ++ showTail tt
+    showTail (TyConApp (AlgTyCon "ghc-prim:GHC.Types.[]" _) []) = ""
+    showTail xs = "????\t\t\t" ++ show xs ++ " \t\t\t"
