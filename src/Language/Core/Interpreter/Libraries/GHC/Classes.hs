@@ -2,9 +2,17 @@ module Language.Core.Interpreter.Libraries.GHC.Classes where
 
 import Language.Core.Interpreter.Structures
 import Language.Core.Core
-import Language.Core.Interpreter.Libraries.Monomophy(monomophy_2)
+import Language.Core.Interpreter.Libraries.Monomophy(monomophy_2, mkMonomophier)
 import Language.Core.Interpreter.Apply
 import Language.Core.Interpreter(evalId)
+
+all :: [(Id, Either Thunk Value)]
+all = [ equals
+--        , lessEquals
+--        , greaterEquals
+--        , fOrdInt
+      , mkMonomophier "ghc-prim:GHC.Classes.$p1Ord"
+        ]
 
 -- | (==)
 
@@ -45,10 +53,3 @@ valEq v w = return . Boolean $ (==) v w
 --   id = "ghc-prim:GHC.Classes.$fOrdInt"
 --   val = Fun lookupH (idName id)
 
-
-all :: [(Id, Either Thunk Value)]
-all = [ equals
---        , lessEquals
---        , greaterEquals
---        , fOrdInt
-        ]

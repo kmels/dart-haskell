@@ -17,12 +17,16 @@ import DART.CmdLine
 import Language.Core.Core
 import Language.Core.Interpreter(evalId)
 import Language.Core.Interpreter.Apply
-import Language.Core.Interpreter.Libraries.Monomophy(monomophy_2)
+import Language.Core.Interpreter.Libraries.Monomophy(monomophy_2,mkMonomophier)
 import Language.Core.Interpreter.Structures
 import Prelude hiding (all)
 
 all :: [(Id, Either Thunk Value)]
 all = [ mod'
+        , mkMonomophier "base:GHC.Real.$fIntegralInt"
+        , mkMonomophier "base:GHC.Real.$p1Integral"
+        , mkMonomophier "base:GHC.Real.$p1Real"
+        , mkMonomophier "base:GHC.Real.$p2Real"
       ]
 
 -- | The polymorphic modulo function
