@@ -180,26 +180,18 @@ showList elems = case partitionEithers elems of
     showTail xs = "????\t\t\t" ++ show xs ++ " \t\t\t"
 
 showTyConApp :: TyCon -> [Either Thunk Value] -> String
--- lists
-showTyConApp (AlgTyCon "ghc-prim:GHC.Types.[]" []) [] = "[]"
-showTyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) cns = showList cns
--- tuples
-showTyConApp (AlgTyCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = show (x,y)
+showTyConApp (AlgTyCon "ghc-prim:GHC.Types.[]" []) [] = "[]" -- empty list
+showTyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) cns = showList cns -- lists
+showTyConApp (AlgTyCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = show (x,y) -- tuples
 -- otherwise
 showTyConApp (AlgTyCon tycon_name []) vals = idName tycon_name ++ " " ++ showVals vals
 showTyConApp (AlgTyCon tycon_name _) vals = idName tycon_name ++ " " ++ showVals vals
 
 showVals :: [Either Thunk Value] -> String
 showVals vs = case partitionEithers vs of
-  ([],vals) -> concatMap (\val -> show val ++ " ") vals
-  (tnks,vals) -> concatMap (\tnk -> show tnk ++ " ") tnks ++ " ; " ++ concatMap (\val -> show val ++ " ") vals
-
-
-  
---  show (TyConApp tc []) = show tc 
-    
-    
-    --      | c == "ghc-prim:GHC.Types.:" = showList vals
-    --                                              | otherwise = idName c ++ vals' where 
-    -- show' tca@(TyConApp _ _) = " " ++ wrapInParenthesis (show tca) 
-    -- vals' = concatMap (\v -> " " ++ show v) vals  
+  ([],vals) -> concatMap (wrapCons) vals
+  (tnks,vals) -> concatMap (\tnk -> show tnk ++ " ") tnks ++ " ; " ++ concatMap (wrapCons) vals
+  where
+    wrapCons :: Value -> String
+    wrapCons t@(TyConApp _ _) = wrapInParenthesis . show $ t
+    wrapCons v = show v ++ " "

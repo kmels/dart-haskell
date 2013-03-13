@@ -168,8 +168,12 @@ evalExp e@(Lam binded_var exp) env = do
   where     
     var_name = bindVarName binded_var
     applyFun :: Id -> Env -> IM Value
-    applyFun id env' = watchReductionM "\t evaluating lambda body (exp)" >>
-                       evalExpI exp (env' ++ env)
+    applyFun id env' = do
+      watchReductionM "\t evaluating lambda body (exp)"
+      --make alias (var_name should point to where id is)
+      --so that the body of exp can find var_name
+      heap_ref <- lookupId id env' >>= flip memorize var_name
+      evalExpI exp (heap_ref:env)
 
 -- Qualified variables that should be in the environment
 evalExp e@(Var qvar) env = mkPointer (qualifiedVar qvar) env >>= flip evalPointer env
@@ -182,17 +186,23 @@ evalExp (Case exp vbind@(vbind_var,_) _ alts) env = do
     
   increaseIndentation
   heap_reference@(id,address) <- memorize (mkThunk exp) vbind_var
-  exp_value <- evalHeapAddress address env
+  exp_value <- evalHeapAddress address (heap_reference:env)
 
   watchReductionM $ "\tDoing case analysis for " ++ show vbind_var
   maybeAlt <- findMatch exp_value alts
   let exp = maybeAlt >>= Just . altExp -- Maybe Exp
   
+  debugM $ "EXP: "++ show exp
   case exp of
     Just e -> do -- a matched alternative was found, in case it's a constructor, bind its arguments
       let alt = fromJust $ maybeAlt
+      
+      debugM "Making altEnv"
+      alt_env <- mkAltEnv exp_value alt
+      debugM "End making altEnv"
       -- TODO IN ENVIRONMENT when(isAcon alt) $ var_val `bindAltVars` alt
-      res <- evalExp e (heap_reference:env)
+      res <- evalExp e (heap_reference:env ++ alt_env)
+      debugM "End making altEnv"
       -- when(isAcon alt) $ deleteAltBindedVars alt
       return res
     _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
@@ -205,14 +215,17 @@ evalExp otherExp _ = do
   expStr <- indentExp otherExp
   return . Wrong $ " TODO: {" ++ expStr ++ "}\nPlease submit a bug report"
 
--- -- | Binds variables to values in a case expression
--- bindAltVars :: Value -> Alt -> IM ()
--- bindAltVars (TyConApp (AlgTyCon _ _) vals) (Acon _ _ vbinds _) = 
---   if (length vals /= length vbinds) 
---   then error "length vals /= length vbinds"
---   else mapM_ (uncurry memorize) ((map fst vbinds) `zip` vals)
--- bindAltVars val@(Num n) (Acon _ _ [(var,_)] _) = var `bindTo` val
--- bindAltVars t v = io . putStrLn $ " Don't know how to bind values " ++ show t ++ " to " ++ show v
+-- | Given an alternative and a value that matches the alternative,
+-- binds the free variables in memory and returns a list of references (an environment)
+mkAltEnv :: Value -> Alt -> IM Env
+mkAltEnv (TyConApp (AlgTyCon _ _) vals) (Acon _ _ vbinds _) = debugM (show vals) >> debugM (show vbinds) >> 
+  if (length vals /= length vbinds)
+  then error "length vals /= length vbinds"
+  else debugM "CAFE" >> mapM (uncurry memorize) (vals `zip` (map fst vbinds))
+mkAltEnv _ _ = return []
+  
+--bindAltVars val@(Num n) (Acon _ _ [(var,_)] _) = var `bindTo` val
+--bindAltVars t v = io . putStrLn $ " Don't know how to bind values " ++ show t ++ " to " ++ show v
 
 
 
@@ -225,6 +238,7 @@ isAcon _ = False
 findMatch :: Value -> [Alt] -> IM (Maybe Alt)
 findMatch val [] = return Nothing
 findMatch val (a:alts) = do
+  debugM $ "Finding match for " ++ show val
   matches <- val `matches` a
   
   if (not matches)
