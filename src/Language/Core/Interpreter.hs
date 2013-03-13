@@ -162,11 +162,12 @@ evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = let
   ap id e = lookupId id e >>= either (evalThunk e) return >>= applyFun  
   in return $ Fun ap "($) :: (a -> b) -> a -> b"
 
-evalExp e@(Lam binded_var exp) env = do
+-- lambda abstraction over types variables
+-- returns a Fun value
+evalExp e@(Lam (Vb (var_name,_)) exp) env = do
   whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
   return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp" 
   where     
-    var_name = bindVarName binded_var
     applyFun :: Id -> Env -> IM Value
     applyFun id env' = do
       watchReductionM "\t evaluating lambda body (exp)"
@@ -175,6 +176,13 @@ evalExp e@(Lam binded_var exp) env = do
       heap_ref <- lookupId id env' >>= flip memorize var_name
       evalExpI exp (heap_ref:env)
 
+-- lambda abstraction over variables
+-- ignores the type argument, evaluating the expression
+evalExp e@(Lam (Tb (var_name,_)) exp) env = do
+  whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
+  debugM "Ignoring type parameter"
+  evalExpI exp env
+      
 -- Qualified variables that should be in the environment
 evalExp e@(Var qvar) env = mkPointer (qualifiedVar qvar) env >>= flip evalPointer env
 evalExp (Dcon qcon) env = mkPointer (qualifiedVar qcon) env >>= flip evalPointer env

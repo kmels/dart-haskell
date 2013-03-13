@@ -25,8 +25,21 @@ listConstructor = (id,Right $ TyConApp typeConstructor []) where
   typeConstructor :: TyCon  
   typeConstructor = AlgTyCon id typeArgs
   
+true :: (Id, Either Thunk Value)
+true = (id, Right $ TyConApp tc []) -- has no applied values
+       where
+         id = "ghc-prim:GHC.Types.True"
+         tc = AlgTyCon id [] -- awaits no types
 
+false :: (Id, Either Thunk Value)
+false = (id, Right $ TyConApp tc []) -- has no applied values
+       where
+         id = "ghc-prim:GHC.Types.False"
+         tc = AlgTyCon id [] -- awaits no types
+         
 all :: [(Id, Either Thunk Value)]
 all = [ cons
-        , listConstructor 
+        , listConstructor
+        , true
+        , false
       ]

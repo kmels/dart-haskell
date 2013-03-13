@@ -3,6 +3,7 @@ module Lists (
   , first3nats
   , first5nats
   , first10primes
+--  , five
   , take'
 ) where
 
