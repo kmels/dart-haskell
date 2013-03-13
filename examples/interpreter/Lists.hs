@@ -1,19 +1,41 @@
 module Lists (
-  naturals
+  xs, head', one
+  , naturals
+  , first50
   , first3nats
   , first5nats
   , first10primes
---  , five
+  , five
+  , str
+  , chr
   , take'
 ) where
 
 data List a = Nil | Cons a (List a)
 
-first5nats = [1,2,3,four,five]
+-- works
+xs = Cons 1000 (Cons 2000 Nil) 
+
+head' :: List a -> a 
+head' Nil = error "Empty list"
+head' (Cons x _) = x
+
+-- works
+one = head' xs
+
+-- first 5 nats
+
+
 four :: Int
 four = 4
 five :: (Num a) => a
 five = 5
+
+--str :: (Eq a) => [a]
+chr = 'a'
+str = "a string"
+
+first5nats = [1,2,3,four,five]
 first3nats = take' 3 first5nats
 
 naturals = [0..]
@@ -40,3 +62,5 @@ take' :: Int -> [Int] -> [Int]
 take' n _      | n <= 0 =  []
 take' _ []              =  []
 take' n (x:xs)          =  x : take' (n-1) xs
+
+first50 = take' 50 naturals

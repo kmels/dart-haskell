@@ -193,5 +193,6 @@ showVals vs = case partitionEithers vs of
   (tnks,vals) -> concatMap (\tnk -> show tnk ++ " ") tnks ++ " ; " ++ concatMap (wrapCons) vals
   where
     wrapCons :: Value -> String
+    wrapCons t@(TyConApp (AlgTyCon _ []) _) = show $ t -- if tycon expects no types, don't wrap
     wrapCons t@(TyConApp _ _) = wrapInParenthesis . show $ t
     wrapCons v = show v ++ " "

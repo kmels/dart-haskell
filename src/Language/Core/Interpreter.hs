@@ -347,19 +347,12 @@ apply (Fun f d) id env = do
   debugM $ "apply " ++ d ++ " to " ++ id ++ " => " ++ show res 
   return res
     
-apply (TyConApp (AlgTyCon name (ty:tys)) vals) id env = 
-  -- Applies a (possibly applied) type constructor that expects appliedValue of type ty.
-  -- The type constructor that we are applying has |vals| applied values
-  -- Returns a new type constructor that will take |tys| more values
-  do 
+-- Applies a (possibly applied) type constructor that expects appliedValue of type ty.
+-- The type constructor that we are applying has |vals| applied values
+apply (TyConApp tycon vals) id env =  do 
     val <- lookupId id env >>= either (evalThunk env) return
-    return $ TyConApp newTyCon (mkAppValues val)
-  where
-    newTyCon :: TyCon
-    newTyCon = AlgTyCon name tys -- expects one value less
-    mkAppValues :: Value -> [Either Thunk Value]
-    mkAppValues v = vals ++ [Right v] -- :: records the (just) applied value *as a pointer*
-  
+    return $ TyConApp tycon (vals ++ [Right val])
+    
 apply w@(Wrong _) _ _ = return w
 apply f x _ = return . Wrong $ "Applying " ++ show f ++ " with argument " ++ show x
 
