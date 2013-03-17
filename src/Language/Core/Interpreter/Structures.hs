@@ -177,6 +177,7 @@ showList elems = case partitionEithers elems of
     showTail :: Value -> String    
     showTail (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) ((Right th):(Right tt):[])) = "," ++ show th ++ showTail tt
     showTail (TyConApp (AlgTyCon "ghc-prim:GHC.Types.[]" _) []) = ""
+    showTail w@(Wrong _) = "," ++ show w
     showTail xs = "????\t\t\t" ++ show xs ++ " \t\t\t"
 
 showTyConApp :: TyCon -> [Either Thunk Value] -> String

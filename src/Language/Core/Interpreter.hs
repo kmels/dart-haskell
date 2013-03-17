@@ -137,11 +137,10 @@ evalExp (App -- Integer,Char construction
               | otherwise = return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
 
 evalExp e@(App function_exp argument_exp) env = do
-  debugMStep ("Evaluating function application {")
   ti <- gets tab_indentation
   let ?tab_indentation = ti
       
-  f <- evalExpI function_exp env
+  f <- evalExpI function_exp env "Evaluating function application"
   heap_reference@(id,arg_address) <- mkHeapReference argument_exp
   --decreaseIndentation
   debugM "" >> debugM ("Argument to function has reference: " ++ show heap_reference)
@@ -164,24 +163,24 @@ evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = let
 
 -- lambda abstraction over types variables
 -- returns a Fun value
-evalExp e@(Lam (Vb (var_name,_)) exp) env = do
-  whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
+evalExp e@(Lam (Vb (var_name,ty)) exp) env = do
+  --whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
+  debugM $ "Making function from lambda abstraction \\" ++ var_name ++ " :: " ++ showType ty ++ " -> exp "
   return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp" 
   where     
     applyFun :: Id -> Env -> IM Value
     applyFun id env' = do
-      watchReductionM "\t evaluating lambda body (exp)"
       --make alias (var_name should point to where id is)
       --so that the body of exp can find var_name
       heap_ref <- lookupId id env' >>= flip memorize var_name
-      evalExpI exp (heap_ref:env)
+      evalExpI exp (heap_ref:env) "Evaluating Lambda body (exp)"
 
 -- lambda abstraction over variables
 -- ignores the type argument, evaluating the expression
 evalExp e@(Lam (Tb (var_name,_)) exp) env = do
   whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
   debugM "Ignoring type parameter"
-  evalExpI exp env
+  evalExpI exp env "Evaluating lambda body (exp)"
       
 -- Qualified variables that should be in the environment
 evalExp e@(Var qvar) env = mkPointer (qualifiedVar qvar) env >>= flip evalPointer env
@@ -312,8 +311,9 @@ evalFails :: String -> IM (Either Thunk Value)
 evalFails = return . Right . Wrong
   
 -- | Does the same as evalExp but indents and deindents for debugging output purposes
-evalExpI :: Exp -> Env -> IM Value
-evalExpI exp env = do  
+evalExpI :: Exp -> Env -> String -> IM Value
+evalExpI exp env desc = do 
+  debugMStep $ desc ++ " {"
   increaseIndentation
   debugSubexpression exp 
   debugM "" -- new line
@@ -338,13 +338,18 @@ evalHeapAddress address env = lookupMem address >>= either (evalThunk env) retur
 
 -- | Looks for the address in the heap, evals a thunk if necessary to return a value
 evalId :: Id -> Env -> IM Value
-evalId i e = lookupId i e >>= either (evalThunk e) return
-
+--evalId i e = lookupId i e >>= either (evalThunk e) return
+evalId i e = do
+  v <- lookupId i e
+  val <- either (evalThunk e) return v
+  debugM (show i ++ " ~> " ++ show val)
+  return val
 -- | Function application
 apply :: Value -> Id -> Env -> IM Value
 apply (Fun f d) id env = do
-  res <- f id env
-  debugM $ "apply " ++ d ++ " to " ++ id ++ " => " ++ show res 
+  debugM $ "applying " ++ d ++ " to " ++ id 
+  res <- f id env  
+  debugM $ "apply " ++ d ++ " to " ++ id ++ " => " ++ show res   
   return res
     
 -- Applies a (possibly applied) type constructor that expects appliedValue of type ty.

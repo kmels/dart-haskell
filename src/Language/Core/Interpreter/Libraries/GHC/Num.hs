@@ -25,6 +25,7 @@ import Prelude hiding (all)
 
 all :: [(Id, Either Thunk Value)]
 all = [ plus
+      , minus
       , multiply
       , fromInteger'
       , zdfNumInteger
@@ -40,6 +41,15 @@ plus = (id, Right $ Fun (monomophy_2 "(+)" add') "polymorphic(+)")
     add' (Num i) (Num j) = return . Num $ i + j 
     add' a b = return . Wrong $ "Trying to add values " ++ show a ++ " and " ++ show b
 
+-- | The function that adds two numbers in GHC (base:GHC.Num.+).
+minus :: (Id, Either Thunk Value)
+minus = (id, Right $ Fun (monomophy_2 "(-)" add') "polymorphic(-)") 
+  where
+    id = "base:GHC.Num.-"      
+    add' :: Value -> Value -> IM Value
+    add' (Num i) (Num j) = return . Num $ i - j 
+    add' a b = return . Wrong $ "Trying to subtract values " ++ show a ++ " and " ++ show b
+    
 -- | The function that multiplies two numbers in GHC (base:GHC.Num.*).
 multiply :: (Id, Either Thunk Value)
 multiply = (id, Right $ Fun (monomophy_2 "(*)" mul') "polymorphic(*)") 

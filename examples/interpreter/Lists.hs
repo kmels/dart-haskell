@@ -9,6 +9,7 @@ module Lists (
   , str
   , chr
   , take'
+  , takeTest1, takeTest2, takeTest3, takeTest4, takeTest5, takeTest6
 ) where
 
 data List a = Nil | Cons a (List a)
@@ -64,3 +65,26 @@ take' _ []              =  []
 take' n (x:xs)          =  x : take' (n-1) xs
 
 first50 = take' 50 naturals
+takeTest1 = take' 0 [] -- works
+takeTest2 = take' 1 [] -- works
+takeTest3 = take' 500 [] -- works
+takeTest4 = take' (5-5) [1,2,3]
+takeTest5 = take' 1 [1]
+takeTest6 = take' 1 [1,2,3]
+
+
+------------------------- mlist -------------------------
+-- data Mlist a = Mlist [a]
+
+-- data Mordering = MEQ | MIN deriving (Eq, Show)
+
+-- s = Mlist [1, 2, 3]
+-- t = Mlist [1, 4, 2, 3]
+
+-- class Mord a where 
+--     mcompare :: a -> a -> Mordering
+
+-- instance Mord (Mlist a) where
+--     mcompare (Mlist xs) (Mlist ys)
+--            | length xs == length ys && null (xs \\ ys) = MEQ
+--            | otherwise = MIN
