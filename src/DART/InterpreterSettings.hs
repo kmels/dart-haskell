@@ -5,7 +5,7 @@ import System.Console.CmdArgs
 
 data InterpreterSettings = InterpreterMode { 
   file :: String
-  , to_eval :: String
+  , to_eval :: FilePath
   , debug :: Bool
   , show_heap :: Bool
 --, show_time :: Bool
@@ -14,6 +14,7 @@ data InterpreterSettings = InterpreterMode {
   , show_tmp_variables :: Bool 
   , watch_reduction :: Bool
   , debug_tab_level :: Int
+  , include :: [FilePath]
   } deriving (Show, Data, Typeable)
 
 -- | We'll use the package cmdargs to identify flags, parameters, etc.,  from the command line
@@ -30,6 +31,7 @@ interpret = InterpreterMode {
   , show_tmp_variables = def &= groupname "DEBUG" &= help "Shows debug messages for temporal variables (if depends flag is on)"
   , watch_reduction = def &= groupname "DEBUG" &= help "Shows debug messages for the evaluation of a value definition (shows reductions of expressions)"
   , debug_tab_level = 0
+  , include = def &= groupname "USAGE" &= help "List of source directories to include in the module namespace, the base package is included by default"
   } &= summary "Reads a .hcr file and evaluates its declarations. "
 
 

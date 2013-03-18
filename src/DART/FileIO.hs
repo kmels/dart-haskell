@@ -1,38 +1,50 @@
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE ImplicitParams #-}
 
 module DART.FileIO where 
 
+import           Control.Monad.IO.Class(liftIO)
+import           DART.CmdLine(debugM)
 import qualified Data.ByteString.Char8 as Char8
 import           Data.ByteString.Lazy.UTF8 (toString)
 import           Data.Conduit.Process
+import           Language.Core.Core
 import           Language.Core.Core (Module)
-import           System.Directory (getCurrentDirectory)
+import           Language.Core.Interpreter.Acknowledge(acknowledgeTypes,acknowledgeVdefgs)
+import           Language.Core.Interpreter.Structures
+import           Language.Core.ParseGlue
+import           Language.Core.Parser
+import           System.Directory (getCurrentDirectory, doesDirectoryExist, doesFileExist, getDirectoryContents)
 import           System.Environment
 import           System.FilePath (dropExtension,takeExtension)
 import           System.IO
 import           System.Process.QQ(cmd)
-import Language.Core.Core
-import Language.Core.Parser
-import Language.Core.ParseGlue
-
 readHcrFile :: FilePath -> IO String
 readHcrFile filepath = case takeExtension filepath of
   ".hcr" -> do
     putStrLn $ "Reading " ++ filepath
     readFile filepath
   ".hs" -> do
-    currentDir <- getCurrentDirectory
-    let pathToFile = currentDir </> filepath
-    putStrLn $ "Compiling " ++ pathToFile
-    putStrLn $ "in " ++ currentDir
-    inp <- [cmd|ghc --make -fext-core #{pathToFile} |] 
-    readHcrFile $ dropExtension pathToFile ++ ".hcr"
+    --currentDir <- getCurrentDirectory
+    --let pathToFile = currentDir </> filepath
+    putStrLn $ "Compiling " ++ filepath
+    --putStrLn $ "in " ++ currentDir
+    inp <- [cmd|ghc --make -fext-core #{filepath} |] 
+    readHcrFile $ dropExtension filepath ++ ".hcr"
   ".lhs" -> do
-    currentDir <- getCurrentDirectory
-    let pathToFile = currentDir </> filepath
-    inp <- [cmd|ghc --make -fext-core #{pathToFile} |] 
-    readHcrFile $ dropExtension pathToFile ++ ".hcr"
-  _ -> error "Invalid extension. Use either an .hcr, .lhs or a .hs file"
+    --currentDir <- getCurrentDirectory
+    --let pathToFile = currentDir </> filepath
+    putStrLn $ "Compiling " ++ filepath
+    inp <- [cmd|ghc --make -fext-core #{filepath} |] 
+    readHcrFile $ dropExtension filepath ++ ".hcr"
+  ext -> error $ "Invalid extension when loading " ++ filepath ++ ". Use either an .hcr, .lhs or a .hs file, found: " ++ ext
+
+hasHsExtension :: FilePath -> Bool
+hasHsExtension filepath = case takeExtension filepath of
+  ".hs" -> True
+  ".lhs" -> True
+  ".hcr" -> True
+  _ -> False
 
 (</>) :: FilePath -> FilePath -> FilePath
 p </> c = p ++ "/" ++ c
@@ -43,3 +55,35 @@ readModule :: FilePath -> IO Module
 readModule fp = readHcrFile fp >>= \c -> case parse c 0 of
   OkP m -> return m
   FailP msg -> error msg
+
+-- | Given an absolute filepath (dir or file), find all the haskell source files within (if dir), compile (if needed) and acknowledge its value definitions.
+-- We only compile a source code if there is no .hcr file
+loadFilePath :: FilePath -> IM Env
+loadFilePath filepath = do
+  liftIO $ putStrLn $ "Loading filepath " ++ filepath
+  is_dir <- liftIO $ doesDirectoryExist filepath
+  is_file <- liftIO $ doesFileExist filepath
+  
+  env <- if (is_dir)
+         then do
+           files <- liftIO $ getDirectoryContents filepath
+           envs <- mapM (loadFilePath . (</>) filepath ) (filter (not . beginsWithDot) files)
+           return $ concat envs
+         else 
+           if (hasHsExtension filepath && is_file) 
+           then do
+             module' <- liftIO $ readModule filepath
+             settings' <- gets settings
+             let ?settings = settings'
+             types_env <- acknowledgeTypes module' 
+             defs_env <- acknowledgeVdefgs module'
+             return $ types_env ++ defs_env
+           else return []
+  return env
+  
+beginsWithDot :: FilePath -> Bool
+beginsWithDot ('.':_) = True
+beginsWithDot _ = False
+
+prepend :: FilePath -> FilePath -> FilePath
+prepend dir file = dir ++ "/" ++ file

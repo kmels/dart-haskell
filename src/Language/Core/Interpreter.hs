@@ -75,7 +75,7 @@ evalModule :: (?settings :: InterpreterSettings) => Module -> Env -> IM [(Id, Va
 evalModule m@(Module name tdefs vdefgs) libs_env = do
   -- recognize type and value definitions
   tycons_env <- acknowledgeTypes m
-  vdefs_env <- acknowledgeVdefgs m libs_env
+  vdefs_env <- acknowledgeVdefgs m --libs_env
   
   -- time to evaluate, set an environment and evaluate only those defs that are not temp
   let 
@@ -98,7 +98,7 @@ evalModuleFunction m@(Module mname tdefs vdefgs) fname libs =
      Just vdefg -> do
        debugM $ "Found definition of " ++ fname
        tycons_env <- acknowledgeTypes m 
-       vdefs_env <- acknowledgeVdefgs m (libs ++ tycons_env)
+       vdefs_env <- acknowledgeVdefgs m --(libs ++ tycons_env)
        let env = (tycons_env ++ vdefs_env ++ libs)
        heap_ref@(_,address) <- doEvalVdefg vdefg env  -- ++ libs)
        evalHeapAddress address env

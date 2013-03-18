@@ -41,7 +41,7 @@ import           Prelude hiding (showList)
 import           DART.InterpreterSettings
 -- Language.Core
 import           Language.Core.Core
-import           Language.Core.Util(showType,showExtCoreType,showExp,wrapName)
+import           Language.Core.Util --(showType,showExtCoreType,showExp,wrapName)
 
 -- mutable hash tables; 
 -- package [hashtables](http://hackage.haskell.org/package/hashtables)

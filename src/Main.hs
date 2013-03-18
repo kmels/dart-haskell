@@ -15,26 +15,26 @@
 
 module Main where
 
-import Language.Core.Core
-import System.Environment
-import Language.Core.Util(showType)
-import Language.Core.Interpreter.Structures
+import           Language.Core.Core
+import           System.Environment
+import           Language.Core.Util(showType)
+import           Language.Core.Interpreter.Structures
 
-import Text.Encoding.Z
-import DART.MkRandomValue
-import Data.Maybe
-import Language.Core.Vdefg
-import DART.FunctionFeeder
+import           Control.Monad.State.Lazy
+import           DART.CmdLine
+import           DART.FileIO
+import           DART.FunctionFeeder
+import           DART.InterpreterSettings
+import           DART.MkRandomValue
+import qualified Data.HashTable.IO as H
+import           Data.Maybe
+import           Language.Core.Interp
 import qualified Language.Core.Interpreter as I
 import qualified Language.Core.Interpreter.Libraries as Libs
-import Language.Core.Interp
-import Control.Monad.State.Lazy
-import qualified Data.HashTable.IO as H
-import DART.CmdLine
-import DART.FileIO
-import DART.InterpreterSettings
-import System.Console.CmdArgs
-
+import           Language.Core.Vdefg
+import           System.Console.CmdArgs
+import           System.Directory(getCurrentDirectory)
+import           Text.Encoding.Z
 main :: IO () 
 main = cmdArgs interpret >>= newState >>= evalStateT processModule 
 
@@ -43,34 +43,36 @@ main = cmdArgs interpret >>= newState >>= evalStateT processModule
 newState :: InterpreterSettings -> IO DARTState
 newState s = do
   h <- io H.new -- get a new heap
+  current_dir <- getCurrentDirectory 
+  let --list = current_dir ++ "/lib/base/Data/List.hs"  
+      --char = current_dir ++ "/lib/base/Data/Char.hs"  
+      absolute_includes = map ((++) (current_dir ++ "/")) $ include s
   return $ DState {
     heap = h
     , heap_count = 0
     , number_of_reductions = 0
     , tab_indentation = 0
-    , settings = s
+    , settings = s { include = (absolute_includes) }
   }
-
-loadFile :: FilePath -> IM Module
-loadFile fp = do
-  debugM $ "Reading " ++ fp  ++ " .."
-  module'@(Module mdlname tdefs vdefgs) <- io . readModule $ fp
-  debugM $ "Read module " ++ show mdlname
-  return module'
 
 processModule :: IM ()
 processModule = do
-  st <- get
-  settgs <- gets settings
   
-  module'@(Module mdlname tdefs vdefgs) <- loadFile $ file settgs
+  st <- get
+  settgs <- gets settings  
+  
+  debugM $ "Reading " ++ file settgs  ++ " .."
+  module'@(Module mdlname tdefs vdefgs) <- io . readModule $ file settgs
+  debugM $ "Read module " ++ show mdlname
   
   -- Time to evaluate
   
   debugM $ "Loading libraries "
   let ?settings = settgs
-  (env,mem) <- io $ runStateT (I.loadLibrary Libs.ghc_base) st
+  (env',mem) <- io $ runStateT (I.loadLibrary Libs.ghc_base) st -- implemented functions
+  lib_envs <- mapM loadFilePath (include settgs)  -- acknowledged from source code
   
+  let env = concat lib_envs ++ env'
 --  loadFile_ "lib/base/Data/List.hs"
   
   case (to_eval settgs) of
@@ -90,10 +92,4 @@ processModule = do
 
 putZDecStrLn = putStrLn . zDecodeString
 
-showVdefg :: Vdefg -> String
-showVdefg (Rec vdefs) = "Rec " ++ concatMap showVdef vdefs
-showVdefg (Nonrec vdef) = "Nonrec " ++ showVdef vdef
-
-showVdef :: Vdef -> String
-showVdef (Vdef ((mname,var),ty,exp)) = var ++ " :: " ++ showType ty
 
