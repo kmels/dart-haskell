@@ -70,7 +70,7 @@ takeTest2 = take' 1 [] -- works
 takeTest3 = take' 500 [] -- works
 takeTest4 = take' (5-5) [1,2,3]
 takeTest5 = take' 1 [1]
-takeTest6 = take' 1 [1,2,3]
+takeTest6 = take' 2 [1,2,3]
 
 
 ------------------------- mlist -------------------------

@@ -25,6 +25,8 @@ module Language.Core.Interpreter.Structures(
   , Thunk (..), TyCon (..) , Value(..)
   , Language.Core.Core.Id
   , module Control.Monad.State
+  , module Language.Core.Core
+  , module Language.Core.Util
 ) where
 
 -- Prelude and control

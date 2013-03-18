@@ -51,21 +51,29 @@ newState s = do
     , settings = s
   }
 
+loadFile :: FilePath -> IM Module
+loadFile fp = do
+  debugM $ "Reading " ++ fp  ++ " .."
+  module'@(Module mdlname tdefs vdefgs) <- io . readModule $ fp
+  debugM $ "Read module " ++ show mdlname
+  return module'
+
 processModule :: IM ()
 processModule = do
   st <- get
   settgs <- gets settings
-  debugM $ "Reading " ++ file settgs  ++ " .."
-  module'@(Module mdlname tdefs vdefgs) <- io . readModule $ file settgs
-  debugM $ "Read module " ++ show mdlname
-
+  
+  module'@(Module mdlname tdefs vdefgs) <- loadFile $ file settgs
+  
   -- Time to evaluate
   
   debugM $ "Loading libraries "
   let ?settings = settgs
   (env,mem) <- io $ runStateT (I.loadLibrary Libs.ghc_base) st
-
-  case (eval settgs) of
+  
+--  loadFile_ "lib/base/Data/List.hs"
+  
+  case (to_eval settgs) of
     -- What should we eval?
     "" -> do  -- not specified
       (vals,state) <- io $ runStateT (I.evalModule module' env) mem

@@ -17,9 +17,12 @@
 module Language.Core.Interpreter where
 
 import           Language.Core.Interpreter.Apply
-import           Language.Core.Interpreter.Acknowledge(acknowledgeTypes,acknowledgeVdefgs)
+import           Language.Core.Interpreter.Acknowledge(acknowledgeTypes, 
+                                                       acknowledgeVdefgs,
+                                                       acknowledgeVdefg)
 import           Language.Core.Interpreter.Util(return')
 import           Language.Core.Interpreter.Structures
+import           Language.Core.Interpreter.Evaluable(eval)
   
 import           Control.Applicative((<|>))
 import qualified Data.HashTable.IO as H
@@ -33,13 +36,12 @@ import           Language.Core.Vdefg (isTmp,vdefgId,vdefgName)
 import           Control.Monad.State.Lazy
 import           DART.CmdLine
 import           DART.FileIO
+import           DART.InterpreterSettings
 import           Data.List(find)
 import           Data.Time.Clock(getCurrentTime,diffUTCTime)
-import           DART.InterpreterSettings
 import           Text.Encoding.Z(zDecodeString)
-
 -- data & control
-import Data.List(intersectBy)
+import           Data.List(intersectBy)
 {-Given a module which contains a list of value definitions, *vd*, evaluate every *vd* and return a heap with their interpreted values.
 
 Value definition to mapped values
@@ -132,8 +134,8 @@ evalExp :: Exp -> Env -> IM Value
 evalExp (App -- Integer,Char construction
           (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),constr))
           (Lit lit) 
-        ) env | constr == "Izh" = evalLit lit
-              | constr == "Czh" = evalLit lit
+        ) env | constr == "Izh" = eval lit []
+              | constr == "Czh" = eval lit []
               | otherwise = return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
 
 evalExp e@(App function_exp argument_exp) env = do
@@ -227,8 +229,12 @@ evalExp (Case exp vbind@(vbind_var,_) _ alts) env = do
       return res
     _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
 
-evalExp (Lit lit) _ = evalLit lit
+evalExp (Lit lit) _ = eval lit []
 
+evalExp (Let vdefg exp) env = do
+  env' <- acknowledgeVdefg vdefg env
+  evalExp exp (env' ++ env)
+  
 -- Otherwise
 
 evalExp otherExp _ = do
@@ -298,24 +304,6 @@ altExp :: Alt -> Exp
 altExp (Acon _ _ _ exp) = exp
 altExp (Alit _ exp) = exp
 altExp (Adefault exp) = exp
-
-evalLit :: Lit -> IM Value
-evalLit (Literal (Lint i) ty) = case showExtCoreType ty of
-   "ghc-prim:GHC.Prim.Int#" -> return . Num $ i 
-   "integer-gmp:GHC.Integer.Type.Integer" -> return . Num $ i 
-   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghc-prim:GHCziPrim.Int#"
-
-evalLit (Literal (Lrational r) ty) = case showExtCoreType ty of
-  "Rational" -> return . Rat $ r
-  _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "Rational"
-
-evalLit (Literal (Lchar c) ty) = case showExtCoreType ty of
-  "ghc-prim:GHC.Prim.Char#" -> return . Char $ c 
-  _ -> return . Wrong $ showExtCoreType ty ++ "ghc-prim:GHC.Prim.Char#" ++ "Char"
-
-evalLit (Literal (Lstring s) ty) = case showExtCoreType ty of
-   "ghc-prim:GHC.Prim.Addr#" -> return . String $ s
-   _ -> return . Wrong $ showExtCoreType ty ++ " .. expected " ++ "ghc-prim:GHC.Prim.Addr#"
 
 -- | Loads nothing ATM, but it'll be useful
 loadLibrary :: (?settings :: InterpreterSettings) => [(Id, Either Thunk Value)] -> IM Env

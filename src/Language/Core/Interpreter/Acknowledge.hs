@@ -14,7 +14,7 @@
 -- When the interpreter reads a module, it should acknowledge type and value definitions
 -- and save them in the heap, before going on to lazily evaluation. 
 -----------------------------------------------------------------------------
-module Language.Core.Interpreter.Acknowledge(acknowledgeTypes,acknowledgeVdefgs) where
+module Language.Core.Interpreter.Acknowledge(acknowledgeTypes,acknowledgeVdefgs,acknowledgeVdefg) where
 
 import Language.Core.Interpreter.Structures
 import Language.Core.Util
