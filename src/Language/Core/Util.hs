@@ -66,7 +66,7 @@ showExp :: (?tab_indentation :: Int) => Exp -> String
 showExp (Var qvar) = zDecodeString . snd $ qvar
 showExp (Dcon qcon) = zDecodeString . snd $ qcon
 showExp (Lit lit) = showLit lit
-showExp (App exp1 exp2) = wrapName "app" $ showExp exp1 ++ "," ++ showExp exp2
+showExp (App exp1 exp2) = showAppExp exp1 exp2
 showExp (Appt exp typ) = wrapName "appt" $ showExp exp ++ "," ++ showType typ --e.g. >= Int
 showExp (Lam bind exp) = "\\" ++ showBind bind ++ " -> " ++ showExp exp
 showExp (Let vdefg exp) = wrapName "let" $ showVdefg vdefg ++ showExp exp
@@ -84,6 +84,13 @@ showExp (Cast exp ty) = wrapName "case" $ showExp exp ++ showType ty
 showExp (Note msg exp) = wrapName "note" $ msg ++ showExp exp
 showExp (External str ty) = wrapName "external" $ str ++ showType ty
 --showExp _ = "NOT IMPLEMENTED YET"
+
+-- | Receives two expressions and pretty prints a function application expression 
+showAppExp :: (?tab_indentation :: Int) => Exp -> Exp -> String
+showAppExp (Dcon qualCon) (Lit lit) | snd qualCon == "Izh" = showLit lit
+                                    | snd qualCon == "Czh" = showLit lit
+                                    | otherwise = "TODO: show showAppExp: " ++ show (snd qualCon)
+showAppExp f x = wrapName "App" $ showExp f ++ "," ++ showExp x
 
 showCoreLit :: CoreLit -> String
 showCoreLit (Lint i) = show i
@@ -129,14 +136,13 @@ showKind (Karrow k k') = wrapName "Karrow" $ showKind k ++ " -> " ++ showKind k'
 showKind (Keq ty ty') = wrapName "Keq" $ showType ty ++ " -> " ++ showType ty'
 
 showLit :: Lit -> String
-showLit (Literal coreLit ty) = 
- let
+showLit (Literal coreLit ty) = showCoreLit coreLit
+ where
    showCoreLit :: CoreLit -> String
    showCoreLit (Lint i) = show i
    showCoreLit (Lrational r) = show r
    showCoreLit (Lchar c) = show c
    showCoreLit (Lstring s) = show s
- in wrapName "lit" $ showCoreLit coreLit ++ "::" ++ showType ty
 
 qualifiedVar :: Qual Var -> String
 qualifiedVar (Nothing,var) = var

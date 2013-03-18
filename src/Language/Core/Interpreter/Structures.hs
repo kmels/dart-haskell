@@ -77,7 +77,8 @@ data Value = Wrong String
            | TyConApp TyCon [Either Thunk Value] -- a type constructor application to some values
            | Pointer HeapAddress
 
-data Thunk = Thunk Exp
+data Thunk = Thunk Exp Env -- a thunk created during the evaluation of a value definition
+           | VdefgThunk Exp -- has no environment, it will be passed by the module for efficiency
 instance Show Thunk where show _ = "Thunk"
 
 -- cons = TyConApp (AlgTyCon "Cons" [a]) [1,Nil]
@@ -136,8 +137,8 @@ wrapInParenthesis s = "(" ++ s ++ ")"
 io :: MonadIO m => IO a -> m a
 io = liftIO
 
-mkThunk :: Exp -> Either Thunk Value
-mkThunk = Left . Thunk
+mkThunk :: Exp -> Env -> Either Thunk Value
+mkThunk exp env = Left $ Thunk exp env
 
 mkVal :: Value -> Either Thunk Value
 mkVal = Right
@@ -154,12 +155,21 @@ memorize val id  = do
   -- Put the value in the heap
   h <- gets heap
   io $ H.insert h address val
-  -- debugM $ "Memorized " ++ id ++ " in " ++ show address ++ " as " ++ show val
+  debugM $ "Memorized " ++ id ++ " in " ++ show address ++ " as " ++ show val
   return (id,address)
 
+-- | Prints a debug message with a new line at the end
+debugM :: String -> IM ()
+debugM msg = do 
+  s <- gets settings
+  ti <- gets tab_indentation  
+  when (debug s) $
+    let tab = replicate ti '\t' 
+    in io . putStrLn $ (tab ++ msg) 
+    
 -- | Creates new variable for the expression, memorizes it and returns a heap reference
-mkHeapReference :: Exp -> IM HeapReference
-mkHeapReference exp = mkVarName >>= memorize (mkThunk exp)
+mkHeapReference :: Exp -> Env -> IM HeapReference
+mkHeapReference exp env  = mkVarName >>= memorize (mkThunk exp env)
 
 -- | Creates a variable name
 mkVarName :: IM String

@@ -23,9 +23,10 @@ debugMStepEnd = debugM "}" -- append the number, print it
                 
 -- | Prints the reduction number
 prependStep :: IM () 
-prependStep = gets number_of_reductions >>= -- get the number
-              debugMNLNT . flip (++) "." . show -- preceed the number, print it
-              >> modify increase_number_of_reductions -- and then, increase the number
+prependStep = do
+  n <- gets number_of_reductions -- get the number 
+  debugMNLNT . flip (++) "." . (++) (replicate n '*' ++ " ") . show $ n -- preceed the number, print it
+  modify increase_number_of_reductions -- and then, increase the number
               
 -- | Prepends a new line
 prependNewLn :: String -> String
@@ -62,7 +63,7 @@ debugMNL msg = do
   s <- gets settings
   ti <- gets tab_indentation  
   when (debug s) $
-    let tab = replicate ti '\t' 
+    let tab = replicate ti '*' 
     in io . putStr $ (tab ++ msg) 
             
 printHeap :: (?settings :: InterpreterSettings) => Heap -> IO ()

@@ -73,7 +73,7 @@ evalModule :: (?settings :: InterpreterSettings) => Module -> Env -> IM [(Id, Va
 evalModule m@(Module name tdefs vdefgs) libs_env = do
   -- recognize type and value definitions
   tycons_env <- acknowledgeTypes m
-  vdefs_env <- acknowledgeVdefgs m
+  vdefs_env <- acknowledgeVdefgs m libs_env
   
   -- time to evaluate, set an environment and evaluate only those defs that are not temp
   let 
@@ -95,8 +95,8 @@ evalModuleFunction m@(Module mname tdefs vdefgs) fname libs =
      Nothing -> return . Wrong $  "Could not find function " ++ fname ++ " in " ++ show mname
      Just vdefg -> do
        debugM $ "Found definition of " ++ fname
-       tycons_env <- acknowledgeTypes m
-       vdefs_env <- acknowledgeVdefgs m
+       tycons_env <- acknowledgeTypes m 
+       vdefs_env <- acknowledgeVdefgs m (libs ++ tycons_env)
        let env = (tycons_env ++ vdefs_env ++ libs)
        heap_ref@(_,address) <- doEvalVdefg vdefg env  -- ++ libs)
        evalHeapAddress address env
@@ -141,13 +141,25 @@ evalExp e@(App function_exp argument_exp) env = do
   let ?tab_indentation = ti
       
   f <- evalExpI function_exp env "Evaluating function application"
-  heap_reference@(id,arg_address) <- mkHeapReference argument_exp
-  --decreaseIndentation
-  debugM "" >> debugM ("Argument to function has reference: " ++ show heap_reference)
   
-  -- apply f arg_address (heap_reference:env) -- Note1: the address is paassed 
-  res <- apply f id (heap_reference:env) -- Note1: the address is paassed 
-  return res
+  -- if the argument is a variable that is already in the env, don't make a new reference  
+  case argument_exp of
+    (Var qvar) -> do
+      qvar_val <- qualifiedVar qvar `lookupId` env
+      case qvar_val of
+        Right (Wrong _) -> mkRefAndApply f argument_exp -- not found, 
+        whnf -> apply f (qualifiedVar qvar) env --don't create thunk for variables in scope
+    _ -> mkRefAndApply f argument_exp
+  where
+    mkRefAndApply :: Value -> Exp -> IM Value
+    mkRefAndApply f arg_exp = do
+      heap_reference@(id,arg_address) <- mkHeapReference arg_exp env
+      --decreaseIndentation
+      debugM "" >> debugM ("Argument to function has reference: " ++ show heap_reference)
+  
+      -- apply f arg_address (heap_reference:env) -- Note1: the address is paassed 
+      res <- apply f id (heap_reference:env) -- Note1: the address is paassed 
+      return res
 
 -- | A function application which has the type annotation which we will essentially ignore.
 evalExp e@(Appt exp ty) env = evalExp exp env
@@ -158,7 +170,7 @@ evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = let
   applyFun _ = return $ Wrong "($), Applying something that is not a function"
   
   -- takes a function `f` and returns a function `g` that applies `f` to its argument 
-  ap id e = lookupId id e >>= either (evalThunk e) return >>= applyFun  
+  ap id e = evalId id e >>= applyFun  
   in return $ Fun ap "($) :: (a -> b) -> a -> b"
 
 -- lambda abstraction over types variables
@@ -192,20 +204,21 @@ evalExp (Case exp vbind@(vbind_var,_) _ alts) env = do
   --let qvar = qualifiedVar var      
     
   increaseIndentation
-  heap_reference@(id,address) <- memorize (mkThunk exp) vbind_var
+  heap_reference@(id,address) <- memorize (mkThunk exp env) vbind_var
   exp_value <- evalHeapAddress address (heap_reference:env)
 
   watchReductionM $ "\tDoing case analysis for " ++ show vbind_var
   maybeAlt <- findMatch exp_value alts
   let exp = maybeAlt >>= Just . altExp -- Maybe Exp
   
-  debugM $ "EXP: "++ show exp
+  --debugM $ "EXP: "++ show exp
   case exp of
     Just e -> do -- a matched alternative was found, in case it's a constructor, bind its arguments
       let alt = fromJust $ maybeAlt
       
       debugM "Making altEnv"
       alt_env <- mkAltEnv exp_value alt
+      debugM $ "This is the alt env: " ++ show alt_env
       debugM "End making altEnv"
       -- TODO IN ENVIRONMENT when(isAcon alt) $ var_val `bindAltVars` alt
       res <- evalExp e (heap_reference:env ++ alt_env)
@@ -225,7 +238,7 @@ evalExp otherExp _ = do
 -- | Given an alternative and a value that matches the alternative,
 -- binds the free variables in memory and returns a list of references (an environment)
 mkAltEnv :: Value -> Alt -> IM Env
-mkAltEnv (TyConApp (AlgTyCon _ _) vals) (Acon _ _ vbinds _) = debugM (show vals) >> debugM (show vbinds) >> 
+mkAltEnv (TyConApp (AlgTyCon _ _) vals) (Acon _ _ vbinds _) = debugM ("Vals: " ++ show vals) >> debugM ("Vbinds :: " ++ show vbinds) >> 
   if (length vals /= length vbinds)
   then error "length vals /= length vbinds"
   else debugM "CAFE" >> mapM (uncurry memorize) (vals `zip` (map fst vbinds))
@@ -244,13 +257,14 @@ isAcon _ = False
 -- | Tries to find an alternative that matches a value. It returns the first match, if any.
 findMatch :: Value -> [Alt] -> IM (Maybe Alt)
 findMatch val [] = return Nothing
-findMatch val (a:alts) = do
-  debugM $ "Finding match for " ++ show val
+findMatch val (a:alts) = do  
   matches <- val `matches` a
   
   if (not matches)
   then val `findMatch` alts   
-  else return . Just $ a 
+  else do
+    debugM $ "Found case match for" ++ show val
+    return . Just $ a
 
 matches :: Value -> Alt -> IM Bool
 (TyConApp (AlgTyCon n _) vals) `matches` (Acon qual_dcon tbs vbs idx_exp) = do
@@ -322,8 +336,14 @@ evalExpI exp env desc = do
   debugMStepEnd
   return res
 
-evalThunk :: Env -> Thunk -> IM Value
-evalThunk env (Thunk exp) = evalExp exp env
+evalThunk :: Thunk -> Env -> IM Value
+evalThunk (VdefgThunk exp) env = evalExp exp env
+evalThunk (Thunk exp env) _ = do
+  ti <- gets tab_indentation
+  let ?tab_indentation = ti
+  debugM $ "Evaluating thunk: " ++ showExp exp
+  evalExp exp env
+
     
 -- | Given a Pointer HeapAddress, eval a Thunk if necessary to return a Value represented
 -- by the address 
@@ -334,16 +354,35 @@ evalPointer _ _ = return . Wrong $ "evalPointer: The impossible happened"
 
 -- | Given an environment, looks for the address in the heap, evals a thunk using the given environment if necessary to return a value
 evalHeapAddress :: HeapAddress -> Env -> IM Value
-evalHeapAddress address env = lookupMem address >>= either (evalThunk env) return
-
+evalHeapAddress address env = do
+  eTnkVal <- lookupMem address
+  -- if it is a thunk, eval and memorize in heap
+  val <- either (flip evalThunk env) return eTnkVal  
+  -- re-save
+  h <- gets heap
+  io $ H.insert h address (Right val)
+  return val
+  
 -- | Looks for the address in the heap, evals a thunk if necessary to return a value
 evalId :: Id -> Env -> IM Value
 --evalId i e = lookupId i e >>= either (evalThunk e) return
 evalId i e = do
-  v <- lookupId i e
-  val <- either (evalThunk e) return v
-  debugM (show i ++ " ~> " ++ show val)
-  return val
+  ptr <- mkPointer i e 
+  case ptr of
+    e@(Wrong s) -> return e -- i was not found in env
+    Pointer heap_address -> do -- we know something about i in env
+      eTnkVal <- lookupMem heap_address
+      debugM $ "lookupId " ++ i ++ " = " ++ show eTnkVal
+      whnf <- case eTnkVal of  -- evaluate to weak head normal form
+        Left thunk -> do
+          val <- evalThunk thunk e
+          h <- gets heap
+          io $ H.insert h heap_address (Right val)
+          return val
+        Right val -> return val  -- it is already in weak head normal form
+      debugM (show i ++ " ~> " ++ show whnf)
+      return whnf
+  
 -- | Function application
 apply :: Value -> Id -> Env -> IM Value
 apply (Fun f d) id env = do
@@ -355,7 +394,7 @@ apply (Fun f d) id env = do
 -- Applies a (possibly applied) type constructor that expects appliedValue of type ty.
 -- The type constructor that we are applying has |vals| applied values
 apply (TyConApp tycon vals) id env =  do 
-    val <- lookupId id env >>= either (evalThunk env) return
+    val <- evalId id env    
     return $ TyConApp tycon (vals ++ [Right val])
     
 apply w@(Wrong _) _ _ = return w

@@ -45,13 +45,13 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) =
       memorize (mkVal $ TyConApp tyCon []) (tyConName)
     
 -- | Given a module, recognize all of its value definitions, functions, and put them in the heap so that we can evaluate them when required. 
-acknowledgeVdefgs :: (?settings :: InterpreterSettings) => Module -> IM Env
-acknowledgeVdefgs m@(Module _ _ vdefgs) = mapM acknowledgeVdefg vdefgs >>= return . concat
+acknowledgeVdefgs :: (?settings :: InterpreterSettings) => Module -> Env -> IM Env
+acknowledgeVdefgs m@(Module _ _ vdefgs) libs = mapM (flip acknowledgeVdefg libs) vdefgs >>= return . concat
 
 -- | Acknowledges value definitions
-acknowledgeVdefg  :: Vdefg -> IM Env
-acknowledgeVdefg (Nonrec vdef) = sequence [acknowledgeVdef vdef]
-acknowledgeVdefg (Rec vdefs) = mapM acknowledgeVdef vdefs
+acknowledgeVdefg  :: Vdefg -> Env -> IM Env
+acknowledgeVdefg (Nonrec vdef) libs = sequence [acknowledgeVdef vdef libs]
+acknowledgeVdefg (Rec vdefs) libs = mapM (flip acknowledgeVdef libs) vdefs
 
-acknowledgeVdef :: Vdef -> IM HeapReference
-acknowledgeVdef (Vdef (qvar, ty, exp)) = memorize (mkThunk exp) (qualifiedVar qvar)
+acknowledgeVdef :: Vdef -> Env -> IM HeapReference
+acknowledgeVdef (Vdef (qvar, ty, exp)) libs = memorize (Left $ VdefgThunk exp) (qualifiedVar qvar)
