@@ -83,7 +83,13 @@ processModule = do
       (vals,state) <- io $ runStateT (I.evalModule module' env) mem
       let h = heap state
       io . putStrLn $ "WARNING: You did not specify a function name to eval (flags --eval or -e), that's why I evaluated all values"
-      io $ mapM_ (putStrLn . show) vals
+      
+      let prettyPrint :: (Id,Value) -> IM String
+          prettyPrint (id,val) = showM val >>= return . show . (,) id
+          
+      prettyPrintedVals <- mapM prettyPrint vals
+      
+      io $ mapM_ putStrLn prettyPrintedVals
       when (show_heap $ ?settings) $ io . printHeap $ h
     fun_name -> do -- eval fun_name
       (result,state) <- io $ runStateT (I.evalModuleFunction module' fun_name env) mem
@@ -93,5 +99,6 @@ processModule = do
 -- | Decode any string encoded as Z-encoded string and print it
 
 putZDecStrLn = putStrLn . zDecodeString
+
 
 

@@ -19,6 +19,8 @@ module Language.Core.Interpreter.Structures(
   , increase_number_of_reductions
   -- heap operation
   , memorize, mkVal, mkThunk, mkHeapReference, lookupMem
+  -- pretty printing
+  , showM
   , DARTState(..)
   , Heap, Env, HeapAddress, HeapReference
   , IM
@@ -101,13 +103,19 @@ instance Eq Value where
   (Boolean b) == (Boolean b') = b == b'
   o == p = False
   
-showAddress :: HeapAddress -> IM String
-showAddress address = lookupMem address >>= \v -> case v of
-  Left thunk -> return "Thunk"
-  Right val -> case val of
-    -- look for functions that depend on an address, computations to happen within the IM monad
-    (TyConApp tc addresses) -> showTyConApp tc addresses        
-    otherVal -> return $ show otherVal -- wrong, num, string, fun, etc..
+-- showAddress :: HeapAddress -> IM String
+-- showAddress address = lookupMem address >>= \v -> case v of
+--   Left thunk -> return "Thunk"
+--   Right val -> case val of
+--     -- look for functions that depend on an address, computations to happen within the IM monad
+--     (TyConApp tc addresses) -> showTyConApp tc addresses        
+--     otherVal -> return $ show otherVal -- wrong, num, string, fun, etc..
+
+-- | There are some values that contain addresses for which we must, in order to
+-- pretty print the given value, look up their actual value in the heap
+showM :: Value -> IM String
+showM (TyConApp tc addresses) = showTyConApp tc addresses
+showM val = return $ show val
 
 instance Show Value where
   show (Wrong s) = "Wrong " ++ s
