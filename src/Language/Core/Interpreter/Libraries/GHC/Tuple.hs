@@ -6,12 +6,19 @@ import Language.Core.Interpreter.Apply
 import Language.Core.Util
 
 tupleConstructor :: (Id, Either Thunk Value)
-tupleConstructor = (id, Right $ Fun (\i e -> lookupId i e >>= mkPair) "(,)") 
-  where
+tupleConstructor = (id, Right $ Fun (\i e -> mkPointer i e >>= mkPair_1) "unary(,)") 
+  where    
     id = "ghc-prim:GHC.Tuple.(,)"
-    mkPair :: (Either Thunk Value) -> IM Value
-    mkPair x = return $ Fun (\i e -> lookupId i e >>= return . (Pair x)) "unary(,)"  
-
+    
+    mkPair_1 :: Value -> IM Value
+    mkPair_1 x = return $ Fun (\i e -> mkPointer i e >>= mkPair_2 x) "binary(,)"  
+               
+    mkPair_2 :: Value -> Value -> IM Value
+    mkPair_2 (Pointer x) (Pointer y) = return $ Pair x y
+    mkPair_2 w@(Wrong _) _ = return w
+    mkPair_2 _ w@(Wrong _) = return w
+    mkPair_2 _ _  = return . Wrong $ "tupleConstructor: The impossible happened"
+    
 all :: [(Id, Either Thunk Value)]
 all = [ tupleConstructor 
       ]

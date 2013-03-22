@@ -114,7 +114,11 @@ evalVdefg :: Vdefg -> Env -> IM (HeapReference,Value)
 evalVdefg (Rec (v@(Vdef _):[]) ) env = do
   evalVdefg (Nonrec v) env
 -- More than one vdef? I haven't found a test case (TODO)
-evalVdefg (Rec vdefs) env = return $ (,) ("",0) (Wrong "TODO: Recursive eval not yet implemented\n\t" )
+evalVdefg (Rec vdefs) env = do
+  ti <- gets tab_indentation
+  let ?tab_indentation = ti
+  io $ mapM_ (\vdef -> putStrLn $ "\n\n\nrec vdef: " ++ showVdef vdef) vdefs
+  return $ (,) ("",0) (Wrong "TODO: Recursive eval not yet implemented\n\t" )
 
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) env = do
   whenFlag show_expressions $ do    
@@ -142,7 +146,7 @@ evalExp e@(App function_exp argument_exp) env = do
   ti <- gets tab_indentation
   let ?tab_indentation = ti
       
-  f <- evalExpI function_exp env "Evaluating function application"
+  f <- evalExpI function_exp env "Evaluating "
   
   -- if the argument is a variable that is already in the env, don't make a new reference  
   case argument_exp of
@@ -164,7 +168,7 @@ evalExp e@(App function_exp argument_exp) env = do
       return res
 
 -- | A function application which has the type annotation which we will essentially ignore.
-evalExp e@(Appt exp ty) env = evalExp exp env
+evalExp e@(Appt exp ty) env = evalExp exp env -- "Typed application "
 
 evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = let
   applyFun :: Value -> IM Value  
@@ -180,7 +184,16 @@ evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = let
 evalExp e@(Lam (Vb (var_name,ty)) exp) env = do
   --whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
   debugM $ "Making function from lambda abstraction \\" ++ var_name ++ " :: " ++ showType ty ++ " -> exp "
-  return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp" 
+  
+  -- var_name could be a value of a free type, ignore in that case
+  case ty of
+    -- the first arg is the type class name
+    (Tapp _ (Tvar(type_name))) -> do      
+      maybe_free_type_pointer <- mkPointer type_name env
+      case maybe_free_type_pointer of
+        Pointer _ -> evalExpI exp env "Ignoring fun because it has a free type" -- ignore
+        w@(Wrong _) -> return w
+    ty' -> return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"  -- run normally
   where     
     applyFun :: Id -> Env -> IM Value
     applyFun id env' = do
@@ -193,11 +206,12 @@ evalExp e@(Lam (Vb (var_name,ty)) exp) env = do
 -- ignores the type argument, evaluating the expression
 evalExp e@(Lam (Tb (var_name,_)) exp) env = do
   whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
-  debugM "Ignoring type parameter"
-  evalExpI exp env "Evaluating lambda body (exp)"
+  debugM $ "Saving type "   ++ var_name ++ " as a free type var"
+  free_type_ref <- memorize (Right . FreeTypeVariable $ var_name) var_name
+  evalExpI exp (free_type_ref:env) "Evaluating lambda body (exp)"
       
 -- Qualified variables that should be in the environment
-evalExp e@(Var qvar) env = mkPointer (qualifiedVar qvar) env >>= flip evalPointer env
+evalExp e@(Var qvar) env = debugM ("Var " ++ qualifiedVar qvar) >> mkPointer (qualifiedVar qvar) env >>= flip evalPointer env
 evalExp (Dcon qcon) env = mkPointer (qualifiedVar qcon) env >>= flip evalPointer env
 
 -- Case of
@@ -244,10 +258,17 @@ evalExp otherExp _ = do
 -- | Given an alternative and a value that matches the alternative,
 -- binds the free variables in memory and returns a list of references (an environment)
 mkAltEnv :: Value -> Alt -> IM Env
-mkAltEnv (TyConApp (AlgTyCon _ _) vals) (Acon _ _ vbinds _) = debugM ("Vals: " ++ show vals) >> debugM ("Vbinds :: " ++ show vbinds) >> 
-  if (length vals /= length vbinds)
+mkAltEnv (TyConApp (AlgTyCon _ _) addresses) (Acon _ _ vbinds _) = do
+  debugM ("addresses: " ++ show addresses)
+  debugM ("Vbinds :: " ++ show vbinds)
+  if (length addresses /= length vbinds)
   then error "length vals /= length vbinds"
-  else debugM "CAFE" >> mapM (uncurry memorize) (vals `zip` (map fst vbinds))
+  else do
+     debugM "CAFE" 
+     -- get vals and memorize that
+     let ids = (map fst vbinds)
+     return $ ids `zip` addresses
+--     mapM (uncurry memorize) (addresses `zip` (map fst vbinds))
 mkAltEnv _ _ = return []
   
 --bindAltVars val@(Num n) (Acon _ _ [(var,_)] _) = var `bindTo` val
@@ -264,6 +285,9 @@ isAcon _ = False
 findMatch :: Value -> [Alt] -> IM (Maybe Alt)
 findMatch val [] = return Nothing
 findMatch val (a:alts) = do  
+  ti <- gets tab_indentation
+  let ?tab_indentation = ti
+  debugM $ "comparing " ++ show val ++ " and " ++ showAlt a
   matches <- val `matches` a
   
   if (not matches)
@@ -297,7 +321,10 @@ val `matches` (Adefault _) = return True -- this is the default case, i.e. "_ - 
 (Boolean False) `matches` (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.False"
 (Boolean True) `matches` (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.True"
 val `matches` alt = do
-  io . putStrLn $ "??? Matching " ++ show val ++ " with " ++ show alt
+  ti <- gets tab_indentation
+  let ?tab_indentation = ti
+  io . putStrLn $ "??? Matching " ++ show val ++ " with " ++ showAlt alt
+--  io . putStrLn $ 
   return False
   
 altExp :: Alt -> Exp
@@ -315,11 +342,14 @@ evalFails = return . Right . Wrong
 -- | Does the same as evalExp but indents and deindents for debugging output purposes
 evalExpI :: Exp -> Env -> String -> IM Value
 evalExpI exp env desc = do 
-  debugMStep $ desc ++ " {"
+  ti <- gets tab_indentation
+  let ?tab_indentation = ti
+  debugMStep $ ">> " ++ desc ++ showExp exp ++ " {"
   increaseIndentation
   debugSubexpression exp 
   debugM "" -- new line
   res <- evalExp exp env
+  debugM $ "evalExpI#res: " ++ show res
   decreaseIndentation
   debugMStepEnd
   return res
@@ -381,10 +411,12 @@ apply (Fun f d) id env = do
     
 -- Applies a (possibly applied) type constructor that expects appliedValue of type ty.
 -- The type constructor that we are applying has |vals| applied values
-apply (TyConApp tycon vals) id env =  do 
-    val <- evalId id env    
-    return $ TyConApp tycon (vals ++ [Right val])
-    
+apply (TyConApp tycon addresses) id env =  do 
+    addr <- mkPointer id env
+    case addr of
+      Pointer a -> return $ TyConApp tycon (addresses ++ [a])
+      e@(Wrong s) -> return e
+      
 apply w@(Wrong _) _ _ = return w
 apply f x _ = return . Wrong $ "Applying " ++ show f ++ " with argument " ++ show x
 

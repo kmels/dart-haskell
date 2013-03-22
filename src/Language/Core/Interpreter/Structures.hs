@@ -18,7 +18,7 @@ module Language.Core.Interpreter.Structures(
   , idName
   , increase_number_of_reductions
   -- heap operation
-  , memorize, mkVal, mkThunk, mkHeapReference
+  , memorize, mkVal, mkThunk, mkHeapReference, lookupMem
   , DARTState(..)
   , Heap, Env, HeapAddress, HeapReference
   , IM
@@ -42,11 +42,11 @@ import           DART.InterpreterSettings
 -- Language.Core
 import           Language.Core.Core
 import           Language.Core.Util --(showType,showExtCoreType,showExp,wrapName)
-
+import           System.IO.Unsafe(unsafePerformIO)
 -- mutable hash tables; 
 -- package [hashtables](http://hackage.haskell.org/package/hashtables)
 import qualified Data.HashTable.IO as H
-import qualified Data.HashTable.ST.Cuckoo as C
+--import qualified Data.HashTable.ST.Cuckoo as C
 
 -- | A State passed around the interpreter
 data DARTState = DState {
@@ -59,6 +59,7 @@ data DARTState = DState {
 }
 
 type Heap = H.CuckooHashTable HeapAddress (Either Thunk Value)
+--type Heap = H.CuckooHashTable HeapAddress (GeneralType)
 type HeapAddress = Int
 type Env = [(Id,HeapAddress )]
 type HeapReference = (Id,HeapAddress)
@@ -75,9 +76,10 @@ data Value = Wrong String
            | String String
            | Fun (Id -> Env -> IM Value) Description
            -- |  List [Value]
-           | Pair (Either Thunk Value) (Either Thunk Value) --HERE
-           | TyConApp TyCon [Either Thunk Value] -- a type constructor application to some values
+           | Pair HeapAddress HeapAddress --HERE, heap addresses
+           | TyConApp TyCon [HeapAddress] -- heap addresses, a type constructor application to some values
            | Pointer HeapAddress
+           | FreeTypeVariable String -- useful when converting a to SomeClass a (we ignore parameters, and it's useful to save them)
 
 data Thunk = Thunk Exp Env -- a thunk created during the evaluation of a value definition
            | VdefgThunk Exp -- has no environment, it will be passed by the module for efficiency
@@ -98,6 +100,14 @@ instance Eq Value where
   (Fun _ _) == (Fun _ _) = False  -- too bad we are not intensional as in intensional type equality
   (Boolean b) == (Boolean b') = b == b'
   o == p = False
+  
+showAddress :: HeapAddress -> IM String
+showAddress address = lookupMem address >>= \v -> case v of
+  Left thunk -> return "Thunk"
+  Right val -> case val of
+    -- look for functions that depend on an address, computations to happen within the IM monad
+    (TyConApp tc addresses) -> showTyConApp tc addresses        
+    otherVal -> return $ show otherVal -- wrong, num, string, fun, etc..
 
 instance Show Value where
   show (Wrong s) = "Wrong " ++ s
@@ -111,8 +121,9 @@ instance Show Value where
     lastUpperIndex = last . findIndices isUpper
   show (Fun f s) = s  
 --  show (List vs) = show vs  
-  show (TyConApp tc vals) = showTyConApp tc vals
+  show (TyConApp tc addresses) = "TyConApp(" ++ show tc ++ ", " ++ show addresses ++ ")"
   show (Pointer address) = "Pointer to " ++ show address
+  show (FreeTypeVariable type_var) = type_var
 
 instance Show TyCon where
   show (AlgTyCon id []) = idName id
@@ -187,18 +198,23 @@ showList elems = case partitionEithers elems of
   _ -> show elems
   where
     showTail :: Value -> String    
-    showTail (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) ((Right th):(Right tt):[])) = "," ++ show th ++ showTail tt
-    showTail (TyConApp (AlgTyCon "ghc-prim:GHC.Types.[]" _) []) = ""
+--    showTail (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) ((Right th):(Right tt):[])) = "," ++ show th ++ showTail tt
+--    showTail (TyConApp (AlgTyCon "ghc-prim:GHC.Types.[]" _) []) = ""
     showTail w@(Wrong _) = "," ++ show w
     showTail xs = "????\t\t\t" ++ show xs ++ " \t\t\t"
 
-showTyConApp :: TyCon -> [Either Thunk Value] -> String
-showTyConApp (AlgTyCon "ghc-prim:GHC.Types.[]" []) [] = "[]" -- empty list
-showTyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) cns = showList cns -- lists
-showTyConApp (AlgTyCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = show (x,y) -- tuples
--- otherwise
-showTyConApp (AlgTyCon tycon_name []) vals = idName tycon_name ++ " " ++ showVals vals
-showTyConApp (AlgTyCon tycon_name _) vals = idName tycon_name ++ " " ++ showVals vals
+showTyConApp :: TyCon -> [HeapAddress] -> IM String
+showTyConApp tycon addresses = do
+  values <- mapM lookupMem addresses
+  return $ showTyConVals tycon values
+  where
+    showTyConVals :: TyCon -> [Either Thunk Value] -> String
+    showTyConVals (AlgTyCon "ghc-prim:GHC.Types.[]" []) [] = "[]" -- empty list
+    showTyConVals (AlgTyCon "ghc-prim:GHC.Types.:" _) cns = showList cns -- lists
+    showTyConVals (AlgTyCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = show (x,y) -- tuples
+    -- otherwise
+    showTyConVals (AlgTyCon tycon_name []) vals = idName tycon_name ++ " " ++ showVals vals
+    showTyConVals (AlgTyCon tycon_name _) vals = idName tycon_name ++ " " ++ showVals vals
 
 showVals :: [Either Thunk Value] -> String
 showVals vs = case partitionEithers vs of
@@ -209,3 +225,12 @@ showVals vs = case partitionEithers vs of
     wrapCons t@(TyConApp (AlgTyCon _ []) _) = show $ t -- if tycon expects no types, don't wrap
     wrapCons t@(TyConApp _ _) = wrapInParenthesis . show $ t
     wrapCons v = show v ++ " "
+
+lookupMem :: HeapAddress -> IM (Either Thunk Value)
+lookupMem address = do
+  h <- gets heap
+  val <- io $ H.lookup h address   
+  maybe fail return val 
+  where 
+    fail :: IM (Either Thunk Value)
+    fail = return . Right . Wrong $ "lookupH could not find heap reference " ++ show address

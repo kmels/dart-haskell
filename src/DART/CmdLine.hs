@@ -14,7 +14,7 @@ import Control.Monad.State.Class(modify)
 
 -- | Prints a debug message with the number of the current reduction prepended
 debugMStep :: String -> IM ()
-debugMStep msg = prependStep >> debugM msg
+debugMStep msg = prependStep >> debugMOTL msg
 
 -- | Prints a debug message that indicates the end of the current reduction
 -- it increases then the step
@@ -49,6 +49,17 @@ debugMNT msg = do
   when (debug s) $
     io . putStrLn $ msg
 
+-- | Prints a debug message with a new line at the end 
+-- and with one less prepended tab
+debugMOTL :: String -> IM ()
+debugMOTL msg = do 
+  s <- gets settings
+  ti <- gets tab_indentation  
+  when (debug s) $
+    let tab = replicate (ti-1) '\t' 
+    in io . putStrLn $ (tab ++ msg) 
+
+    
 -- | Prints a debug message without a new line at the end
 -- and without a prepended type
 debugMNLNT :: String -> IM ()

@@ -19,12 +19,3 @@ lookupId id env = do
     Pointer addr -> lookupMem addr
     _ -> return $ Right $ Wrong "lookupId: The impossible happened"
   
-                               
-lookupMem :: HeapAddress -> IM (Either Thunk Value)
-lookupMem address = do
-  h <- gets heap
-  val <- io $ H.lookup h address   
-  maybe fail return val 
-  where 
-    fail :: IM (Either Thunk Value)
-    fail = return . Right . Wrong $ "lookupH could not find heap reference " ++ show address

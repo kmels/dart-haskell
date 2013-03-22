@@ -30,6 +30,7 @@ all = [ plus
       , fromInteger'
       , zdfNumInteger
       , zdfNumInt
+      , mkMonomophier "integer-gmp:GHC.Integer.Type.$fEqInteger"
       ]
       
 -- | The function that adds two numbers in GHC (base:GHC.Num.+).

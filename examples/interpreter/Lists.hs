@@ -10,8 +10,11 @@ module Lists (
   , chr
   , take'
   , takeTest1, takeTest2, takeTest3, takeTest4, takeTest5, takeTest6
+  , intListLength, hundred, four
+  , odd, even, evenOf10
 ) where
 
+import Prelude hiding (even,odd)
 data List a = Nil | Cons a (List a)
 
 -- works
@@ -26,9 +29,6 @@ one = head' xs
 
 -- first 5 nats
 
-
-four :: Int
-four = 4
 five :: (Num a) => a
 five = 5
 
@@ -55,8 +55,8 @@ intListLength :: [Int] -> Int
 intListLength [] = 0
 intListLength (x:xs) = intListLength xs + 1
 
-four' = intListLength [0,1,2,3]
-hundred = intListLength $ take 100 [1..]
+four = intListLength $ take' 4 [0,1,2,3,10,20]
+hundred = intListLength $ take' 100 [1..]
 hundredOne = intListLength [1..101]
 
 take' :: Int -> [Int] -> [Int]
@@ -72,7 +72,13 @@ takeTest4 = take' (5-5) [1,2,3]
 takeTest5 = take' 1 [1]
 takeTest6 = take' 2 [1,2,3]
 
+even 0 = True
+even x = odd (x-1)
 
+odd 0 = False
+odd x = even (x-1)
+
+evenOf10 = even 10
 ------------------------- mlist -------------------------
 -- data Mlist a = Mlist [a]
 
