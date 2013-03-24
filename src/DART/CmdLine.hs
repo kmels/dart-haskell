@@ -108,3 +108,13 @@ whenFlag f a = do
   
 indentExp :: Exp -> IM String
 indentExp e = gets tab_indentation >>= \ti -> let ?tab_indentation = ti in return $ showExp e
+
+increaseIndentation :: IM ()
+increaseIndentation = get >>= put . increase_indentation
+decreaseIndentation :: IM ()
+decreaseIndentation = get >>= put . decrease_indentation
+
+increase_indentation :: DARTState -> DARTState
+increase_indentation s = s { tab_indentation  = tab_indentation s + 1 }
+decrease_indentation :: DARTState -> DARTState
+decrease_indentation s = s { tab_indentation  = tab_indentation s - 1 }
