@@ -84,7 +84,7 @@ printHeap heap = do
   putStrLn $ "-------------------- Heap ends --------------------" 
   where
     showVal :: Either Thunk Value -> String
-    showVal (Left t) = "Thunk"
+    showVal (Left t) = show t
     showVal (Right v) = show v
     
     printVar (id,val) = putStrLn $ show id ++ " => " ++ showVal val

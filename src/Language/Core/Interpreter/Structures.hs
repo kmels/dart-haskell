@@ -12,6 +12,7 @@
 -----------------------------------------------------------------------------
 
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ImplicitParams #-}
 
 module Language.Core.Interpreter.Structures(
   io
@@ -24,7 +25,7 @@ module Language.Core.Interpreter.Structures(
   , DARTState(..)
   , Heap, Env, HeapAddress, HeapReference
   , IM
-  , Thunk (..), TyCon (..) , Value(..)
+  , Thunk (..), DataCon(..) , Value(..)
   , Language.Core.Core.Id
   , module Control.Monad.State
   , module Language.Core.Core
@@ -79,20 +80,25 @@ data Value = Wrong String
            | Fun (Id -> Env -> IM Value) Description
            -- |  List [Value]
            | Pair HeapAddress HeapAddress --HERE, heap addresses
-           | TyConApp TyCon [HeapAddress] -- heap addresses, a type constructor application to some values
+           | TyConApp DataCon[HeapAddress] -- heap addresses, a type constructor application to some values
            | Pointer HeapAddress
            | FreeTypeVariable String -- useful when converting a to SomeClass a (we ignore parameters, and it's useful to save them)
 
 data Thunk = Thunk Exp Env -- a thunk created during the evaluation of a value definition
            | VdefgThunk Exp -- has no environment, it will be passed by the module for efficiency
-instance Show Thunk where show _ = "Thunk"
-
--- cons = TyConApp (AlgTyCon "Cons" [a]) [1,Nil]
+instance Show Thunk where 
+  show (Thunk exp env) = let ?tab_indentation = 0 
+                         in "Thunk(exp=" ++ showExp exp ++ ")"
+  show (VdefgThunk exp) = let ?tab_indentation = 0 
+                          in "VdefgThunk(exp=" ++ showExp exp ++ ")"
+                          
+-- cons = TyConApp (MkDataCon "Cons" [a]) [1,Nil]
 
 -- RENAME THIS (DataCon)
 
-data TyCon = AlgTyCon Id [Ty] -- if Left, then this tycon expects at least one value of type Ty; if Value, this TyCon replaced a Ty for a Value
---data DataCon = MkDataCon Id [Value] --when a TyCon has no Lefts, we shall create a data con
+-- | A data type constructor that has normally a qualified name and a list of
+-- types that it expects. 
+data DataCon = MkDataCon Id [Ty]
 
 type Description = String
 
@@ -133,9 +139,9 @@ instance Show Value where
   show (Pointer address) = "Pointer to " ++ show address
   show (FreeTypeVariable type_var) = type_var
 
-instance Show TyCon where
-  show (AlgTyCon id []) = idName id
-  show (AlgTyCon id types) = idName id ++ " :: " ++ types' where
+instance Show DataCon where
+  show (MkDataCon id []) = idName id
+  show (MkDataCon id types) = idName id ++ " :: " ++ types' where
     types' :: String
     types' | length types == 1 = show types 
            | otherwise = concatMap (\t -> show t ++ " -> ") types
@@ -206,23 +212,23 @@ showList elems = case partitionEithers elems of
   _ -> show elems
   where
     showTail :: Value -> String    
---    showTail (TyConApp (AlgTyCon "ghc-prim:GHC.Types.:" _) ((Right th):(Right tt):[])) = "," ++ show th ++ showTail tt
---    showTail (TyConApp (AlgTyCon "ghc-prim:GHC.Types.[]" _) []) = ""
+--    showTail (TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ((Right th):(Right tt):[])) = "," ++ show th ++ showTail tt
+--    showTail (TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) = ""
     showTail w@(Wrong _) = "," ++ show w
     showTail xs = "????\t\t\t" ++ show xs ++ " \t\t\t"
 
-showTyConApp :: TyCon -> [HeapAddress] -> IM String
+showTyConApp :: DataCon-> [HeapAddress] -> IM String
 showTyConApp tycon addresses = do
   values <- mapM lookupMem addresses
   return $ showTyConVals tycon values
   where
-    showTyConVals :: TyCon -> [Either Thunk Value] -> String
-    showTyConVals (AlgTyCon "ghc-prim:GHC.Types.[]" []) [] = "[]" -- empty list
-    showTyConVals (AlgTyCon "ghc-prim:GHC.Types.:" _) cns = showList cns -- lists
-    showTyConVals (AlgTyCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = show (x,y) -- tuples
+    showTyConVals :: DataCon-> [Either Thunk Value] -> String
+    showTyConVals (MkDataCon "ghc-prim:GHC.Types.[]" []) [] = "[]" -- empty list
+    showTyConVals (MkDataCon "ghc-prim:GHC.Types.:" _) cns = showList cns -- lists
+    showTyConVals (MkDataCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = show (x,y) -- tuples
     -- otherwise
-    showTyConVals (AlgTyCon tycon_name []) vals = idName tycon_name ++ " " ++ showVals vals
-    showTyConVals (AlgTyCon tycon_name _) vals = idName tycon_name ++ " " ++ showVals vals
+    showTyConVals (MkDataCon tycon_name []) vals = idName tycon_name ++ " " ++ showVals vals
+    showTyConVals (MkDataCon tycon_name _) vals = idName tycon_name ++ " " ++ showVals vals
 
 showVals :: [Either Thunk Value] -> String
 showVals vs = case partitionEithers vs of
@@ -230,7 +236,7 @@ showVals vs = case partitionEithers vs of
   (tnks,vals) -> concatMap (\tnk -> show tnk ++ " ") tnks ++ " ; " ++ concatMap (wrapCons) vals
   where
     wrapCons :: Value -> String
-    wrapCons t@(TyConApp (AlgTyCon _ []) _) = show $ t -- if tycon expects no types, don't wrap
+    wrapCons t@(TyConApp (MkDataCon _ []) _) = show $ t -- if tycon expects no types, don't wrap
     wrapCons t@(TyConApp _ _) = wrapInParenthesis . show $ t
     wrapCons v = show v ++ " "
 

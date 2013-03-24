@@ -19,7 +19,8 @@ module Language.Core.Interpreter where
 import           Language.Core.Interpreter.Apply
 import           Language.Core.Interpreter.Acknowledge(acknowledgeTypes, 
                                                        acknowledgeVdefgs,
-                                                       acknowledgeVdefg)
+                                                       acknowledgeVdefg,
+                                                       acknowledgeVdefgWithin)
 import           Language.Core.Interpreter.Util(return')
 import           Language.Core.Interpreter.Structures
 import           Language.Core.Interpreter.Evaluable(eval)
@@ -185,23 +186,35 @@ evalExp e@(Lam (Vb (var_name,ty)) exp) env = do
   --whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
   debugM $ "Making function from lambda abstraction \\" ++ var_name ++ " :: " ++ showType ty ++ " -> exp "
   
-  -- var_name could be a value of a free type, ignore in that case
-  -- case ty of
-  --   -- the first arg is the type class name
+  -- If we abstract over a variable with a free type variable  
+  -- e.g. \zddNumTmp :: Num a 
+  -- and we are applying it, we should assume some value before reducing its value
+    
+  case exp of
+    App _ (Var x) -> if (qualifiedVar x == showType ty)
+                     then debugM ("HOLA" ++ showType ty ++" . " ++ qualifiedVar x) >> return (Fun mkFun $ "\\" ++ var_name ++ " -> exp")
+                     else debugM ("HOLA" ++ showType ty ++" . " ++ qualifiedVar x) >> return (Fun mkFun $ "\\" ++ var_name ++ " -> exp")
+    exp' -> do
+      ti <- gets tab_indentation
+      let ?tab_indentation = ti
+      debugM $ "MMM "++ showExp exp'
+      return $ Fun mkFun $ "\\" ++ var_name ++ " -> exp"
+--    case ty of
+    -- the first arg is the type class name
   --   (Tapp _ (Tvar(type_name))) -> do      
   --     maybe_free_type_pointer <- mkPointer type_name env
   --     case maybe_free_type_pointer of
   --       Pointer _ -> return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"
   --       w@(Wrong _) -> return w
   --   ty' -> return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"  -- run normally
-  return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"
-  where     
-    applyFun :: Id -> Env -> IM Value
-    applyFun id env' = do
-      --make alias (var_name should point to where id is)
-      --so that the body of exp can find var_name
-      heap_ref <- lookupId id env' >>= flip memorize var_name
-      evalExpI exp (heap_ref:env) "Evaluating Lambda body (exp)"
+  -- return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"
+  where  
+    -- a function that receives an identifier, env and returns a value
+    mkFun :: Id -> Env -> IM Value
+    mkFun id env' = do
+      ptr <- mkPointer id env' --lookupId id env' >>= flip memorize var_name -- get address
+      case ptr of
+        Pointer address -> evalExpI exp ((id,address):env) "Evaluating Lambda body (exp)"
 
 -- lambda abstraction over variables
 -- ignores the type argument, evaluating the expression
@@ -245,7 +258,7 @@ evalExp (Case exp vbind@(vbind_var,_) _ alts) env = do
 evalExp (Lit lit) _ = eval lit []
 
 evalExp (Let vdefg exp) env = do
-  env' <- acknowledgeVdefg vdefg env
+  env' <- acknowledgeVdefgWithin env vdefg
   evalExp exp (env' ++ env)
   
 -- Otherwise
@@ -257,7 +270,7 @@ evalExp otherExp _ = do
 -- | Given an alternative and a value that matches the alternative,
 -- binds the free variables in memory and returns a list of references (an environment)
 mkAltEnv :: Value -> Alt -> IM Env
-mkAltEnv (TyConApp (AlgTyCon _ _) addresses) (Acon _ _ vbinds _) = do
+mkAltEnv (TyConApp (MkDataCon _ _) addresses) (Acon _ _ vbinds _) = do
   debugM ("addresses: " ++ show addresses)
   debugM ("Vbinds :: " ++ show vbinds)
   if (length addresses /= length vbinds)
@@ -293,7 +306,7 @@ findMatch val (a:alts) = do
     return . Just $ a
 
 matches :: Value -> Alt -> IM Bool
-(TyConApp (AlgTyCon n _) vals) `matches` (Acon qual_dcon tbs vbs idx_exp) = do
+(TyConApp (MkDataCon n _) vals) `matches` (Acon qual_dcon tbs vbs idx_exp) = do
 
   let tyconId = qualifiedVar qual_dcon
       matches' = tyconId == n
