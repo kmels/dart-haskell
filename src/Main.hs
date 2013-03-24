@@ -53,7 +53,7 @@ newState s = do
     heap = h
     , heap_count = 0
     , number_of_reductions = 0
-    , tab_indentation = 0
+    , tab_indentation = 1
     , settings = s { include = (absolute_includes) }
   }
 
@@ -77,7 +77,7 @@ processModule = do
   let env = concat lib_envs ++ env'
 --  loadFile_ "lib/base/Data/List.hs"
   
-  case (to_eval settgs) of
+  case (evaluate_function settgs) of
     -- What should we eval?
     "" -> do  -- not specified
       (vals,state) <- io $ runStateT (I.evalModule module' env) mem

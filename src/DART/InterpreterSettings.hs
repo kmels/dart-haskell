@@ -5,7 +5,7 @@ import System.Console.CmdArgs
 
 data InterpreterSettings = InterpreterMode { 
   file :: String
-  , to_eval :: FilePath
+  , evaluate_function :: FilePath
   , debug :: Bool
   , show_heap :: Bool
 --, show_time :: Bool
@@ -22,7 +22,7 @@ data InterpreterSettings = InterpreterMode {
              
 interpret = InterpreterMode {
   file = def &= typFile &= groupname "USAGE"
-  , to_eval = def &= typ "FUNCTION_NAME" &= groupname "USAGE" &= help "The function to evaluate (if not provided, all function declarations will be evaluated)"
+  , evaluate_function = def &= typ "FUNCTION_NAME" &= groupname "USAGE" &= help "The function to evaluate (if not provided, all function declarations will be evaluated)"
   , debug = def &= groupname "DEBUG" &= help "Be verbose about what this program is doing"
   , show_heap = def &= groupname "DEBUG" &= help "Shows binded values in the heap"
   , show_expressions = def &= groupname "DEBUG" &= help "Shows the external core expression for every value being evaluated"

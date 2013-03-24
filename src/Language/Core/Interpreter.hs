@@ -186,14 +186,15 @@ evalExp e@(Lam (Vb (var_name,ty)) exp) env = do
   debugM $ "Making function from lambda abstraction \\" ++ var_name ++ " :: " ++ showType ty ++ " -> exp "
   
   -- var_name could be a value of a free type, ignore in that case
-  case ty of
-    -- the first arg is the type class name
-    (Tapp _ (Tvar(type_name))) -> do      
-      maybe_free_type_pointer <- mkPointer type_name env
-      case maybe_free_type_pointer of
-        Pointer _ -> evalExpI exp env "Ignoring fun because it has a free type" -- ignore
-        w@(Wrong _) -> return w
-    ty' -> return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"  -- run normally
+  -- case ty of
+  --   -- the first arg is the type class name
+  --   (Tapp _ (Tvar(type_name))) -> do      
+  --     maybe_free_type_pointer <- mkPointer type_name env
+  --     case maybe_free_type_pointer of
+  --       Pointer _ -> return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"
+  --       w@(Wrong _) -> return w
+  --   ty' -> return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"  -- run normally
+  return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"
   where     
     applyFun :: Id -> Env -> IM Value
     applyFun id env' = do
@@ -217,8 +218,6 @@ evalExp (Dcon qcon) env = mkPointer (qualifiedVar qcon) env >>= flip evalPointer
 -- Case of
 
 evalExp (Case exp vbind@(vbind_var,_) _ alts) env = do
-  --let qvar = qualifiedVar var      
-    
   increaseIndentation
   heap_reference@(id,address) <- memorize (mkThunk exp env) vbind_var
   exp_value <- evalHeapAddress address (heap_reference:env)
@@ -274,12 +273,9 @@ mkAltEnv _ _ = return []
 --bindAltVars val@(Num n) (Acon _ _ [(var,_)] _) = var `bindTo` val
 --bindAltVars t v = io . putStrLn $ " Don't know how to bind values " ++ show t ++ " to " ++ show v
 
-
-
 isAcon :: Alt -> Bool
 isAcon (Acon _ _ _ _) = True
 isAcon _ = False
-
 
 -- | Tries to find an alternative that matches a value. It returns the first match, if any.
 findMatch :: Value -> [Alt] -> IM (Maybe Alt)

@@ -1,5 +1,5 @@
 module Lists (
-  xs, head', one
+  xs, listHead, one
   , naturals
   , first50
   , first3nats
@@ -17,15 +17,13 @@ module Lists (
 import Prelude hiding (even,odd)
 data List a = Nil | Cons a (List a)
 
+listHead :: List a -> a 
+listHead Nil = error "Empty list"
+listHead (Cons x _) = x
+
 -- works
 xs = Cons 1000 (Cons 2000 Nil) 
-
-head' :: List a -> a 
-head' Nil = error "Empty list"
-head' (Cons x _) = x
-
--- works
-one = head' xs
+one = listHead xs
 
 -- first 5 nats
 

@@ -25,7 +25,7 @@ debugMStepEnd = debugM "}" -- append the number, print it
 prependStep :: IM () 
 prependStep = do
   n <- gets number_of_reductions -- get the number 
-  debugMNLNT . flip (++) "." . (++) (replicate n '*' ++ " ") . show $ n -- preceed the number, print it
+  debugMNLNT . flip (++) "." . (++) (replicate (n+1) '*' ++ " ") . show $ n -- preceed the number, print it
   modify increase_number_of_reductions -- and then, increase the number
               
 -- | Prepends a new line
