@@ -109,7 +109,9 @@ evalExp e@(App function_exp argument_exp) env = do
       qvar_val <- qualifiedVar qvar `lookupId` env
       case qvar_val of
         Right (Wrong _) -> mkRefAndApply f argument_exp -- not found, 
-        whnf -> apply f (qualifiedVar qvar) env --don't create thunk for variables in scope
+        whnf -> do
+          debugM $ "Skipping the making of reference, " ++ (qualifiedVar qvar) ++ " is already in env"
+          apply f (qualifiedVar qvar) env --don't create thunk for variables in scope
     _ -> mkRefAndApply f argument_exp
   where
     mkRefAndApply :: Value -> Exp -> IM Value
@@ -165,11 +167,12 @@ evalExp e@(Lam (Vb (var_name,ty)) exp) env = do
   where  
     -- a function that receives an identifier, env and returns a value
     mkFun :: Id -> Env -> IM Value
-    mkFun id env' = do
+    mkFun id env' = do      
       ptr <- mkPointer id env' --lookupId id env' >>= flip memorize var_name -- get address
       case ptr of
-        Pointer address -> evalExpI exp ((id,address):env) "Evaluating Lambda body (exp)"
-
+        Pointer address -> evalExpI exp ((var_name,address):env) "Evaluating Lambda body (exp)"
+        w@(Wrong _)  -> return w
+        
 -- lambda abstraction over variables
 -- ignores the type argument, evaluating the expression
 evalExp e@(Lam (Tb (var_name,_)) exp) env = do
@@ -331,7 +334,7 @@ evalId i e = do
 apply :: Value -> Id -> Env -> IM Value
 apply (Fun f d) id env = do
   debugM $ "applying " ++ d ++ " to " ++ id 
-  res <- f id env  
+  res <- f id env
   debugM $ "apply " ++ d ++ " to " ++ id ++ " => " ++ show res   
   return res
     
