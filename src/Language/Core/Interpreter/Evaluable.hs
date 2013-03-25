@@ -85,7 +85,7 @@ instance Evaluable Thunk where
 instance Evaluable Value where
 --  eval :: Value -> Env -> IM Value
   eval e@(Wrong _) _ = return e
-  eval ptr@(Pointer _) env = eval ptr env
+  eval (Pointer ptr) env = eval ptr env
   eval v env = return $ Wrong $ "Wrong Evaluable Value: " ++ show v
   
 instance Evaluable Pointer where
@@ -126,7 +126,7 @@ evalExp e@(App function_exp argument_exp) env = do
   ti <- gets tab_indentation
   let ?tab_indentation = ti
       
-  f <- evalExpI function_exp env "Evaluating function_exp"
+  f <- evalExpI function_exp env ("Evaluating function_exp" ++ showExp function_exp)
   
   -- if the argument is a variable that is already in the env, don't make a new reference  
   case argument_exp of
@@ -151,7 +151,15 @@ evalExp e@(App function_exp argument_exp) env = do
       return res
 
 -- | A function application which has the type annotation which we will essentially ignore.
-evalExp e@(Appt exp ty) env = evalExp exp env -- "Typed application "
+evalExp e@(Appt exp ty) env = do 
+  ti <- gets tab_indentation  
+  let ?tab_indentation = ti
+  debugM $ showExp exp
+  debugM $ showType ty
+  case exp of
+    (Var qvar) -> evalExpI exp env "Typed Var application "
+    (Dcon qvar) -> evalExpI exp env $ "Typed Dcon application  " ++ qualifiedVar qvar
+    _ -> evalExpI exp env "Typed application "
 
 evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = let
   applyFun :: Value -> IM Value  
@@ -211,10 +219,9 @@ evalExp e@(Lam (Tb (var_name,_)) exp) env = do
       
 -- Qualified variables that should be in the environment
 evalExp e@(Var qvar) env = do
-  debugM ("Var " ++ qualifiedVar qvar)
-  debugM ("Env: " ++ show (map ((++) "\n" . show) env))
+--  debugM ("Env: " ++ show (map ((++) "\n" . show) env))
   maybePtr <- mkPointer (qualifiedVar qvar) env
-  debugM $ "Got ptr:: " ++ show maybePtr
+--  debugM $ "Got ptr:: " ++ show maybePtr
   case maybePtr of
     Just ptr ->   eval ptr env
     Nothing -> return $ Wrong $ "Could not find var in env " ++ qualifiedVar qvar  
