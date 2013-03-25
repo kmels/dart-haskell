@@ -67,26 +67,51 @@ evalHeapAddress :: HeapAddress -> Env -> IM Value
 evalHeapAddress address env = do
   eTnkVal <- lookupMem address
   -- if it is a thunk, eval and memorize in heap
-  val <- either (flip evalThunk env) return eTnkVal  
+  val <- either (flip eval env) return eTnkVal  
   -- re-save
   h <- gets heap
   io $ H.insert h address (Right val)
   return val
 
-evalThunk :: Thunk -> Env -> IM Value
-evalThunk (VdefgThunk exp) env = evalExp exp env
-evalThunk (Thunk exp env) _ = do
-  ti <- gets tab_indentation
-  let ?tab_indentation = ti
-  debugM $ "Evaluating thunk: " ++ showExp exp
-  evalExp exp env
+instance Evaluable Thunk where
+-- eval :: Thunk -> Env -> IM Value
+  eval (VdefgThunk exp) env = evalExp exp env
+  eval (Thunk exp env) _ = do
+    ti <- gets tab_indentation
+    let ?tab_indentation = ti
+    debugM $ "Evaluating thunk: " ++ showExp exp
+    evalExp exp env
 
+instance Evaluable Value where
+--  eval :: Value -> Env -> IM Value
+  eval e@(Wrong _) _ = return e
+  eval ptr@(Pointer _) env = eval ptr env
+  eval v env = return $ Wrong $ "Wrong Evaluable Value: " ++ show v
+  
+instance Evaluable Pointer where
+--  eval :: Pointer -> Env -> IM Value
+  eval (MkPointer address) env = do
+    debugM "Evaluable Pointer"
+    eval address env
+
+instance Evaluable HeapAddress where
+  eval address env = do
+    debugM $ "Evaluable HeapAddress: " ++ show address
+    eTnkVal <- lookupMem address
+    -- if it is a thunk, eval and memorize in heap
+    val <- either (flip eval env) return eTnkVal
+    debugM $ "Saving : " ++ show val
+    -- re-save
+    h <- gets heap    
+    io $ H.insert h address (Right val)
+    return val
+  
 -- | Given a Pointer HeapAddress, eval a Thunk if necessary to return a Value represented
 -- by the address 
-evalPointer :: Value -> Env -> IM Value
-evalPointer (Pointer address) env = evalHeapAddress address env
-evalPointer e@(Wrong s) _ = return e
-evalPointer _ _ = return . Wrong $ "evalPointer: The impossible happened"
+-- evalPointer :: Value -> Env -> IM Value
+-- evalPointer (Pointer address) env = evalHeapAddress address env
+-- evalPointer e@(Wrong s) _ = return e
+-- evalPointer _ _ = return . Wrong $ "evalPointer: The impossible happened"
 
 evalExp :: Exp -> Env -> IM Value
 
@@ -101,7 +126,7 @@ evalExp e@(App function_exp argument_exp) env = do
   ti <- gets tab_indentation
   let ?tab_indentation = ti
       
-  f <- evalExpI function_exp env "Evaluating "
+  f <- evalExpI function_exp env "Evaluating function_exp"
   
   -- if the argument is a variable that is already in the env, don't make a new reference  
   case argument_exp of
@@ -116,6 +141,7 @@ evalExp e@(App function_exp argument_exp) env = do
   where
     mkRefAndApply :: Value -> Exp -> IM Value
     mkRefAndApply f arg_exp = do
+      debugM "mkRefAndApply"
       heap_reference@(id,arg_address) <- mkHeapReference arg_exp env
       --decreaseIndentation
       debugM "" >> debugM ("Argument to function has reference: " ++ show heap_reference)
@@ -165,12 +191,14 @@ evalExp e@(Lam (Vb (var_name,ty)) exp) env = do
   --   ty' -> return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"  -- run normally
   -- return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"
   where  
-    -- a function that receives an identifier, env and returns a value
+    -- a function that receives an identifier that points to some address
+    -- makes a pointer from the variable we are abstracting over to found the address
+    -- and computes a value in a new constructed environment
     mkFun :: Id -> Env -> IM Value
     mkFun id env' = do      
-      ptr <- mkPointer id env' --lookupId id env' >>= flip memorize var_name -- get address
+      ptr <- getPointer id env'
       case ptr of
-        Pointer address -> evalExpI exp ((var_name,address):env) "Evaluating Lambda body (exp)"
+        Pointer ptr -> evalExpI exp ((var_name,address ptr):env) "Evaluating Lambda body (exp)"
         w@(Wrong _)  -> return w
         
 -- lambda abstraction over variables
@@ -182,12 +210,20 @@ evalExp e@(Lam (Tb (var_name,_)) exp) env = do
   evalExpI exp (free_type_ref:env) "Evaluating lambda body (exp)"
       
 -- Qualified variables that should be in the environment
-evalExp e@(Var qvar) env = debugM ("Var " ++ qualifiedVar qvar) >> mkPointer (qualifiedVar qvar) env >>= flip evalPointer env
-evalExp (Dcon qcon) env = mkPointer (qualifiedVar qcon) env >>= flip evalPointer env
+evalExp e@(Var qvar) env = do
+  debugM ("Var " ++ qualifiedVar qvar)
+  debugM ("Env: " ++ show (map ((++) "\n" . show) env))
+  maybePtr <- mkPointer (qualifiedVar qvar) env
+  debugM $ "Got ptr:: " ++ show maybePtr
+  case maybePtr of
+    Just ptr ->   eval ptr env
+    Nothing -> return $ Wrong $ "Could not find var in env " ++ qualifiedVar qvar  
+  
+evalExp (Dcon qcon) env = getPointer (qualifiedVar qcon) env >>= flip eval env
 
 -- Case of
 
-evalExp (Case exp vbind@(vbind_var,_) _ alts) env = do
+evalExp (Case exp vbind@(vbind_var,ty) gen_ty alts) env = do
   increaseIndentation
   heap_reference@(id,address) <- memorize (mkThunk exp env) vbind_var
   exp_value <- evalHeapAddress address (heap_reference:env)
@@ -227,16 +263,16 @@ evalExp otherExp _ = do
 -- | Given an alternative and a value that matches the alternative,
 -- binds the free variables in memory and returns a list of references (an environment)
 mkAltEnv :: Value -> Alt -> IM Env
-mkAltEnv (TyConApp (MkDataCon _ _) addresses) (Acon _ _ vbinds _) = do
-  debugM ("addresses: " ++ show addresses)
+mkAltEnv (TyConApp (MkDataCon _ _) pointers) (Acon _ _ vbinds _) = do
+  debugM ("pointers: " ++ show pointers)
   debugM ("Vbinds :: " ++ show vbinds)
-  if (length addresses /= length vbinds)
+  if (length pointers /= length vbinds)
   then error "length vals /= length vbinds"
   else do
      debugM "CAFE" 
      -- get vals and memorize that
      let ids = (map fst vbinds)
-     return $ ids `zip` addresses
+     return $ ids `zip` (map address pointers)
 --     mapM (uncurry memorize) (addresses `zip` (map fst vbinds))
 mkAltEnv _ _ = return []
 
@@ -300,10 +336,9 @@ evalExpI :: Exp -> Env -> String -> IM Value
 evalExpI exp env desc = do 
   ti <- gets tab_indentation
   let ?tab_indentation = ti
-  debugMStep $ ">> " ++ desc ++ showExp exp ++ " {"
-  increaseIndentation
+  debugMStep $ desc
   debugSubexpression exp 
-  debugM "" -- new line
+  increaseIndentation  
   res <- evalExp exp env
   debugM $ "evalExpI#res: " ++ show res
   decreaseIndentation
@@ -314,15 +349,15 @@ evalExpI exp env desc = do
 evalId :: Id -> Env -> IM Value
 --evalId i e = lookupId i e >>= either (evalThunk e) return
 evalId i e = do
-  ptr <- mkPointer i e 
+  ptr <- getPointer i e 
   case ptr of
     e@(Wrong s) -> return e -- i was not found in env
-    Pointer heap_address -> do -- we know something about i in env
+    Pointer (MkPointer heap_address) -> do -- we know something about i in env
       eTnkVal <- lookupMem heap_address
       debugM $ "lookupId " ++ i ++ " = " ++ show eTnkVal
       whnf <- case eTnkVal of  -- evaluate to weak head normal form
         Left thunk -> do
-          val <- evalThunk thunk e
+          val <- eval thunk e
           h <- gets heap
           io $ H.insert h heap_address (Right val)
           return val
@@ -333,17 +368,17 @@ evalId i e = do
 -- | Function application
 apply :: Value -> Id -> Env -> IM Value
 apply (Fun f d) id env = do
-  debugM $ "applying " ++ d ++ " to " ++ id 
+  watchReductionM $ "applying " ++ d ++ " to " ++ id
   res <- f id env
-  debugM $ "apply " ++ d ++ " to " ++ id ++ " => " ++ show res   
+  watchReductionM $ "apply " ++ d ++ " to " ++ id ++ " => " ++ show res   
   return res
     
 -- Applies a (possibly applied) type constructor that expects appliedValue of type ty.
 -- The type constructor that we are applying has |vals| applied values
 apply (TyConApp tycon addresses) id env =  do 
-    addr <- mkPointer id env
+    addr <- getPointer id env
     case addr of
-      Pointer a -> return $ TyConApp tycon (addresses ++ [a])
+      Pointer p -> return $ TyConApp tycon (addresses ++ [p])
       e@(Wrong s) -> return e
       
 apply w@(Wrong _) _ _ = return w

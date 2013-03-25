@@ -6,12 +6,12 @@ import Language.Core.Interpreter.Apply
 import Language.Core.Util
 
 tupleConstructor :: (Id, Either Thunk Value)
-tupleConstructor = (id, Right $ Fun (\i e -> mkPointer i e >>= mkPair_1) "unary(,)") 
+tupleConstructor = (id, Right $ Fun (\i e -> getPointer i e >>= mkPair_1) "unary(,)") 
   where    
     id = "ghc-prim:GHC.Tuple.(,)"
     
     mkPair_1 :: Value -> IM Value
-    mkPair_1 x = return $ Fun (\i e -> mkPointer i e >>= mkPair_2 x) "binary(,)"  
+    mkPair_1 x = return $ Fun (\i e -> getPointer i e >>= mkPair_2 x) "binary(,)"  
                
     mkPair_2 :: Value -> Value -> IM Value
     mkPair_2 (Pointer x) (Pointer y) = return $ Pair x y

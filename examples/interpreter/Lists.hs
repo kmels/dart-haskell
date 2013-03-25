@@ -8,13 +8,12 @@ module Lists (
   , five
   , str
   , chr
-  , take'
   , takeTest1, takeTest2, takeTest3, takeTest4, takeTest5, takeTest6
   , intListLength, hundred, four
   , odd, even, evenOf10
 ) where
 
-import Prelude hiding (even,odd)
+import Prelude hiding (even,odd,take)
 data List a = Nil | Cons a (List a)
 
 listHead :: List a -> a 
@@ -34,8 +33,8 @@ five = 5
 chr = 'a'
 str = "a string"
 
-first5nats = [1,2,3,four,five]
-first3nats = take' 3 first5nats
+first5nats = take 5 naturals
+first3nats = take 3 first5nats
 
 naturals = [0..]
 first10primes = take 10 $ filter isPrime naturals
@@ -53,22 +52,17 @@ intListLength :: [Int] -> Int
 intListLength [] = 0
 intListLength (x:xs) = intListLength xs + 1
 
-four = intListLength $ take' 4 [0,1,2,3,10,20]
-hundred = intListLength $ take' 100 [1..]
+four = intListLength $ take 4 [0,1,2,3,10,20]
+hundred = intListLength $ take 100 [1..]
 hundredOne = intListLength [1..101]
 
-take' :: Int -> [Int] -> [Int]
-take' n _      | n <= 0 =  []
-take' _ []              =  []
-take' n (x:xs)          =  x : take' (n-1) xs
-
-first50 = take' 50 naturals
-takeTest1 = take' 0 [] -- works
-takeTest2 = take' 1 [] -- works
-takeTest3 = take' 500 [] -- works
-takeTest4 = take' (5-5) [1,2,3]
-takeTest5 = take' 1 [1]
-takeTest6 = take' 2 [1,2,3]
+first50 = take 50 naturals
+takeTest1 = take 0 [] -- works
+takeTest2 = take 1 [] -- works
+takeTest3 = take 500 [] -- works
+takeTest4 = take (5-5) [1,2,3]
+takeTest5 = take 1 [1]
+takeTest6 = take 2 [1,2,3]
 
 even 0 = True
 even x = odd (x-1)
@@ -92,3 +86,7 @@ evenOf10 = even 10
 --     mcompare (Mlist xs) (Mlist ys)
 --            | length xs == length ys && null (xs \\ ys) = MEQ
 --            | otherwise = MIN
+
+take n _      | n <= 0 =  []
+take _ []              =  []
+take n (x:xs)          =  x : take (n-1) xs

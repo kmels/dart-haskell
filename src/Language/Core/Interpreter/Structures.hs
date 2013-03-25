@@ -25,7 +25,7 @@ module Language.Core.Interpreter.Structures(
   , DARTState(..)
   , Heap, Env, HeapAddress, HeapReference
   , IM
-  , Thunk (..), DataCon(..) , Value(..)
+  , Thunk (..), DataCon(..) , Value(..), Pointer(..)
   , Language.Core.Core.Id
   , module Control.Monad.State
   , module Language.Core.Core
@@ -56,7 +56,8 @@ data DARTState = DState {
  heap :: Heap, -- our memory 
  heap_count :: Int, -- address counter, counts those previously deleted too
                     -- useful to generate new variable names
- number_of_reductions :: !Int -- when an expression is evaluated, this value increments by 1
+ number_of_reductions :: !Int, -- when an expression is evaluated, this value increments by 1, useful to print debug headings
+ number_of_reductions_part :: !Int -- when in debugging mode, this value is increased everytime an step is done in the evaluation of the expression represented by the number `number_of_reductions`, prints debug subheadings
  , tab_indentation :: !Int -- useful when to know how many tabs we shoud prepend
  , settings :: InterpreterSettings
 }
@@ -79,10 +80,12 @@ data Value = Wrong String
            | String String
            | Fun (Id -> Env -> IM Value) Description
            -- |  List [Value]
-           | Pair HeapAddress HeapAddress --HERE, heap addresses
-           | TyConApp DataCon[HeapAddress] -- heap addresses, a type constructor application to some values
-           | Pointer HeapAddress
+           | Pair Pointer Pointer --HERE, heap addresses
+           | TyConApp DataCon [Pointer] -- heap addresses, a type constructor application to some values
+           | Pointer Pointer
            | FreeTypeVariable String -- useful when converting a to SomeClass a (we ignore parameters, and it's useful to save them)
+
+newtype Pointer = MkPointer { address :: HeapAddress } deriving Show
 
 data Thunk = Thunk Exp Env -- a thunk created during the evaluation of a value definition
            | VdefgThunk Exp -- has no environment, it will be passed by the module for efficiency
@@ -120,7 +123,7 @@ instance Eq Value where
 -- | There are some values that contain addresses for which we must, in order to
 -- pretty print the given value, look up their actual value in the heap
 showM :: Value -> IM String
-showM (TyConApp tc addresses) = showTyConApp tc addresses
+showM (TyConApp tc ptrs) = showTyConApp tc ptrs
 showM val = return $ show val
 
 instance Show Value where
@@ -217,9 +220,9 @@ showList elems = case partitionEithers elems of
     showTail w@(Wrong _) = "," ++ show w
     showTail xs = "????\t\t\t" ++ show xs ++ " \t\t\t"
 
-showTyConApp :: DataCon-> [HeapAddress] -> IM String
-showTyConApp tycon addresses = do
-  values <- mapM lookupMem addresses
+showTyConApp :: DataCon-> [Pointer] -> IM String
+showTyConApp tycon pointers = do
+  values <- mapM lookupPtr pointers
   return $ showTyConVals tycon values
   where
     showTyConVals :: DataCon-> [Either Thunk Value] -> String
@@ -240,10 +243,14 @@ showVals vs = case partitionEithers vs of
     wrapCons t@(TyConApp _ _) = wrapInParenthesis . show $ t
     wrapCons v = show v ++ " "
 
+lookupPtr :: Pointer -> IM (Either Thunk Value)
+lookupPtr (MkPointer address) = lookupMem address
+
 lookupMem :: HeapAddress -> IM (Either Thunk Value)
 lookupMem address = do
   h <- gets heap
-  val <- io $ H.lookup h address   
+  val <- io $ H.lookup h address
+  debugM $ " lookupMem: " ++ show val   
   maybe fail return val 
   where 
     fail :: IM (Either Thunk Value)

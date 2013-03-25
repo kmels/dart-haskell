@@ -45,14 +45,18 @@ newState s = do
   h <- io H.new -- get a new heap
   current_dir <- getCurrentDirectory 
   let --list = current_dir ++ "/lib/base/Data/List.hs"  
-       --char = current_dir ++ "/lib/base/Data/Char.hs"  
---    enum = current_dir ++ "/lib/base/GHC/Enum.hcr"  
+       --char = current_dir ++ "/lib/base/Data/Char.hs"
+    ghc_list = current_dir ++ "/lib/base/Prelude.hcr"  
+    data_list = current_dir ++ "/lib/base/Data/List.hcr"  
+    enum = current_dir ++ "/lib/base/GHC/Enum.hcr"  
     absolute_includes = (map ((++) (current_dir ++ "/")) $ include s) -- ++ 
-                        -- ++ [enum]
+                        ++ [enum]
+                        ++ [ghc_list]
   return $ DState {
     heap = h
     , heap_count = 0
     , number_of_reductions = 0
+    , number_of_reductions_part = 0
     , tab_indentation = 1
     , settings = s { include = (absolute_includes) }
   }

@@ -60,6 +60,7 @@ Value definition to mapped values
 
 evalModule :: (?settings :: InterpreterSettings) => Module -> Env -> IM [(Id, Value)]
 evalModule m@(Module name tdefs vdefgs) libs_env = do
+  debugM $ "Evaluating module with env: " ++ show libs_env
   -- recognize type and value definitions
   tycons_env <- acknowledgeTypes m
   vdefs_env <- acknowledgeVdefgs m --libs_env
