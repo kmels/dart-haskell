@@ -24,13 +24,13 @@ import DART.InterpreterSettings
 
 -- | Given a module, recognize type constructors and put them in the heap 
 -- so that we can build values for custom types afterwards.
-acknowledgeTypes :: (?settings :: InterpreterSettings) => Module -> IM Env
+acknowledgeTypes :: Module -> IM Env
 acknowledgeTypes modl@(Module _ tdefs _) = mapM acknowledgeType tdefs >>= return . concat
   
 -- | Given a data type or a newtype definition, memorize their type constructors,
 -- create an environment variable for each of them and return an environment that holds
 -- all the created heap references
-acknowledgeType :: (?settings :: InterpreterSettings) => Tdef -> IM Env
+acknowledgeType :: Tdef -> IM Env
 acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) = 
   do
     debugM $ "Acknowledging type " ++ qualifiedVar qdname
@@ -45,7 +45,7 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) =
       memorize (mkVal $ TyConApp tyCon []) (tyConName)
     
 -- | Given a module, recognize all of its value definitions, functions, and put them in the heap so that we can evaluate them when required. 
-acknowledgeVdefgs :: (?settings :: InterpreterSettings) => Module -> IM Env
+acknowledgeVdefgs :: Module -> IM Env
 acknowledgeVdefgs m@(Module _ _ vdefgs) = do
   envs <- mapM acknowledgeVdefg vdefgs :: IM [Env]
   return . concat $ envs

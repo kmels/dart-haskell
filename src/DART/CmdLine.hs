@@ -116,7 +116,7 @@ debugMNL msg = do
     let tab = replicate ti '*' 
     in io . putStr $ (tab ++ msg) 
             
-printHeap :: (?settings :: InterpreterSettings) => Heap -> IO ()
+printHeap :: Heap -> IO ()
 printHeap heap = do
   putStrLn $ "-------------------- Heap begins --------------------" 
   H.mapM_ printVar heap

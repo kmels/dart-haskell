@@ -57,8 +57,7 @@ Value definition to mapped values
 -----------------------------------------------------
 -}
 
-
-evalModule :: (?settings :: InterpreterSettings) => Module -> Env -> IM [(Id, Value)]
+evalModule :: Module -> Env -> IM [(Id, Value)]
 evalModule m@(Module name tdefs vdefgs) libs_env = do
   debugM $ "Evaluating module with env: " ++ show libs_env
   -- recognize type and value definitions
@@ -77,7 +76,7 @@ evalModule m@(Module name tdefs vdefgs) libs_env = do
 
 -- | Given a module and a function name, we evaluate the function in that module and return the heap. 
 
-evalModuleFunction :: (?settings :: InterpreterSettings) => Module -> String -> Env -> IM Value
+evalModuleFunction :: Module -> String -> Env -> IM Value
 evalModuleFunction m fun_name env = eval (ModuleFunction fun_name m) env
   
 --bindAltVars val@(Num n) (Acon _ _ [(var,_)] _) = var `bindTo` val
@@ -89,6 +88,6 @@ isAcon _ = False
 
 
 -- | Loads nothing ATM, but it'll be useful
-loadLibrary :: (?settings :: InterpreterSettings) => [(Id, Either Thunk Value)] -> IM Env
+loadLibrary :: [(Id, Either Thunk Value)] -> IM Env
 loadLibrary funs = mapM (uncurry $ flip memorize) funs
 

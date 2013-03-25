@@ -35,14 +35,15 @@ import           Language.Core.Vdefg
 import           System.Console.CmdArgs
 import           System.Directory(getCurrentDirectory)
 import           Text.Encoding.Z
+
 main :: IO () 
-main = cmdArgs interpret >>= newState >>= evalStateT processModule 
+main = cmdArgs interpret >>= initDART >>= evalStateT runDART 
 
--- | Creates an initial state
-
-newState :: InterpreterSettings -> IO DARTState
-newState s = do
-  h <- io H.new -- get a new heap
+-- | Creates an initial state given the arguments given
+-- in the command line and parsed by CmdArgs
+initDART :: InterpreterSettings -> IO DARTState
+initDART s = do
+  h <- io H.new -- create a fresh new heap
   current_dir <- getCurrentDirectory 
   let --list = current_dir ++ "/lib/base/Data/List.hs"  
        --char = current_dir ++ "/lib/base/Data/Char.hs"
@@ -61,49 +62,53 @@ newState s = do
     , settings = s { include = (absolute_includes) }
   }
 
-processModule :: IM ()
-processModule = do
-  
-  st <- get
+-- | After an initial state is created, evaluates according to the settings
+runDART :: IM ()
+runDART = do  
   settgs <- gets settings  
   
-  debugM $ "Reading " ++ file settgs  ++ " .."
-  module'@(Module mdlname tdefs vdefgs) <- io . readModule $ file settgs
-  debugM $ "Read module " ++ show mdlname
+  -- Load includes  
+  debugMStep $ "Loading includes "
+  let includes = include settgs
+  lib_envs <- mapM loadFilePath includes -- read source code files
   
-  -- Time to evaluate
-  
-  debugM $ "Loading libraries "
-  let ?settings = settgs
-  (env',mem) <- io $ runStateT (I.loadLibrary Libs.ghc_base) st -- implemented functions
-  lib_envs <- mapM loadFilePath (include settgs)  -- acknowledged from source code
-  
-  let env = concat lib_envs ++ env'
---  loadFile_ "lib/base/Data/List.hs"
-  
-  case (evaluate_function settgs) of
-    -- What should we eval?
-    "" -> do  -- not specified
-      (vals,state) <- io $ runStateT (I.evalModule module' env) mem
-      let h = heap state
-      io . putStrLn $ "WARNING: You did not specify a function name to eval (flags --eval or -e), that's why I evaluated all values"
+  -- Load GHC definitions like GHC.Num.+
+  ghc_defs <- I.loadLibrary Libs.ghc_base
+
+  -- Evaluate specified module
+  let pathToModule = file settgs
+  debugMStep $ "Reading module " ++ pathToModule  ++ " .."
+  m@(Module mdlname tdefs vdefgs) <- io . readModule $ file settgs
+
+  -- What should we eval? a function or the whole module?
+  evaluate m (concat lib_envs ++ ghc_defs) (evaluate_function settgs)
+  where
+    evaluate :: Module -> Env -> String -> IM () 
+    -- | no function specified  
+    evaluate m env [] = do 
+      vals <- I.evalModule m env -- interpret values
       
+      -- funtion to pretty print
       let prettyPrint :: (Id,Value) -> IM String
           prettyPrint (id,val) = showM val >>= return . (++) (id ++ " => ")
-          
-      prettyPrintedVals <- mapM prettyPrint vals
+        
+      mapM prettyPrint vals >>= io . mapM_ putStrLn
       
-      io $ mapM_ putStrLn prettyPrintedVals
-      when (show_heap $ ?settings) $ io . printHeap $ h
-    fun_name -> do -- eval fun_name
-      (result,state) <- io $ runStateT (I.evalModuleFunction module' fun_name env) mem
-      when (show_heap $ ?settings) $ io . printHeap $ (heap state)
-      prettyPrintedVal <- showM result
-      io . putStrLn $ prettyPrintedVal -- will be a Value iff fun_name is not null
+      h <- gets heap
+      st <- gets settings
+      when (show_heap st) $ io . printHeap $ h
+  
+    -- | eval fun_name
+    evaluate m env fun_name = do 
+      result <- I.evalModuleFunction m fun_name env
+      
+      -- do we print the heap?
+      h <- gets heap
+      st <- gets settings
+      when (show_heap $ st) $ io . printHeap $ h
+      
+      -- output computed result
+      showM result >>= io . putStrLn
 
 -- | Decode any string encoded as Z-encoded string and print it
-
 putZDecStrLn = putStrLn . zDecodeString
-
-
-
