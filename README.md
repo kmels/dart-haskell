@@ -4,7 +4,7 @@ Automated testing for Haskell programs. We take a program, simulate it against l
 
 Roadmap
 ------
- - Compile .hs and interpret expressions -- Pretty much complete, some libraries functions are missing though, please report bugs.
+ - Compile .hs and interpret expressions. 
  - Record reduction paths -- TODO 
  - Find paths that were not run using an SMT solver -- TODO
  - Simulate further -- TODO

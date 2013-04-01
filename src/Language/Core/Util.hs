@@ -151,12 +151,12 @@ qualifiedVar (Just mname,var) = zDecodeString $ show mname ++ "." ++ var
 bindVarName :: Bind -> Id
 bindVarName (Vb (var,ty)) = var
 bindVarName (Tb (tvar,kind)) = tvar
-
-{-
+{--
 instance Show AnMname where 
   show (M ((P packageName),[],s2)) = packageName ++ ":" ++ s2
   show (M ((P packageName),[s1],s2)) = packageName ++ ":" ++ s1 ++ "." ++ s2
   show (M ((P packageName),ss,s2)) = packageName ++ ":" ++ show ss ++ "." ++ s2
+
 
 instance Show Cdef where
   show (Constr (_,dcon) tbinds types) = 

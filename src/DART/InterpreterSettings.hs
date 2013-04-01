@@ -4,9 +4,10 @@ module DART.InterpreterSettings where
 import System.Console.CmdArgs
 
 data InterpreterSettings = InterpreterMode { 
-  file :: String
-  , evaluate_function :: FilePath
-  , debug :: Bool
+  file :: FilePath -- The file we will read information from, it can be either .hs, .lhs or .hcr
+  , evaluate_function :: String -- the interpreter evaluates some function, defined in `file`
+  , test_funcion :: String -- some function to test, defined in `file`
+  , debug :: Bool -- debug flags
   , show_heap :: Bool
 --, show_time :: Bool
   , show_expressions :: Bool
@@ -22,7 +23,8 @@ data InterpreterSettings = InterpreterMode {
              
 interpret = InterpreterMode {
   file = def &= typFile &= groupname "USAGE"
-  , evaluate_function = def &= typ "FUNCTION_NAME" &= groupname "USAGE" &= help "The function to evaluate (if not provided, all function declarations will be evaluated)"
+  , evaluate_function = def &= groupname "USAGE" &= help "The function to evaluate (if not provided, all function declarations will be evaluated)"
+  , test_funcion = def &= groupname "USAGE" &= help "The function to test (if not provided, all functions will be tested)"
   , debug = def &= groupname "DEBUG" &= help "Be verbose about what this program is doing"
   , show_heap = def &= groupname "DEBUG" &= help "Shows binded values in the heap"
   , show_expressions = def &= groupname "DEBUG" &= help "Shows the external core expression for every value being evaluated"

@@ -30,6 +30,7 @@ import qualified Data.HashTable.IO as H
 import           Data.Maybe
 import           Language.Core.Interp
 import qualified Language.Core.Interpreter as I
+import qualified DART.ModuleTester as T
 import qualified Language.Core.Interpreter.Libraries as Libs
 import           Language.Core.Vdefg
 import           System.Console.CmdArgs
@@ -47,9 +48,9 @@ initDART s = do
   current_dir <- getCurrentDirectory 
   let --list = current_dir ++ "/lib/base/Data/List.hs"  
        --char = current_dir ++ "/lib/base/Data/Char.hs"
-    ghc_list = current_dir ++ "/lib/base/Prelude.hcr"  
-    data_list = current_dir ++ "/lib/base/Data/List.hcr"  
-    enum = current_dir ++ "/lib/base/GHC/Enum.hcr"  
+    ghc_list = current_dir ++ "/lib/base/Prelude.hs"  
+    data_list = current_dir ++ "/lib/base/Data/List.hs"  
+    enum = current_dir ++ "/lib/base/GHC/Enum.hs"  
     absolute_includes = (map ((++) (current_dir ++ "/")) $ include s) -- ++ 
                         ++ [enum]
                         ++ [ghc_list]
@@ -79,10 +80,28 @@ runDART = do
   let pathToModule = file settgs
   debugMStep $ "Reading module " ++ pathToModule  ++ " .."
   m@(Module mdlname tdefs vdefgs) <- io . readModule $ file settgs
-
-  -- What should we eval? a function or the whole module?
-  evaluate m (concat lib_envs ++ ghc_defs) (evaluate_function settgs)
+    
+  let env = concat lib_envs ++ ghc_defs
+  -- What should we eval? a function or the whole module?  
+  evaluate m env (evaluate_function settgs)
+  
+  -- What should we test? a function or the whole module?  
+  test m env (test_funcion settgs)
+  
   where
+    test :: Module -> Env -> String -> IM ()
+    -- | No function specified
+    test m env [] = do
+      results <- T.testModule m env
+      
+      let prettyPrint :: (Id,T.TestResult) -> IM String
+          prettyPrint (id,test_result) = T.showTest test_result >>= return . (++) (id ++ ": \n")
+
+      mapM prettyPrint results >>= io . mapM_ putStrLn
+      
+      h <- gets heap
+      whenFlag show_heap $ io . printHeap $ h
+      
     evaluate :: Module -> Env -> String -> IM () 
     -- | no function specified  
     evaluate m env [] = do 
@@ -100,6 +119,7 @@ runDART = do
   
     -- | eval fun_name
     evaluate m env fun_name = do 
+      io $ putStrLn $ show $ env
       result <- I.evalModuleFunction m fun_name env
       
       -- do we print the heap?

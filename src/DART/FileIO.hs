@@ -10,7 +10,7 @@ import           Data.ByteString.Lazy.UTF8 (toString)
 import           Data.Conduit.Process
 import           Language.Core.Core
 import           Language.Core.Core (Module)
-import           Language.Core.Interpreter.Acknowledge(acknowledgeTypes,acknowledgeVdefgs)
+import           Language.Core.Interpreter.Acknowledge(acknowledgeTypes,acknowledgeVdefgs,acknowledgeModule)
 import           Language.Core.Interpreter.Structures
 import           Language.Core.ParseGlue
 import           Language.Core.Parser
@@ -75,9 +75,7 @@ loadFilePath filepath = do
              module' <- liftIO $ readModule filepath
              settings' <- gets settings
              let ?settings = settings'
-             types_env <- acknowledgeTypes module' 
-             defs_env <- acknowledgeVdefgs module'
-             return $ types_env ++ defs_env
+             acknowledgeModule module'
            else return []
   return env
   

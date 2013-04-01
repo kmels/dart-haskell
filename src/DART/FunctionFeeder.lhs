@@ -13,7 +13,7 @@
 
 > module DART.FunctionFeeder where
 
-We'll need to differentiate types, for that we will pattern match on them. To be able to pattern match on them, we need to parse them. TypeExtractor converts types managed by  Language.Core.Parser into types described in Language.Core.TypeExtractor.
+We'll need to differentiate types, for that we will pattern match on them. To be able to pattern match on them, we parse them first. TypeExtractor converts types given by Language.Core.Parser into types described in Language.Core.TypeExtractor.
 
 > import Language.Core.TypeExtractor
 > import Language.Core.TypeExtractor.DataTypes

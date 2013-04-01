@@ -52,9 +52,8 @@ instance Evaluable ModuleFunction where
         stgs <- gets settings
         let ?settings = stgs
         debugM $ "Found definition of " ++ fun_name
-        tycons_env <- acknowledgeTypes m 
-        vdefs_env <- acknowledgeVdefgs m --(libs ++ tycons_env)
-        let env = (tycons_env ++ vdefs_env ++ libs)
+        module_env <- acknowledgeModule m
+        let env = (module_env ++ libs)
         heap_ref@(_,address) <- doEvalVdefg vdefg env  -- ++ libs)
         evalHeapAddress address env
     where

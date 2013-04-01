@@ -21,7 +21,8 @@ module Language.Core.Interpreter(
   )where
 
 import           Language.Core.Interpreter.Apply
-import           Language.Core.Interpreter.Acknowledge(acknowledgeTypes, 
+import           Language.Core.Interpreter.Acknowledge(acknowledgeModule,
+                                                       acknowledgeTypes, 
                                                        acknowledgeVdefgs,
                                                        acknowledgeVdefg,
                                                        acknowledgeVdefgWithin)
@@ -59,14 +60,13 @@ Value definition to mapped values
 
 evalModule :: Module -> Env -> IM [(Id, Value)]
 evalModule m@(Module name tdefs vdefgs) libs_env = do
-  debugM $ "Evaluating module with env: " ++ show libs_env
+  debugMStep $ "Evaluating module with env: " ++ show libs_env
   -- recognize type and value definitions
-  tycons_env <- acknowledgeTypes m
-  vdefs_env <- acknowledgeVdefgs m --libs_env
-  
+  module_env <- acknowledgeModule m
+    
   -- time to evaluate, set an environment and evaluate only those defs that are not temp
   let 
-    env = tycons_env ++ vdefs_env ++ libs_env
+    env = module_env ++ libs_env
     exposed_vdefgs = filter (not . isTmp) vdefgs    
   heap_refs <- mapM (flip doEvalVdefg env) exposed_vdefgs
   
