@@ -14,6 +14,7 @@ data InterpreterSettings = InterpreterMode {
   , show_subexpressions :: Bool
   , show_tmp_variables :: Bool 
   , watch_reduction :: Bool
+  , watch_test :: Bool 
   , debug_tab_level :: Int
   , include :: [FilePath]
   } deriving (Show, Data, Typeable)
@@ -32,6 +33,7 @@ interpret = InterpreterMode {
 --   , show_time = def &= groupname "DEBUG" &= help "Shows the time in which an evaluation was done (if depends flag is on)"
   , show_tmp_variables = def &= groupname "DEBUG" &= help "Shows debug messages for temporal variables (if depends flag is on)"
   , watch_reduction = def &= groupname "DEBUG" &= help "Shows debug messages for the evaluation of a value definition (shows reductions of expressions)"
+  , watch_test = def &= groupname "DEBUG" &= help "Shows debug messages when testing a value definition"
   , debug_tab_level = 0
   , include = def &= groupname "USAGE" &= help "List of source directories to include in the module namespace, the base package is included by default"
   } &= summary "Reads a .hcr file and evaluates its declarations. "

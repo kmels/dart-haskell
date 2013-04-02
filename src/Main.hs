@@ -60,7 +60,8 @@ initDART s = do
     , number_of_reductions = 0
     , number_of_reductions_part = 0
     , tab_indentation = 1
-    , settings = s { include = (absolute_includes) }
+    , settings = s { include = (absolute_includes) }    
+    , test_name = Nothing
   }
 
 -- | After an initial state is created, evaluates according to the settings

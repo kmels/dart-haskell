@@ -19,7 +19,7 @@ module Language.Core.Interpreter.Structures(
   , idName
   , increase_number_of_reductions
   -- heap operation
-  , memorize, mkVal, mkThunk, mkHeapReference, lookupMem
+  , memorize, memorizeVal, mkVal, mkThunk, mkHeapReference, lookupMem
   -- pretty printing
   , showM
   , DARTState(..)
@@ -60,6 +60,9 @@ data DARTState = DState {
  number_of_reductions_part :: !Int -- when in debugging mode, this value is increased everytime an step is done in the evaluation of the expression represented by the number `number_of_reductions`, prints debug subheadings
  , tab_indentation :: !Int -- useful when to know how many tabs we shoud prepend
  , settings :: InterpreterSettings
+ 
+ -- state of testing
+ , test_name :: Maybe (Qual Var) 
 }
 
 type Heap = H.CuckooHashTable HeapAddress (Either Thunk Value)
@@ -173,6 +176,9 @@ mkThunk exp env = Left $ Thunk exp env
 mkVal :: Value -> Either Thunk Value
 mkVal = Right
 
+memorizeVal :: Value -> IM HeapReference
+memorizeVal val = mkVarName >>= memorize (mkVal val)
+
 -- | Stores a value/thunk in memory, returns the given name with the address where
 -- it was stored
 memorize :: Either Thunk Value -> Id -> IM HeapReference
@@ -185,7 +191,7 @@ memorize val id  = do
   -- Put the value in the heap
   h <- gets heap
   io $ H.insert h address val
-  debugM $ "Memorized " ++ id ++ " in " ++ show address ++ " as " ++ show val
+  --watchReductionM $ "Memorized " ++ id ++ " in " ++ show address ++ " as " ++ show val
   return (id,address)
 
 -- | Prints a debug message with a new line at the end

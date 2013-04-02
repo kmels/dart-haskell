@@ -32,7 +32,8 @@ testModule :: Module -> Env -> IM [(Id,TestResult)]
 testModule m@(Module mname tdefs vdefgs) env = do
   debugMStep $ "Testing module " ++ show mname
   module_env <- acknowledgeModule m
-  test_results <- mapM testMaybe vdefgs -- [Maybe TestResult]  
+  let testVdefg = \v -> testMaybe v Nothing Nothing env
+  test_results <- mapM testVdefg vdefgs -- [Maybe TestResult]  
   let results = catMaybes test_results
   return $ zip (map (qualifiedVar . vdefg_name) results) results
 

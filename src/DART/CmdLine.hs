@@ -140,9 +140,11 @@ debugSubexpression e = do
 -- | If we are in the IM Monad, we might want to watch expressions being reduced as they are interpreted. 
 -- If the flag --watch-reduction was specified, prints a debug message.
 watchReductionM :: String -> IM ()
-watchReductionM msg = whenFlag watch_reduction $ do
-  prependStars
-  debugM msg
+watchReductionM msg = whenFlag watch_reduction $ prependStars >> debugM msg
+
+-- | Prints a debug message when the flag --watch-test was provided
+watchTestM :: String -> IM ()
+watchTestM msg = whenFlag watch_test $ prependStars >> debugM msg
 
 whenFlag :: (InterpreterSettings -> Bool) -> IM () -> IM ()
 whenFlag f a = do

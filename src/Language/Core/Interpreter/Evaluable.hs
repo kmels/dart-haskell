@@ -74,12 +74,12 @@ evalHeapAddress address env = do
 
 instance Evaluable Thunk where
 -- eval :: Thunk -> Env -> IM Value
-  eval (VdefgThunk exp) env = evalExp exp env
+  eval (VdefgThunk exp) env = eval exp env
   eval (Thunk exp env) _ = do
     ti <- gets tab_indentation
     let ?tab_indentation = ti
     debugM $ "Evaluating thunk: " ++ showExp exp
-    evalExp exp env
+    eval exp env
 
 instance Evaluable Value where
 --  eval :: Value -> Env -> IM Value
@@ -112,32 +112,30 @@ instance Evaluable HeapAddress where
 -- evalPointer e@(Wrong s) _ = return e
 -- evalPointer _ _ = return . Wrong $ "evalPointer: The impossible happened"
 
-evalExp :: Exp -> Env -> IM Value
+instance Evaluable Exp where
+  -- Integer,Char construction
+{-  eval (App (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),constr)) (Lit lit)) env = case constr of
+    "Izh" -> eval lit []
+    "Czh" = eval lit []
+    otherwise = return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"-}
 
-evalExp (App -- Integer,Char construction
-          (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),constr))
-          (Lit lit) 
-        ) env | constr == "Izh" = eval lit []
-              | constr == "Czh" = eval lit []
-              | otherwise = return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
-
-evalExp e@(App function_exp argument_exp) env = do
-  ti <- gets tab_indentation
-  let ?tab_indentation = ti
-      
-  f <- evalExpI function_exp env ("Evaluating function_exp" ++ showExp function_exp)
+  eval e@(App function_exp argument_exp) env = do  
+    ti <- gets tab_indentation
+    let ?tab_indentation = ti
+            
+    f <- evalExpI function_exp env ("Evaluating function_exp" ++ showExp function_exp)
   
-  -- if the argument is a variable that is already in the env, don't make a new reference  
-  case argument_exp of
-    (Var qvar) -> do
-      qvar_val <- qualifiedVar qvar `lookupId` env
-      case qvar_val of
-        Right (Wrong _) -> mkRefAndApply f argument_exp -- not found, 
-        whnf -> do
-          debugM $ "Skipping the making of reference, " ++ (qualifiedVar qvar) ++ " is already in env"
-          apply f (qualifiedVar qvar) env --don't create thunk for variables in scope
-    _ -> mkRefAndApply f argument_exp
-  where
+    -- if the argument is a variable that is already in the env, don't make a new reference  
+    case argument_exp of
+      (Var qvar) -> do
+        qvar_val <- qualifiedVar qvar `lookupId` env
+        case qvar_val of
+          Right (Wrong _) -> mkRefAndApply f argument_exp -- not found, 
+          whnf -> do
+            debugM $ "Skipping the making of reference, " ++ (qualifiedVar qvar) ++ " is already in env"
+            apply f (qualifiedVar qvar) env --don't create thunk for variables in scope
+      _ -> mkRefAndApply f argument_exp
+    where
     mkRefAndApply :: Value -> Exp -> IM Value
     mkRefAndApply f arg_exp = do
       debugM "mkRefAndApply"
@@ -149,122 +147,106 @@ evalExp e@(App function_exp argument_exp) env = do
       res <- apply f id (heap_reference:env) -- Note1: the address is paassed 
       return res
 
--- | A function application which has the type annotation which we will essentially ignore.
-evalExp e@(Appt exp ty) env = do 
-  ti <- gets tab_indentation  
-  let ?tab_indentation = ti
-  debugM $ showExp exp
-  debugM $ showType ty
-  case exp of
-    (Var qvar) -> evalExpI exp env "Typed Var application "
-    (Dcon qvar) -> evalExpI exp env $ "Typed Dcon application  " ++ qualifiedVar qvar
-    _ -> evalExpI exp env "Typed application "
+  -- | A function application which has the type annotation which we will essentially ignore.
+  eval e@(Appt exp ty) env = do 
+    ti <- gets tab_indentation  
+    let ?tab_indentation = ti
+    debugM $ showExp exp
+    debugM $ showType ty
+    case exp of
+      (Var qvar) -> evalExpI exp env "Typed Var application "
+      (Dcon qvar) -> evalExpI exp env $ "Typed Dcon application  " ++ qualifiedVar qvar
+      _ -> evalExpI exp env "Typed application "
 
-evalExp (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = let
-  applyFun :: Value -> IM Value  
-  applyFun (Fun f dsc) = return $ Fun f ("($) " ++ dsc)
-  applyFun _ = return $ Wrong "($), Applying something that is not a function"
-  
-  -- takes a function `f` and returns a function `g` that applies `f` to its argument 
-  ap id e = evalId id e >>= applyFun  
-  in return $ Fun ap "($) :: (a -> b) -> a -> b"
+  {-eval (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = 
+    let
+      applyFun :: Value -> IM Value  
+      applyFun (Fun f dsc) = return $ Fun f ("($) " ++ dsc)
+      applyFun _ = return $ Wrong "($), Applying something that is not a function"  
+      -- takes a function `f` and returns a function `g` that applies `f` to its argument 
+      ap id e = evalId id e >>= applyFun  
+    in return $ Fun ap "($) :: (a -> b) -> a -> b" -}
 
--- lambda abstraction over types variables
--- returns a Fun value
-evalExp e@(Lam (Vb (var_name,ty)) exp) env = do
-  --whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
-  debugM $ "Making function from lambda abstraction \\" ++ var_name ++ " :: " ++ showType ty ++ " -> exp "
+  -- lambda abstraction over types variables
+  -- returns a Fun value
+  eval e@(Lam (Vb (var_name,ty)) exp) env = do
+    --whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
+    debugM $ "Making function from lambda abstraction \\" ++ var_name ++ " :: " ++ showType ty ++ " -> exp "
   
-  -- If we abstract over a variable with a free type variable  
-  -- e.g. \zddNumTmp :: Num a 
-  -- and we are applying it, we should assume some value before reducing its value
+    -- If we abstract over a variable with a free type variable  
+    -- e.g. \zddNumTmp :: Num a 
+    -- and we are applying it, we should assume some value before reducing its value
     
-  case exp of
-    App _ (Var x) -> if (qualifiedVar x == showType ty)
-                     then debugM ("HOLA" ++ showType ty ++" . " ++ qualifiedVar x) >> return (Fun mkFun $ "\\" ++ var_name ++ " -> exp")
-                     else debugM ("HOLA" ++ showType ty ++" . " ++ qualifiedVar x) >> return (Fun mkFun $ "\\" ++ var_name ++ " -> exp")
-    exp' -> do
-      ti <- gets tab_indentation
-      let ?tab_indentation = ti
---      debugM $ "MMM "++ showExp exp'
-      return $ Fun mkFun $ "\\" ++ var_name ++ " -> exp"
---    case ty of
-    -- the first arg is the type class name
-  --   (Tapp _ (Tvar(type_name))) -> do      
-  --     maybe_free_type_pointer <- mkPointer type_name env
-  --     case maybe_free_type_pointer of
-  --       Pointer _ -> return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"
-  --       w@(Wrong _) -> return w
-  --   ty' -> return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"  -- run normally
-  -- return $ Fun applyFun $ "\\" ++ var_name ++ " -> exp"
-  where  
+    case exp of
+      App _ (Var x) -> if (qualifiedVar x == showType ty)
+                       then debugM ("HOLA" ++ showType ty ++" . " ++ qualifiedVar x) >> return (Fun mkFun $ "\\" ++ var_name ++ " -> exp")
+                       else debugM ("HOLA" ++ showType ty ++" . " ++ qualifiedVar x) >> return (Fun mkFun $ "\\" ++ var_name ++ " -> exp")
+      exp' -> do
+        ti <- gets tab_indentation
+        let ?tab_indentation = ti
+        return $ Fun mkFun $ "\\" ++ var_name ++ " -> exp"
+    where  
     -- a function that receives an identifier that points to some address
     -- makes a pointer from the variable we are abstracting over to found the address
     -- and computes a value in a new constructed environment
-    mkFun :: Id -> Env -> IM Value
-    mkFun id env' = do      
-      ptr <- getPointer id env'
-      case ptr of
-        Pointer ptr -> evalExpI exp ((var_name,address ptr):env) "Evaluating Lambda body (exp)"
-        w@(Wrong _)  -> return w
+      mkFun :: Id -> Env -> IM Value
+      mkFun id env' = do      
+        ptr <- getPointer id env'
+        case ptr of
+          Pointer ptr -> evalExpI exp ((var_name,address ptr):env) "Evaluating Lambda body (exp)"
+          w@(Wrong _)  -> return w
         
--- lambda abstraction over variables
--- ignores the type argument, evaluating the expression
-evalExp e@(Lam (Tb (var_name,_)) exp) env = do
-  whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
-  debugM $ "Saving type "   ++ var_name ++ " as a free type var"
-  free_type_ref <- memorize (Right . FreeTypeVariable $ var_name) var_name
-  evalExpI exp (free_type_ref:env) "Evaluating lambda body (exp)"
+  -- lambda abstraction over variables
+  -- ignores the type argument, evaluating the expression
+  eval e@(Lam (Tb (var_name,_)) exp) env = do
+    whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
+    debugM $ "Saving type "   ++ var_name ++ " as a free type var"
+    free_type_ref <- memorize (Right . FreeTypeVariable $ var_name) var_name
+    evalExpI exp (free_type_ref:env) "Evaluating lambda body (exp)"
       
--- Qualified variables that should be in the environment
-evalExp e@(Var qvar) env = do
---  debugM ("Env: " ++ show (map ((++) "\n" . show) env))
-  maybePtr <- mkPointer (qualifiedVar qvar) env
---  debugM $ "Got ptr:: " ++ show maybePtr
-  case maybePtr of
-    Just ptr ->   eval ptr env
-    Nothing -> return $ Wrong $ "Could not find var in env " ++ qualifiedVar qvar  
+  -- Qualified variables that should be in the environment
+  eval e@(Var qvar) env = do
+    maybePtr <- mkPointer (qualifiedVar qvar) env
+    case maybePtr of
+      Just ptr ->   eval ptr env
+      Nothing -> return $ Wrong $ "Could not find var in env " ++ qualifiedVar qvar  
   
-evalExp (Dcon qcon) env = getPointer (qualifiedVar qcon) env >>= flip eval env
+  eval (Dcon qcon) env = getPointer (qualifiedVar qcon) env >>= flip eval env
 
--- Case of
+  -- Case of
+  eval (Case exp vbind@(vbind_var,ty) gen_ty alts) env = do
+    increaseIndentation
+    heap_reference@(id,address) <- memorize (mkThunk exp env) vbind_var
+    exp_value <- evalHeapAddress address (heap_reference:env)
 
-evalExp (Case exp vbind@(vbind_var,ty) gen_ty alts) env = do
-  increaseIndentation
-  heap_reference@(id,address) <- memorize (mkThunk exp env) vbind_var
-  exp_value <- evalHeapAddress address (heap_reference:env)
-
-  watchReductionM $ "\tDoing case analysis for " ++ show vbind_var
-  maybeAlt <- findMatch exp_value alts
-  let exp = maybeAlt >>= Just . altExp -- Maybe Exp
+    watchReductionM $ "\tDoing case analysis for " ++ show vbind_var
+    maybeAlt <- findMatch exp_value alts
+    let exp = maybeAlt >>= Just . altExp -- Maybe Exp
   
-  --debugM $ "EXP: "++ show exp
-  case maybeAlt of
-    Just alt -> do -- a matched alternative was found, in case it's a constructor, bind its arguments
-      let exp = altExp alt
+    --debugM $ "EXP: "++ show exp
+    case maybeAlt of
+      Just alt -> do -- a matched alternative was found, in case it's a constructor, bind its arguments
+        let exp = altExp alt
       
-      debugM "Making altEnv"
-      alt_env <- mkAltEnv exp_value alt
-      debugM $ "This is the alt env: " ++ show alt_env
-      debugM "End making altEnv"
-      -- TODO IN ENVIRONMENT when(isAcon alt) $ var_val `bindAltVars` alt
-      res <- evalExp exp (heap_reference:env ++ alt_env)
-      debugM "End making altEnv"
-      -- when(isAcon alt) $ deleteAltBindedVars alt
-      return res
-    _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
+        debugM "Making altEnv"
+        alt_env <- mkAltEnv exp_value alt
+        debugM $ "This is the alt env: " ++ show alt_env
+        debugM "End making altEnv"
+        -- TODO IN ENVIRONMENT when(isAcon alt) $ var_val `bindAltVars` alt
+        res <- eval exp (heap_reference:env ++ alt_env)
+        debugM "End making altEnv"
+        -- when(isAcon alt) $ deleteAltBindedVars alt
+        return res
+      _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
 
-evalExp (Lit lit) _ = eval lit []
+  eval (Lit lit) _ = eval lit []
 
-evalExp (Let vdefg exp) env = do
-  env' <- acknowledgeVdefgWithin env vdefg
-  evalExp exp (env' ++ env)
+  eval (Let vdefg exp) env = do
+    env' <- acknowledgeVdefgWithin env vdefg
+    eval exp (env' ++ env)
   
--- Otherwise
-
-evalExp otherExp _ = do
-  expStr <- indentExp otherExp
-  return . Wrong $ " TODO: {" ++ expStr ++ "}\nPlease submit a bug report"
+  -- | Otherwise
+  eval otherExp _ = indentExp otherExp >>= \expStr -> return . Wrong $ " TODO: {" ++ expStr ++ "}\nPlease submit a bug report"
 
 -- | Given an alternative and a value that matches the alternative,
 -- binds the free variables in memory and returns a list of references (an environment)
@@ -345,7 +327,7 @@ evalExpI exp env desc = do
   debugMStep $ desc
   debugSubexpression exp 
   increaseIndentation  
-  res <- evalExp exp env
+  res <- eval exp env
   debugM $ "evalExpI#res: " ++ show res
   decreaseIndentation
   debugMStepEnd
@@ -429,7 +411,7 @@ evalVdefg (Nonrec (Vdef (qvar, ty, exp))) env = do
     debugMStep $ "Evaluating value definition"
     indentExp exp >>= debugM . (++) "Expression: " 
   increaseIndentation
-  res <- evalExp exp env  -- result
+  res <- eval exp env  -- result
   decreaseIndentation
   
   h <- gets heap

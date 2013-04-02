@@ -35,8 +35,6 @@ import           Control.Applicative((<|>))
 import qualified Data.HashTable.IO as H
 import           Data.Maybe
 import           Language.Core.Core
-import           Language.Core.TypeExtractor(extractType)
-import           Language.Core.TypeExtractor.DataTypes
 import           Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,bindVarName,showBind)
 import           Language.Core.Vdefg (isTmp,vdefgId,vdefgName)
 
@@ -60,8 +58,8 @@ Value definition to mapped values
 -}
 
 evalModule :: Module -> Env -> IM [(Id, Value)]
-evalModule m@(Module name tdefs vdefgs) libs_env = do
-  debugMStep $ "Evaluating module with env: " ++ show libs_env
+evalModule m@(Module mname tdefs vdefgs) libs_env = do
+  debugMStep $ "Evaluating module " ++ show mname
   -- recognize type and value definitions
   module_env <- acknowledgeModule m
     

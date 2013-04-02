@@ -27,6 +27,7 @@ executable dart-haskell
                     DART.InterpreterSettings,
                     DART.CmdLine,
                     DART.MkRandomValue,
+                    DART.MkRandom,
                     DART.ModuleTester
                     DART.ModuleTester.Testable,
                     DART.ExtCore.TypeExtractor,
