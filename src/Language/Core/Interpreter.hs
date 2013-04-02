@@ -17,7 +17,8 @@
 module Language.Core.Interpreter(
   evalModule, evalModuleFunction,
   loadLibrary,
-  module Language.Core.Interpreter.Evaluable
+  module Language.Core.Interpreter.Evaluable,
+  module Language.Core.Interpreter.Structures
   )where
 
 import           Language.Core.Interpreter.Apply

@@ -27,6 +27,10 @@ executable dart-haskell
                     DART.InterpreterSettings,
                     DART.CmdLine,
                     DART.MkRandomValue,
+                    DART.ModuleTester
+                    DART.ModuleTester.Testable,
+                    DART.ExtCore.TypeExtractor,
+                    DART.ExtCore.TypeExtractor.DataTypes,
                     Language.Core.Util,
                     Language.Core.Interpreter,
                     Language.Core.Interpreter.Structures,
@@ -40,8 +44,6 @@ executable dart-haskell
                     Language.Core.Interpreter.Libraries.GHC.Types,
                     Language.Core.Interpreter.Libraries.GHC.Real,
                     Language.Core.Interpreter.Util
-                    Language.Core.TypeExtractor,
-                    Language.Core.TypeExtractor.DataTypes,
                     Language.Core.Vdefg
   build-depends:
                     ghc >= 7.6.1 ,     
