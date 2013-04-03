@@ -68,7 +68,7 @@ data DARTState = DState {
 type Heap = H.CuckooHashTable HeapAddress (Either Thunk Value)
 --type Heap = H.CuckooHashTable HeapAddress (GeneralType)
 type HeapAddress = Int
-type Env = [(Id,HeapAddress )]
+type Env = [(Id,HeapAddress)]
 type HeapReference = (Id,HeapAddress)
 
 -- | Define a monad IM (for Interpreter Monad) where we keep a value of type DARTState containing state variables such as the heap and settings such as the number of reduction for debugging purposes. 
@@ -130,7 +130,7 @@ showM (TyConApp tc ptrs) = showTyConApp tc ptrs
 showM val = return $ show val
 
 instance Show Value where
-  show (Wrong s) = "Wrong " ++ s
+  show (Wrong s) = "WRONG: " ++ s
   show (Num i) = show i
   show (Rat r) = show r
   show (Boolean b) = show b  

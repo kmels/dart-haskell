@@ -72,7 +72,8 @@ runDART = do
   settgs <- gets settings  
   
   -- Load includes  
-  debugMStep $ "Loading includes "
+  debugMStep ("Loading includes ")
+  
   let includes = include settgs
   lib_envs <- mapM loadFilePath includes -- read source code files
   
@@ -107,7 +108,7 @@ runDART = do
       
     evaluate :: Module -> Env -> String -> IM () 
     -- | no function specified  
-    evaluate m env [] = do 
+    evaluate m env [] = do
       vals <- I.evalModule m env -- interpret values
       
       -- funtion to pretty print

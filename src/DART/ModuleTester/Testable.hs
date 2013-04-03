@@ -43,9 +43,9 @@ instance MaybeTestable Vdef where
   testMaybe (Vdef (qual_var,ty,exp)) _ _ env = do
     debugMStep $ "Testing value definition : " ++ qualifiedVar qual_var
     case extractType ty of 
-      Nothing -> return Nothing
       Just l@(Lambda _) -> testMaybe l (Just qual_var) (Just exp) env
-      Just _ -> undefined
+      Nothing -> return Nothing
+      Just x -> error $ " Undefined Testable: " ++ show x
   
 instance TestableType LambdaAbstraction where
   testExp (LambdaAbstraction concrete_type general_type) lambda_exp env = case concrete_type of

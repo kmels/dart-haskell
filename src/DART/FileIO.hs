@@ -60,7 +60,7 @@ readModule fp = readHcrFile fp >>= \c -> case parse c 0 of
 -- We only compile a source code if there is no .hcr file
 loadFilePath :: FilePath -> IM Env
 loadFilePath filepath = do
-  liftIO $ putStrLn $ "Loading filepath " ++ filepath
+  debugM $ "Loading filepath " ++ filepath
   is_dir <- liftIO $ doesDirectoryExist filepath
   is_file <- liftIO $ doesFileExist filepath
   

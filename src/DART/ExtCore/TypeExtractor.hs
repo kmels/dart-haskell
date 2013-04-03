@@ -36,43 +36,43 @@ extractType = extractZDecodedType . zDecodeString . showExtCoreType
 
 -- | A function to extract a type. The first argument must be a z-decoded string.
 extractZDecodedType :: String -> Maybe GeneralType
-extractZDecodedType ty = trace ("Doing "++ty) $ case (parse generalType "" ty) of
-  Left err -> trace (show err) $ Nothing
+extractZDecodedType ty = case (parse generalType "" ty) of
+  Left err -> Nothing
   Right t -> Just t
 
 -- | A parser combinator that identifies the Char primitive type
 primitiveCharType :: Parser PrimitiveType
-primitiveCharType = trace "Debug: primitiveCharType" $ string "ghc-prim:GHC.Types.Char" >>= return . PrimitiveCharType
+primitiveCharType = string "ghc-prim:GHC.Types.Char" >>= return . PrimitiveCharType
 
 -- | A parser combinator that identifies the Int primitive type
 primitiveIntType :: Parser PrimitiveType
-primitiveIntType = trace "debug: primitiveIntType" $ string "ghc-prim:GHC.Types.Int" >>= return . PrimitiveIntType
+primitiveIntType = string "ghc-prim:GHC.Types.Int" >>= return . PrimitiveIntType
 
 -- | A parser combinator that identifies the Bool primitive type
 primitiveBoolType :: Parser PrimitiveType
-primitiveBoolType = trace "Debug: primitiveBoolType" $ string "ghc-prim:GHC.Types.Bool" >>= return . PrimitiveBoolType
+primitiveBoolType = string "ghc-prim:GHC.Types.Bool" >>= return . PrimitiveBoolType
 
-primitiveType = trace "Debug: primitiveType" $ (try primitiveIntType) <|> (trace "\t missed primitiveInt" $ try primitiveCharType) <|> (try primitiveBoolType)
+primitiveType = try primitiveIntType <|> try primitiveCharType <|> try primitiveBoolType
 
 -- | A Primitive list has kind * and no parametric polymorphism associated. That is, it represents a list of primitive types.
 primitiveList :: Parser PrimitiveList
 primitiveList = let
   listConstructor = string $ "ghc-prim:GHC.Types.[]"
-  in trace "debug: primitiveList" $ do
+  in do
     lc <- listConstructor 
     pt <- primitiveType
     return $ PrimitiveList pt
 
 -- | A concrete type is any type of kind *.
 concreteType :: Parser ConcreteType
-concreteType = trace "debug: concreteType" $ 
+concreteType = 
   (try primitiveList >>= return . PList)
-  <|> (trace "\t missed primitiveList" $ (primitiveType >>= return . PType))
+  <|> (primitiveType >>= return . PType)
 
 -- | A Lambda abstraction is a ready-to-be beta-reduced lambda abstraction. That is, there is no unapplied arguments to the function arrow, and has kind *.
 
 lambdaAbstraction :: Parser LambdaAbstraction
-lambdaAbstraction = trace "debug: lambdaAbstraction" $ do
+lambdaAbstraction = do
   functionConstructor <- string $ "ghc-prim:GHC.Prim.(->)"
   functionDomain <- concreteType
   functionCodomain <- generalType
@@ -80,7 +80,7 @@ lambdaAbstraction = trace "debug: lambdaAbstraction" $ do
 
 
 generalType :: Parser GeneralType
-generalType = trace "debug: General type" $ do 
+generalType = do 
   fa <- try lambdaAbstraction
   return $ Lambda fa
   <|>(try primitiveList >>= return . CType . PList)

@@ -35,8 +35,8 @@ import           Control.Applicative((<|>))
 import qualified Data.HashTable.IO as H
 import           Data.Maybe
 import           Language.Core.Core
-import           Language.Core.Util(qualifiedVar,showVdefg,showType,showExtCoreType,showExp,bindVarName,showBind)
-import           Language.Core.Vdefg (isTmp,vdefgId,vdefgName)
+import           Language.Core.Util(qualIsTmp,qualifiedVar,showVdefg,showType,showExtCoreType,showExp,bindVarName,showBind)
+import           Language.Core.Vdefg (vdefgQualVars)
 
 import           Control.Monad.State.Lazy
 import           DART.CmdLine
@@ -64,17 +64,24 @@ evalModule m@(Module mname tdefs vdefgs) libs_env = do
   module_env <- acknowledgeModule m
     
   -- time to evaluate, set an environment and evaluate only those defs that are not temp
+  
   let 
     env = module_env ++ libs_env
-    exposed_vdefgs = filter (not . isTmp) vdefgs    
-  heap_refs <- mapM (flip doEvalVdefg env) exposed_vdefgs
+    
+    qual_vars = map vdefgQualVars vdefgs -- [[Qual Var]]
+    exposed_vdefgs = concat $ filter (not . all qualIsTmp) qual_vars     --[Qual Var]
+    vdefg_names = map qualifiedVar exposed_vdefgs -- exposed vdefs, [Qual Var]
+    
+  io $ putStrLn . show . length $ exposed_vdefgs
+  io $ putStrLn . show  $ vdefgs
+   
+  vals <- mapM (flip evalId env) vdefg_names -- [Value]
   
   -- lookup values in memory
-  vals <- mapM (flip (evalHeapAddress . snd) []) heap_refs --fun_heap_refs
-  return $ zip (map fst heap_refs) vals
+  --vals <- mapM (flip evalPointer env . fst) pointers -- [Value]
+  return $ zip vdefg_names vals
 
 -- | Given a module and a function name, we evaluate the function in that module and return the heap. 
-
 evalModuleFunction :: Module -> String -> Env -> IM Value
 evalModuleFunction m fun_name env = eval (ModuleFunction fun_name m) env
   

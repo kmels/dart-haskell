@@ -56,19 +56,24 @@ vdefTapp _ = Nothing
 
 -- | Given a value definition, we return its full identifier. That is, containing the package and the module name together with the function name.
 
-vdefgId :: Vdefg -> String
-vdefgId (Nonrec (Vdef (qvar, _, _))) = qualifiedVar qvar
-vdefgId (Rec []) = ""
-vdefgId (Rec ((Vdef (qvar, _, _)):xs)) = qualifiedVar qvar ++ " and " ++ vdefgName (Rec xs)
+-- vdefgId :: Vdefg -> String
+-- vdefgId (Nonrec (Vdef (qvar, _, _))) = qualifiedVar qvar
+-- vdefgId (Rec []) = ""
+-- vdefgId (Rec ((Vdef (qvar, _, _)):xs)) = qualifiedVar qvar ++ " and " ++ vdefgName (Rec xs)
 
--- | Given a Value definition, return its name within its module.
+-- | Given a value definition, return its name (or names if recursive) 
+vdefgNames :: Vdefg -> [String]
+vdefgNames (Nonrec (Vdef ((_,id), _, _))) = [id]
+vdefgNames (Rec []) = []
+vdefgNames (Rec ((Vdef ((_,id), _, _)):xs)) = id:(vdefgNames (Rec xs))
 
-vdefgName :: Vdefg -> String
-vdefgName (Nonrec (Vdef ((_,id), _, _))) = id
-vdefgName (Rec []) = ""
-vdefgName (Rec ((Vdef ((_,id), _, _)):xs)) = id
+-- | Given a value definition, return its name (or names if recursive) 
+vdefgQualVars :: Vdefg -> [Qual Var]
+vdefgQualVars (Nonrec (Vdef (qvar, _, _))) = [qvar]
+vdefgQualVars (Rec []) = []
+vdefgQualVars (Rec ((Vdef (qvar, _, _)):xs)) = qvar:(vdefgQualVars (Rec xs))
 
-isTmp :: Vdefg -> Bool
+{-isTmp :: Vdefg -> Bool
 isTmp vdefg = 
   let
     isTmp' :: Qual Var -> Bool
@@ -77,3 +82,4 @@ isTmp vdefg =
   in case vdefg of
     (Nonrec v@(Vdef (qvar, _, _))) -> isTmp' qvar
     (Rec vdefs) -> not . any (isTmp . Nonrec) $ vdefs
+-}

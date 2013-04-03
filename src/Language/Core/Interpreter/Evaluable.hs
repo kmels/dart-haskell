@@ -18,14 +18,15 @@ module Language.Core.Interpreter.Evaluable where
 
 import           DART.CmdLine
 import           DART.InterpreterSettings
+import           Data.Either(lefts)
 import qualified Data.HashTable.IO as H
 import           Data.List(find)
+import           Data.Time.Clock
+import           Data.Time.Clock(getCurrentTime,diffUTCTime)
 import           Language.Core.Interpreter.Acknowledge
 import           Language.Core.Interpreter.Apply
 import           Language.Core.Interpreter.Structures
-import           Language.Core.Vdefg (isTmp,vdefgId,vdefgName) --delete me maybe
-import           Data.Time.Clock(getCurrentTime,diffUTCTime)
-
+import           Language.Core.Vdefg (vdefgNames) --delete me maybe
 class Evaluable a where
   eval :: a -> Env -> IM Value
   
@@ -54,10 +55,10 @@ instance Evaluable ModuleFunction where
         debugM $ "Found definition of " ++ fun_name
         module_env <- acknowledgeModule m
         let env = (module_env ++ libs)
-        heap_ref@(_,address) <- doEvalVdefg vdefg env  -- ++ libs)
+        [heap_ref@(_,address)] <- doEvalVdefg vdefg env  -- ++ libs) -- doEvalVdefg should return a single list
         evalHeapAddress address env
     where
-      fnames = map vdefgName vdefgs -- [String]
+      fnames = concatMap vdefgNames vdefgs -- [String]
       fnames_vdefgs = zip fnames vdefgs 
       maybeVdefg = find ((==) fun_name . fst) fnames_vdefgs >>= return . snd -- :: Maybe Vdefg
 
@@ -372,49 +373,50 @@ apply (TyConApp tycon addresses) id env =  do
 apply w@(Wrong _) _ _ = return w
 apply f x _ = return . Wrong $ "Applying " ++ show f ++ " with argument " ++ show x
 
-
-
-doEvalVdefg :: Vdefg -> Env -> IM HeapReference
+doEvalVdefg :: Vdefg -> Env -> IM [HeapReference]
 doEvalVdefg vdefg env = do
-  before <- liftIO getCurrentTime
-  h <- gets heap
-  sttgs <- gets settings
-  debugM $ "Evaluating " ++ (vdefgId vdefg)
-  (heapRef,res) <- evalVdefg vdefg env
-  after <- liftIO getCurrentTime
-  let 
-    id = vdefgId vdefg
-    time = after `diffUTCTime` before    
-    should_print = debug sttgs && show_tmp_variables sttgs
-                   || debug sttgs && show_tmp_variables sttgs && (not $ isTmp vdefg)
-  (when should_print) $ do
-    debugM $ "Evaluation of " ++ (vdefgId vdefg)
-    debugM $ "\t.. done in " ++ show time ++ "\n\t.. and resulted in " ++ show res
+  beforeTime <- liftIO getCurrentTime
+  h <- gets heap  
+      
+  heap_refs <- evalVdefg vdefg env
   
-  return heapRef
+  mapM_ (benchmark beforeTime) heap_refs  
+  return heap_refs
+  
+  where
+    benchmark :: UTCTime -> HeapReference -> IM ()
+    benchmark before heapRef@(id,heap_address) = do      
+      sttgs <- gets settings
+      res <- lookupMem heap_address
+      afterTime <- liftIO getCurrentTime
+      let 
+        time = afterTime `diffUTCTime` before
+      
+        -- TODO: replace with new flag --benchmark
+        should_print = debug sttgs && show_tmp_variables sttgs
+                       || debug sttgs && show_tmp_variables sttgs
+                     
+      (when should_print) $ do
+        debugM $ "Evaluation of " ++ id
+        debugM $ "\t.. done in " ++ show time ++ "\n\t.. and resulted in " ++ show res      
 
 
 -- | Evaluate a value definition, which can be either recursive or not recursive
 
-evalVdefg :: Vdefg -> Env -> IM (HeapReference,Value)
-evalVdefg (Rec (v@(Vdef _):[]) ) env = do
-  evalVdefg (Nonrec v) env
--- More than one vdef? I haven't found a test case (TODO)
-evalVdefg (Rec vdefs) env = do
-  ti <- gets tab_indentation
-  let ?tab_indentation = ti
-  io $ mapM_ (\vdef -> putStrLn $ "\n\n\nrec vdef: " ++ showVdef vdef) vdefs
-  return $ (,) ("",0) (Wrong "TODO: Recursive eval not yet implemented\n\t" )
-
+-- | Returns either one heap reference when the definition is non recursive
+-- or a list of these when it is recursive
+evalVdefg :: Vdefg -> Env -> IM [HeapReference]
+evalVdefg (Rec vdefs) env = mapM (flip evalVdefg env . Nonrec) vdefs >>= return . concat
+  
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) env = do
-  whenFlag show_expressions $ do    
-    debugMStep $ "Evaluating value definition"
-    indentExp exp >>= debugM . (++) "Expression: " 
+  debugMStep $ "Evaluating value definition: " ++ qualifiedVar qvar
+
+  whenFlag show_expressions $ indentExp exp >>= debugM . (++) "Expression: "
+  
   increaseIndentation
   res <- eval exp env  -- result
   decreaseIndentation
-  
-  h <- gets heap
-  
+
   heap_ref <- memorize (mkVal res) (qualifiedVar qvar)
-  return $ (heap_ref,res)
+  return [heap_ref]
+ 

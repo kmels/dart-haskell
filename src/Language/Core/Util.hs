@@ -148,6 +148,10 @@ qualifiedVar :: Qual Var -> String
 qualifiedVar (Nothing,var) = var
 qualifiedVar (Just mname,var) = zDecodeString $ show mname ++ "." ++ var
 
+qualIsTmp :: Qual Var -> Bool
+qualIsTmp (Nothing,_) = True
+qualIsTmp _ = False
+
 bindVarName :: Bind -> Id
 bindVarName (Vb (var,ty)) = var
 bindVarName (Tb (tvar,kind)) = tvar
