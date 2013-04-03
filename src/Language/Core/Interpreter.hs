@@ -85,7 +85,6 @@ isAcon :: Alt -> Bool
 isAcon (Acon _ _ _ _) = True
 isAcon _ = False
 
-
 -- | Loads nothing ATM, but it'll be useful
 loadLibrary :: [(Id, Either Thunk Value)] -> IM Env
 loadLibrary funs = mapM (uncurry $ flip memorize) funs

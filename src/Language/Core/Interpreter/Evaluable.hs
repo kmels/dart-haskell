@@ -114,10 +114,10 @@ instance Evaluable HeapAddress where
 
 instance Evaluable Exp where
   -- Integer,Char construction
-{-  eval (App (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),constr)) (Lit lit)) env = case constr of
+  eval (App (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),constr)) (Lit lit)) env = case constr of
     "Izh" -> eval lit []
-    "Czh" = eval lit []
-    otherwise = return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"-}
+    "Czh" -> eval lit []
+    otherwise -> return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
 
   eval e@(App function_exp argument_exp) env = do  
     ti <- gets tab_indentation
@@ -158,14 +158,14 @@ instance Evaluable Exp where
       (Dcon qvar) -> evalExpI exp env $ "Typed Dcon application  " ++ qualifiedVar qvar
       _ -> evalExpI exp env "Typed application "
 
-  {-eval (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = 
+  eval (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = 
     let
       applyFun :: Value -> IM Value  
       applyFun (Fun f dsc) = return $ Fun f ("($) " ++ dsc)
-      applyFun _ = return $ Wrong "($), Applying something that is not a function"  
+      applyFun x = return . Wrong $ "($), Applying something that is not a function, namely: " ++ show x
       -- takes a function `f` and returns a function `g` that applies `f` to its argument 
       ap id e = evalId id e >>= applyFun  
-    in return $ Fun ap "($) :: (a -> b) -> a -> b" -}
+    in return $ Fun ap "($) :: (a -> b) -> a -> b"
 
   -- lambda abstraction over types variables
   -- returns a Fun value

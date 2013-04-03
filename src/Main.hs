@@ -48,12 +48,14 @@ initDART s = do
   current_dir <- getCurrentDirectory 
   let --list = current_dir ++ "/lib/base/Data/List.hs"  
        --char = current_dir ++ "/lib/base/Data/Char.hs"
-    ghc_list = current_dir ++ "/lib/base/Prelude.hs"  
-    data_list = current_dir ++ "/lib/base/Data/List.hs"  
-    enum = current_dir ++ "/lib/base/GHC/Enum.hs"  
-    absolute_includes = (map ((++) (current_dir ++ "/")) $ include s) -- ++ 
+       base = current_dir ++ "/lib/base/GHC/Base.hcr"
+  --    ghc_list = current_dir ++ "/lib/base/Prelude.hs"  
+       data_list = current_dir ++ "/lib/base/Data/List.hcr"  
+       enum = current_dir ++ "/lib/base/GHC/Enum.hs"  
+       absolute_includes = (map ((++) (current_dir ++ "/")) $ include s) -- ++ 
                         ++ [enum]
-                        ++ [ghc_list]
+                        ++ [base] ++ [data_list]
+       --                 ++ [ghc_list]
   return $ DState {
     heap = h
     , heap_count = 0

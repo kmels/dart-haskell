@@ -25,6 +25,13 @@ listConstructor = (id,Right $ TyConApp typeConstructor []) where
   typeConstructor :: DataCon
   typeConstructor = MkDataCon id typeArgs
   
+{--- | An Int constructor, receives a literal
+intConstructor :: (Id, Either Thunk Value)
+intConstructor = (id, Right . Num $ typeConstructor []) where
+  id = "ghc-prim:GHC.Types.I#"
+  typeConstructor :: DataCon
+  typeConstructor = MkDataCon id -}
+
 true :: (Id, Either Thunk Value)
 true = (id, Right $ TyConApp tc []) -- has no applied values
        where

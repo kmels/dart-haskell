@@ -70,8 +70,12 @@ acknowledgeVdefgWithin env (Rec vdefs) = sequence [acknowledgeVdefWithin env vde
 
 -- | Acknowledges a value definition. 
 acknowledgeVdef :: Vdef -> IM HeapReference
-acknowledgeVdef (Vdef (qvar, ty, exp)) = memorize (Left $ VdefgThunk exp) (qualifiedVar qvar)
+acknowledgeVdef (Vdef (qvar, ty, exp)) = do
+  debugM $ "Acknowledging definition " ++ qualifiedVar qvar
+  memorize (Left $ VdefgThunk exp) (qualifiedVar qvar)
 
 -- | Acknowledges a value definition with some environment. 
 acknowledgeVdefWithin :: Env -> Vdef -> IM HeapReference
-acknowledgeVdefWithin env (Vdef (qvar, ty, exp)) = memorize (Left $ Thunk exp env) (qualifiedVar qvar)
+acknowledgeVdefWithin env (Vdef (qvar, ty, exp)) = do
+  debugM $ "Acknowledging definition " ++ qualifiedVar qvar
+  memorize (Left $ Thunk exp env) (qualifiedVar qvar)

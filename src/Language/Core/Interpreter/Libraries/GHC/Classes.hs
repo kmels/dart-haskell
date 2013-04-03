@@ -8,7 +8,7 @@ import Language.Core.Interpreter(evalId)
 
 all :: [(Id, Either Thunk Value)]
 all = [ equals
-        , leq
+        , lt, leq        
         , geq
         , mkMonomophier "ghc-prim:GHC.Classes.$p1Ord"
         , mkMonomophier "ghc-prim:GHC.Classes.$fOrdInt"
@@ -28,6 +28,13 @@ leq = (id, Right $ Fun (monomophy_2 "(<=)" leq') "(<=)") where
   leq' (Num v) (Num w) = return . Boolean $ v <= w
   leq' v w = return . Wrong $ "lessEquals: " ++ show v ++ " and " ++ show w ++ " are not comparable"
 
+lt :: (Id, Either Thunk Value)
+lt = (id, Right $ Fun (monomophy_2 "(<)" lt') "(<)") where
+  id = "ghc-prim:GHC.Classes.<"
+  lt' :: Value -> Value -> IM Value
+  lt' (Num v) (Num w) = return . Boolean $ v < w
+  lt' v w = return . Wrong $ "lessThan: " ++ show v ++ " and " ++ show w ++ " are not comparable"
+  
 geq = (id, Right $ Fun (monomophy_2 "(>=)" geq') "(>=)")
   where 
     id = "ghc-prim:GHC.Classes.>="

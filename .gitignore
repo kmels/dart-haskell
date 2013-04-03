@@ -7,4 +7,6 @@ cabal-dev
 .virthualenv
 virthualenv.log
 *#
-*.hcr
+src/*.hcr
+
+lib/*
