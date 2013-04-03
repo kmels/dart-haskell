@@ -82,7 +82,9 @@ runDART = do
 
   -- Evaluate specified module
   let pathToModule = file settgs
+  let ?be_verbose = verbose settgs
   debugMStep $ "Reading module " ++ pathToModule  ++ " .."
+  
   m@(Module mdlname tdefs vdefgs) <- io . readModule $ file settgs
     
   let env = concat lib_envs ++ ghc_defs

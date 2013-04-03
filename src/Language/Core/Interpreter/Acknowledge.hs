@@ -19,7 +19,7 @@ module Language.Core.Interpreter.Acknowledge(acknowledgeModule,acknowledgeTypes,
 import Language.Core.Interpreter.Structures
 import Language.Core.Util
 import Language.Core.Core
-import DART.CmdLine
+import DART.CmdLine(beVerboseM)
 import DART.InterpreterSettings
 
 -- | Given a module, recognize type constructors and value definitions
@@ -41,7 +41,7 @@ acknowledgeTypes tdefs = mapM acknowledgeType tdefs >>= return . concat
 acknowledgeType :: Tdef -> IM Env
 acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) = 
   do
-    debugM $ "Acknowledging type " ++ qualifiedVar qdname
+    beVerboseM $ "Acknowledging type " ++ qualifiedVar qdname
     mapM insertTyCon cdefs
   where  
     insertTyCon :: Cdef -> IM HeapReference
@@ -71,11 +71,11 @@ acknowledgeVdefgWithin env (Rec vdefs) = sequence [acknowledgeVdefWithin env vde
 -- | Acknowledges a value definition. 
 acknowledgeVdef :: Vdef -> IM HeapReference
 acknowledgeVdef (Vdef (qvar, ty, exp)) = do
-  debugM $ "Acknowledging definition " ++ qualifiedVar qvar
+  beVerboseM $ "Acknowledging definition " ++ qualifiedVar qvar
   memorize (Left $ VdefgThunk exp) (qualifiedVar qvar)
 
 -- | Acknowledges a value definition with some environment. 
 acknowledgeVdefWithin :: Env -> Vdef -> IM HeapReference
 acknowledgeVdefWithin env (Vdef (qvar, ty, exp)) = do
-  debugM $ "Acknowledging definition " ++ qualifiedVar qvar
+  beVerboseM $ "Acknowledging definition " ++ qualifiedVar qvar
   memorize (Left $ Thunk exp env) (qualifiedVar qvar)

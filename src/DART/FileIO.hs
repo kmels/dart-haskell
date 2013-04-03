@@ -4,10 +4,11 @@
 module DART.FileIO where 
 
 import           Control.Monad.IO.Class(liftIO)
-import           DART.CmdLine(debugM)
+import           DART.CmdLine(beVerboseM)
 import qualified Data.ByteString.Char8 as Char8
 import           Data.ByteString.Lazy.UTF8 (toString)
 import           Data.Conduit.Process
+import           DART.InterpreterSettings
 import           Language.Core.Core
 import           Language.Core.Core (Module)
 import           Language.Core.Interpreter.Acknowledge(acknowledgeTypes,acknowledgeVdefgs,acknowledgeModule)
@@ -19,10 +20,10 @@ import           System.Environment
 import           System.FilePath (dropExtension,takeExtension)
 import           System.IO
 import           System.Process.QQ(cmd)
-readHcrFile :: FilePath -> IO String
+readHcrFile :: (?be_verbose :: Bool) => FilePath -> IO String
 readHcrFile filepath = case takeExtension filepath of
   ".hcr" -> do
-    putStrLn $ "Reading " ++ filepath
+    when (?be_verbose) $ putStrLn $ "Reading " ++ filepath
     readFile filepath
   ".hs" -> do
     --currentDir <- getCurrentDirectory
@@ -51,7 +52,7 @@ p </> c = p ++ "/" ++ c
 
 -- | Every .hcr file corresponds to a haskell module
 
-readModule :: FilePath -> IO Module
+readModule :: (?be_verbose :: Bool) => FilePath -> IO Module
 readModule fp = readHcrFile fp >>= \c -> case parse c 0 of
   OkP m -> return m
   FailP msg -> error msg
@@ -60,7 +61,7 @@ readModule fp = readHcrFile fp >>= \c -> case parse c 0 of
 -- We only compile a source code if there is no .hcr file
 loadFilePath :: FilePath -> IM Env
 loadFilePath filepath = do
-  debugM $ "Loading filepath " ++ filepath
+  beVerboseM $ "Loading filepath " ++ filepath
   is_dir <- liftIO $ doesDirectoryExist filepath
   is_file <- liftIO $ doesFileExist filepath
   
@@ -72,6 +73,9 @@ loadFilePath filepath = do
          else 
            if (hasHsExtension filepath && is_file) 
            then do
+             stgs <- gets settings
+             let ?be_verbose = verbose stgs
+             
              module' <- liftIO $ readModule filepath
              settings' <- gets settings
              let ?settings = settings'

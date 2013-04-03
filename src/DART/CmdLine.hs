@@ -137,6 +137,10 @@ debugSubexpression e = do
     prependStars
     debugM $ "Subexpression: " ++ showExp e
 
+-- | If the flag --verbose is on, prints messages about Loading, Reading and Acknowledging of modules
+beVerboseM :: String -> IM ()
+beVerboseM msg = whenFlag verbose $ debugM msg
+
 -- | If we are in the IM Monad, we might want to watch expressions being reduced as they are interpreted. 
 -- If the flag --watch-reduction was specified, prints a debug message.
 watchReductionM :: String -> IM ()

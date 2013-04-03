@@ -64,21 +64,13 @@ evalModule m@(Module mname tdefs vdefgs) libs_env = do
   module_env <- acknowledgeModule m
     
   -- time to evaluate, set an environment and evaluate only those defs that are not temp
-  
   let 
-    env = module_env ++ libs_env
-    
+    env = module_env ++ libs_env    
     qual_vars = map vdefgQualVars vdefgs -- [[Qual Var]]
     exposed_vdefgs = concat $ filter (not . all qualIsTmp) qual_vars     --[Qual Var]
     vdefg_names = map qualifiedVar exposed_vdefgs -- exposed vdefs, [Qual Var]
     
-  io $ putStrLn . show . length $ exposed_vdefgs
-  io $ putStrLn . show  $ vdefgs
-   
-  vals <- mapM (flip evalId env) vdefg_names -- [Value]
-  
-  -- lookup values in memory
-  --vals <- mapM (flip evalPointer env . fst) pointers -- [Value]
+  vals <- mapM (flip evalId env) vdefg_names -- [Value]  
   return $ zip vdefg_names vals
 
 -- | Given a module and a function name, we evaluate the function in that module and return the heap. 
