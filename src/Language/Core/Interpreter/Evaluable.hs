@@ -18,7 +18,6 @@ module Language.Core.Interpreter.Evaluable where
 
 import           DART.CmdLine
 import           DART.InterpreterSettings
-import           Data.Either(lefts)
 import qualified Data.HashTable.IO as H
 import           Data.List(find)
 import           Data.Time.Clock
@@ -26,7 +25,7 @@ import           Data.Time.Clock(getCurrentTime,diffUTCTime)
 import           Language.Core.Interpreter.Acknowledge
 import           Language.Core.Interpreter.Apply
 import           Language.Core.Interpreter.Structures
-import           Language.Core.Vdefg (vdefgNames) --delete me maybe
+import           Language.Core.Vdefg (vdefgNames)
 class Evaluable a where
   eval :: a -> Env -> IM Value
   
@@ -40,8 +39,6 @@ instance Evaluable Lit where
     "ghc-prim:GHC.Prim.Addr#" -> let (Lstring s) = coreLit in return . String $ s
     --"Rational" -> return . Rat $ r
     _ -> return . Wrong $ "Could not evaluate literal of type " ++ showExtCoreType ty
-
-data ModuleFunction = ModuleFunction Id Module
 
 instance Evaluable ModuleFunction where
   eval (ModuleFunction fun_name m@(Module mname tdefs vdefgs)) libs = 
@@ -272,7 +269,7 @@ findMatch val [] = return Nothing
 findMatch val (a:alts) = do  
   ti <- gets tab_indentation
   let ?tab_indentation = ti
-  debugM $ "comparing " ++ show val ++ " and " ++ showAlt a
+  debugM $ "Comparing " ++ show val ++ " and " ++ showAlt a
   matches <- val `matches` a
   
   if (not matches)
@@ -305,6 +302,9 @@ val `matches` (Adefault _) = return True -- this is the default case, i.e. "_ - 
   
 (Boolean False) `matches` (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.False"
 (Boolean True) `matches` (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.True"
+
+e@(Wrong s) `matches` _ = return False
+
 val `matches` alt = do
   ti <- gets tab_indentation
   let ?tab_indentation = ti
@@ -343,7 +343,7 @@ evalId i e = do
     e@(Wrong s) -> return e -- i was not found in env
     Pointer (MkPointer heap_address) -> do -- we know something about i in env
       eTnkVal <- lookupMem heap_address
-      debugM $ "lookupId " ++ i ++ " = " ++ show eTnkVal
+      --debugM $ "lookupId " ++ i ++ " = " ++ show eTnkVal
       whnf <- case eTnkVal of  -- evaluate to weak head normal form
         Left thunk -> do
           val <- eval thunk e

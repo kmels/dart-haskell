@@ -107,6 +107,16 @@ runDART = do
       
       h <- gets heap
       whenFlag show_heap $ io . printHeap $ h
+    
+    -- test specified function
+    test m env fun_name =             
+      let prettyPrint :: Maybe (Id,T.TestResult) -> IM String
+          prettyPrint Nothing = return $ "No test result "
+          prettyPrint (Just (id,test_result)) = T.showTest test_result >>= return . (++) (id ++ ": \n")
+      in do
+        res <- T.testFunction m fun_name env >>= prettyPrint
+        io . putStrLn $ res
+        (gets heap >>= \h -> whenFlag show_heap $ io . printHeap $ h)
       
     evaluate :: Module -> Env -> String -> IM () 
     -- | no function specified  

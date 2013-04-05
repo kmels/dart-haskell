@@ -19,6 +19,10 @@ import DART.ExtCore.TypeExtractor
 import DART.MkRandom
 import Language.Core.Core
 import Language.Core.Interpreter
+import Language.Core.Interpreter.Acknowledge
+import           Language.Core.Vdefg (vdefgNames)
+import           Data.List(find)
+
 
 data TestResult = TestResult{
   vdefg_name :: Qual Var,
@@ -34,7 +38,23 @@ class TestableType t where
 
 class MaybeTestable a where
   testMaybe :: a -> Maybe (Qual Var) -> Maybe Exp -> Env -> IM (Maybe TestResult)
-    
+
+instance MaybeTestable ModuleFunction where
+  testMaybe (ModuleFunction [] _) _ _ _ = return Nothing
+  
+  testMaybe (ModuleFunction fun_name m@(Module mname tdefs vdefgs)) _ _ env = do
+    debugMStep $ "Testing function " ++ fun_name
+        
+    case maybeVdefg of
+      Nothing -> return Nothing
+      Just vdefg -> do
+        module_env <- acknowledgeModule m
+        testMaybe vdefg Nothing Nothing (module_env ++ env)        
+    where
+      fnames = concatMap vdefgNames vdefgs -- [String]
+      fnames_vdefgs = zip fnames vdefgs 
+      maybeVdefg = find ((==) fun_name . fst) fnames_vdefgs >>= return . snd -- :: Maybe Vdefg      
+
 instance MaybeTestable Vdefg where
   testMaybe (Rec vdefs) _ _ env = return Nothing -- error "Undefined Rec" --test vdefs
   testMaybe (Nonrec vdef) _ _ env = testMaybe vdef Nothing Nothing env

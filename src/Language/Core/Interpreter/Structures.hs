@@ -27,6 +27,7 @@ module Language.Core.Interpreter.Structures(
   , IM
   , Thunk (..), DataCon(..) , Value(..), Pointer(..)
   , Language.Core.Core.Id
+  , ModuleFunction(..)
   , module Control.Monad.State
   , module Language.Core.Core
   , module Language.Core.Util
@@ -97,7 +98,8 @@ instance Show Thunk where
                          in "Thunk(exp=" ++ showExp exp ++ ")"
   show (VdefgThunk exp) = let ?tab_indentation = 0 
                           in "VdefgThunk(exp=" ++ showExp exp ++ ")"
-                          
+
+data ModuleFunction = ModuleFunction Id Module                          
 -- cons = TyConApp (MkDataCon "Cons" [a]) [1,Nil]
 
 -- RENAME THIS (DataCon)
@@ -256,7 +258,7 @@ lookupMem :: HeapAddress -> IM (Either Thunk Value)
 lookupMem address = do
   h <- gets heap
   val <- io $ H.lookup h address
-  debugM $ " lookupMem: " ++ show val   
+  --watchReductionM $ " lookupMem: " ++ show val   
   maybe fail return val 
   where 
     fail :: IM (Either Thunk Value)
