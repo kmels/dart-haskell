@@ -1,6 +1,7 @@
 module OnInt(
   ackermann, ackermannE, ackermannU
   , f1, positive, positive', negative
+  , positiveFail
 --  , division
 )where
 
@@ -60,3 +61,5 @@ negative :: Int -> Int
 negative n | n < 0 = n
            | otherwise = error $ "Argument is positive or zero" ++ show n 
 
+positiveFail :: Int
+positiveFail = positive (-5)

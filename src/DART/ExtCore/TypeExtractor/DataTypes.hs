@@ -27,3 +27,4 @@ data PrimitiveType = PrimitiveCharType String
 data LambdaAbstraction = LambdaAbstraction ConcreteType GeneralType deriving Show
 
 data GenericList = GenericList
+

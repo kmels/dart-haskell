@@ -303,12 +303,20 @@ val `matches` (Adefault _) = return True -- this is the default case, i.e. "_ - 
 (Boolean False) `matches` (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.False"
 (Boolean True) `matches` (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.True"
 
+-- We keep a String value as a separate data type, but in Haskell it is a list of chars
+matches (String _) (Acon (Just (M (P ("ghczmprim"),["GHC"],"Types")),"ZMZN") _ _ _) = return True  
+matches (String _) (Acon (Just (M (P ("ghczmprim"),["GHC"],"Types")),"ZC") tbinds vbinds exp) = return True
+matches (String (s:ss)) (Acon qual_dcon tbinds vbinds exp) = do
+  io . putStrLn $ "!??? Matching " ++ show (s:ss) ++ " with Dcon= " ++ show qual_dcon
+  return False
+
 e@(Wrong s) `matches` _ = return False
 
+--match against list cons
 val `matches` alt = do
   ti <- gets tab_indentation
   let ?tab_indentation = ti
-  io . putStrLn $ "??? Matching " ++ show val ++ " with " ++ showAlt alt
+  io . putStrLn $ "??? Matching " ++ show val ++ " with " ++ show alt
 --  io . putStrLn $ 
   return False
   
@@ -410,13 +418,12 @@ evalVdefg (Rec vdefs) env = mapM (flip evalVdefg env . Nonrec) vdefs >>= return 
   
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) env = do
   debugMStep $ "Evaluating value definition: " ++ qualifiedVar qvar
-
   whenFlag show_expressions $ indentExp exp >>= debugM . (++) "Expression: "
   
   increaseIndentation
-  res <- eval exp env  -- result
+  res <- eval exp env  -- result **** 
   decreaseIndentation
 
-  heap_ref <- memorize (mkVal res) (qualifiedVar qvar)
+  heap_ref <- memorize (mkVal res) (qualifiedVar qvar) -- ***
   return [heap_ref]
  

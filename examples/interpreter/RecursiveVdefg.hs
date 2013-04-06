@@ -1,6 +1,7 @@
 module RecursiveVdefg(
-  even, odd
-  
+  even, odd,
+  testOdd, testOdd', testOdd'',
+  testEven, testEven', testEven''
   ) where
 
 import Prelude hiding (even,odd)
@@ -13,3 +14,11 @@ odd :: Int -> Bool
 odd 0 = False
 --odd 1 = True
 odd n = even (n-1)
+
+testOdd = odd 5
+testOdd' = odd 6
+testOdd'' = odd 7
+
+testEven = even 5
+testEven' = even 6
+testEven'' = even 7

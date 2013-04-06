@@ -19,6 +19,7 @@ import qualified Language.Core.Interpreter.Libraries.GHC.Num as GHC.Num
 import qualified Language.Core.Interpreter.Libraries.GHC.Tuple as GHC.Tuple
 import qualified Language.Core.Interpreter.Libraries.GHC.Types as GHC.Types
 import qualified Language.Core.Interpreter.Libraries.GHC.Real as GHC.Real
+import qualified Language.Core.Interpreter.Libraries.GHC.Show as GHC.Show
 import qualified Language.Core.Interpreter.Libraries.GHC.Err as GHC.Err
 import           Language.Core.Core
 import           Language.Core.Interpreter.Structures
@@ -32,5 +33,6 @@ ghc_base = concat $ [
    , GHC.Types.all
    , GHC.Tuple.all
    , GHC.Real.all
+   , GHC.Show.all
    , GHC.Err.all
   ]

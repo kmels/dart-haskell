@@ -22,11 +22,11 @@ import Language.Core.Interpreter.Libraries.Monomophy(monomophy_1, monomophy_2,mk
 import Language.Core.Interpreter.Structures
 import Prelude hiding (all)
 
-
 all :: [(Id, Either Thunk Value)]
 all = [ plus
       , minus
       , multiply
+      , negate'
       , fromInteger'
       , zdfNumInteger
       , zdfNumInt
@@ -60,6 +60,15 @@ multiply = (id, Right $ Fun (monomophy_2 "(*)" mul') "polymorphic(*)")
     mul' (Num i) (Num j) = return . Num $ i * j 
     mul' a b = return . Wrong $ "Trying to multiply values " ++ show a ++ " and " ++ show b
 
+-- | The function that negates an Num
+negate' :: (Id, Either Thunk Value)
+negate' = (id, Right $ Fun (monomophy_1 "(-)" neg') "polymorphic(-)")
+  where
+    id = "base:GHC.Num.negate" 
+    neg' :: Value -> IM Value
+    neg' (Num n) = return . Num . negate $ n
+    neg' x = return . Wrong $ "GHC.Num.negate: Trying to negate " ++ show x
+    
 -- | The function that converts an integer to any number
 -- fromInteger :: Integer -> a
 fromInteger' = (id, Right $ Fun (monomophy_1 "fromInteger" fromInteger'') "polymorphic(fromInteger)")

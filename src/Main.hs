@@ -51,6 +51,7 @@ initDART s = do
        base = current_dir ++ "/lib/base/GHC/Base.hcr"
   --    ghc_list = current_dir ++ "/lib/base/Prelude.hs"  
        data_list = current_dir ++ "/lib/base/Data/List.hcr"  
+--       data_list = current_dir ++ "/lib/base-4.6.0.0/GHC/Show.hcr" 
        enum = current_dir ++ "/lib/base/GHC/Enum.hs"  
        absolute_includes = (map ((++) (current_dir ++ "/")) $ include s) -- ++ 
                         ++ [enum]
