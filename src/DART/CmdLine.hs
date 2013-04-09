@@ -17,7 +17,7 @@ debugMStep :: String -> IM ()
 debugMStep msg = do
   modify increase_number_of_reductions -- and then, increase the number
   prependStep -- print * 0, * 1, * 2, etc.
-  debugMOTL (msg ++ " {") -- print the message with a prepended tab, should have { at the end
+  debugMOTL msg -- print the message with a prepended tab, should have { at the end
   resetStepPart
   where
     -- | resets the subheading number to none or 0

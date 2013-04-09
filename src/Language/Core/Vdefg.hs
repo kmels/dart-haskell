@@ -37,6 +37,9 @@ data FunctionApplication = FunApp String String Exp
 vdefExp :: Vdef -> Exp
 vdefExp (Vdef (_, _, exp)) = exp
 
+vdefQualId :: Vdef -> String
+vdefQualId (Vdef (qual_var, _ , _)) = qualifiedVar qual_var
+ 
 -- | Useful functions to filter types of value definitions.
 
 vdefNonRecursive :: Vdefg -> Maybe Vdef

@@ -41,7 +41,7 @@ instance Evaluable Lit where
     _ -> return . Wrong $ "Could not evaluate literal of type " ++ showExtCoreType ty
 
 instance Evaluable ModuleFunction where
-  eval (ModuleFunction fun_name m@(Module mname tdefs vdefgs)) libs = 
+  eval (ModuleFunction fun_name m@(Module mname tdefs vdefgs)) env = 
     if null fun_name then 
       error $ "evalModuleFunction: function name is empty" 
     else case maybeVdefg of
@@ -50,8 +50,8 @@ instance Evaluable ModuleFunction where
         stgs <- gets settings
         let ?settings = stgs
         debugM $ "Found definition of " ++ fun_name
-        module_env <- acknowledgeModule m
-        let env = (module_env ++ libs)
+        --module_env <- acknowledgeModule m
+        --let env = (module_env ++ libs)
         [heap_ref@(_,address)] <- doEvalVdefg vdefg env  -- ++ libs) -- doEvalVdefg should return a single list
         evalHeapAddress address env
     where
@@ -71,13 +71,12 @@ evalHeapAddress address env = do
   return val
 
 instance Evaluable Thunk where
--- eval :: Thunk -> Env -> IM Value
-  eval (VdefgThunk exp) env = eval exp env
-  eval (Thunk exp env) _ = do
+  --eval :: Thunk -> Env -> IM Value
+  eval (Thunk exp env) e = do -- TODO. To comment: Why we don't care about the second env?
     ti <- gets tab_indentation
     let ?tab_indentation = ti
     debugM $ "Evaluating thunk: " ++ showExp exp
-    eval exp env
+    eval exp (e ++ env)
 
 instance Evaluable Value where
 --  eval :: Value -> Env -> IM Value
@@ -117,7 +116,8 @@ instance Evaluable Exp where
     "Czh" -> eval lit []
     otherwise -> return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
 
-  eval e@(App function_exp argument_exp) env = do  
+  eval e@(App function_exp argument_exp) env = do
+    debugM $ "\t\t\t\t\t\t App.env== " ++ show env
     ti <- gets tab_indentation
     let ?tab_indentation = ti
             
@@ -240,7 +240,7 @@ instance Evaluable Exp where
   eval (Lit lit) _ = eval lit []
 
   eval (Let vdefg exp) env = do
-    env' <- acknowledgeVdefgWithin env vdefg
+    env' <- acknowledgeVdefg vdefg env
     eval exp (env' ++ env)
   
   -- | Otherwise
@@ -279,38 +279,22 @@ findMatch val (a:alts) = do
     return . Just $ a
 
 matches :: Value -> Alt -> IM Bool
-(TyConApp (MkDataCon n _) vals) `matches` (Acon qual_dcon tbs vbs idx_exp) = do
-
-  let tyconId = qualifiedVar qual_dcon
-      matches' = tyconId == n
-      
-  watchReductionM $ 
-    "Trying to match value with type constructor " ++ tyconId ++ 
-    "\t.. " ++ if matches' then " matches" else " does not match"
-        
-  return $ matches'
-    
-val `matches` (Alit lit exp) = return False --TODO
-val `matches` (Adefault _) = return True -- this is the default case, i.e. "_ - " 
+matches (TyConApp (MkDataCon n _) _) (Acon qual_dcon _ _ _) = return $ qualifiedVar qual_dcon == n
+--matches val (Alit lit exp) = return False --TODO
+matches val (Adefault _) = return True -- this is the default case, i.e. "_ -> exp " 
 (Num n) `matches` (Acon qdcon _ _ _) = do
   watchReductionM $ "Trying to match a Num value (" ++ show n ++ ") with the type constructed by " ++ qualifiedVar qdcon    
   let matches' = qualifiedVar qdcon == "ghc-prim:GHC.Types.I#" 
   
   watchReductionM $ "\t.. " ++ if matches' then " matches" else " does not match"
 
-  return matches'
-  
-(Boolean False) `matches` (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.False"
-(Boolean True) `matches` (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.True"
-
+  return matches'  
+matches (Boolean False) (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.False"
+matches (Boolean True) (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.True"
 -- We keep a String value as a separate data type, but in Haskell it is a list of chars
 matches (String _) (Acon (Just (M (P ("ghczmprim"),["GHC"],"Types")),"ZMZN") _ _ _) = return True  
 matches (String _) (Acon (Just (M (P ("ghczmprim"),["GHC"],"Types")),"ZC") tbinds vbinds exp) = return True
-matches (String (s:ss)) (Acon qual_dcon tbinds vbinds exp) = do
-  io . putStrLn $ "!??? Matching " ++ show (s:ss) ++ " with Dcon= " ++ show qual_dcon
-  return False
-
-e@(Wrong s) `matches` _ = return False
+matches e@(Wrong s) _ = return False
 
 --match against list cons
 val `matches` alt = do
@@ -383,6 +367,7 @@ apply f x _ = return . Wrong $ "Applying " ++ show f ++ " with argument " ++ sho
 
 doEvalVdefg :: Vdefg -> Env -> IM [HeapReference]
 doEvalVdefg vdefg env = do
+  debugM $ "doEvalVdefg; env.size == " ++ (show . length $ env)
   beforeTime <- liftIO getCurrentTime
   h <- gets heap  
       
@@ -418,6 +403,8 @@ evalVdefg (Rec vdefs) env = mapM (flip evalVdefg env . Nonrec) vdefs >>= return 
   
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) env = do
   debugMStep $ "Evaluating value definition: " ++ qualifiedVar qvar
+  debugM $ "doEvalVdefg; env.size == " ++ (show . length $ env)
+  debugM $ "\t\t\t\t\t\t App.env== " ++ show env
   whenFlag show_expressions $ indentExp exp >>= debugM . (++) "Expression: "
   
   increaseIndentation

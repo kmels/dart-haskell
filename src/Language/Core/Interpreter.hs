@@ -25,8 +25,7 @@ import           Language.Core.Interpreter.Apply
 import           Language.Core.Interpreter.Acknowledge(acknowledgeModule,
                                                        acknowledgeTypes, 
                                                        acknowledgeVdefgs,
-                                                       acknowledgeVdefg,
-                                                       acknowledgeVdefgWithin)
+                                                       acknowledgeVdefg)
 import           Language.Core.Interpreter.Util(return')
 import           Language.Core.Interpreter.Structures
 import           Language.Core.Interpreter.Evaluable
@@ -61,11 +60,11 @@ evalModule :: Module -> Env -> IM [(Id, Value)]
 evalModule m@(Module mname tdefs vdefgs) libs_env = do
   debugMStep $ "Evaluating module " ++ show mname
   -- recognize type and value definitions
-  module_env <- acknowledgeModule m
+  --module_env <- acknowledgeModule m
     
   -- time to evaluate, set an environment and evaluate only those defs that are not temp
   let 
-    env = module_env ++ libs_env    
+    env = libs_env --module_env ++ libs_env    
     qual_vars = map vdefgQualVars vdefgs -- [[Qual Var]]
     exposed_vdefgs = concat $ filter (not . all qualIsTmp) qual_vars     --[Qual Var]
     vdefg_names = map qualifiedVar exposed_vdefgs -- exposed vdefs, [Qual Var]

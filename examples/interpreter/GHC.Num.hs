@@ -16,6 +16,8 @@ module FirstOrderFunctions (
 import Prelude hiding (map)
 
 -- Operatinons on Num
+numberTwenty = twice $ numberTen -- DONE
+
 plusOneInt :: Int -> Int --TODO, remove type signature
 plusOneInt n = n + 1
 twice :: Int -> Int --TODO, remove type signature
@@ -24,7 +26,7 @@ twice n = n * 2
 -- Computed with Num operations
 numberTen = plusOneInt 9 -- DONE
 numberEleven = plusOneInt numberTen
-numberTwenty = twice $ numberTen -- DONE
+
 numberTwentyTwo = twice numberEleven -- DONE
 numberFourtyTwo = twice $ (twice 5) * 2 + 1 -- DONE
 

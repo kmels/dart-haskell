@@ -14,13 +14,14 @@
 -- When the interpreter reads a module, it should acknowledge type and value definitions
 -- and save them in the heap, before going on to lazily evaluation. 
 -----------------------------------------------------------------------------
-module Language.Core.Interpreter.Acknowledge(acknowledgeModule,acknowledgeTypes,acknowledgeVdefgs,acknowledgeVdefg, acknowledgeVdefgWithin) where
+module Language.Core.Interpreter.Acknowledge(acknowledgeModule,acknowledgeTypes,acknowledgeVdefgs,acknowledgeVdefg) where
 
-import Language.Core.Interpreter.Structures
-import Language.Core.Util
-import Language.Core.Core
 import DART.CmdLine(beVerboseM)
 import DART.InterpreterSettings
+import Language.Core.Core
+import Language.Core.Interpreter.Structures
+import Language.Core.Util
+import Language.Core.Vdefg(vdefgNames,vdefQualId)
 
 -- | Given a module, recognize type constructors and value definitions
 -- and save them in the heap
@@ -54,28 +55,23 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) =
     
 -- | Given a module, recognize all of its value definitions, functions, and put them in the heap so that we can evaluate them when required. 
 acknowledgeVdefgs :: [Vdefg] -> IM Env
-acknowledgeVdefgs vdefgs = do
-  envs <- mapM acknowledgeVdefg vdefgs :: IM [Env]
-  return . concat $ envs
+acknowledgeVdefgs vdefgs = acknowledgeVdefgs' vdefgs []
+  where
+    acknowledgeVdefgs' :: [Vdefg] -> Env -> IM Env
+    acknowledgeVdefgs' [vdefg] env = acknowledgeVdefg vdefg env >>= return . flip (++) env
+    acknowledgeVdefgs' (v:vs) env = acknowledgeVdefg v env >>= \e -> acknowledgeVdefgs' vs (e ++ env)      
 
 -- | Acknowledges a generic value definition
-acknowledgeVdefg  :: Vdefg -> IM Env
-acknowledgeVdefg (Nonrec vdef) = sequence [acknowledgeVdef vdef]
-acknowledgeVdefg (Rec vdefs) = mapM (acknowledgeVdef) vdefs
-
--- | Acknowledges a generic value definition with some environment. 
-acknowledgeVdefgWithin :: Env -> Vdefg -> IM [HeapReference]
-acknowledgeVdefgWithin env (Nonrec vdef) = sequence [acknowledgeVdefWithin env vdef]
-acknowledgeVdefgWithin env (Rec vdefs) = sequence [acknowledgeVdefWithin env vdef | vdef <- vdefs]
+acknowledgeVdefg  :: Vdefg -> Env -> IM Env
+acknowledgeVdefg (Nonrec vdef) env = do
+  beVerboseM $ "Acknowledging non-recursive definition: " ++ vdefQualId vdef
+  sequence [(flip acknowledgeVdef env) vdef]
+acknowledgeVdefg v@(Rec vdefs) env = do
+  beVerboseM $ "Acknowledging recursive definitions: " ++ (show . vdefgNames $ v)
+  mapM (flip acknowledgeVdef env) vdefs
 
 -- | Acknowledges a value definition. 
-acknowledgeVdef :: Vdef -> IM HeapReference
-acknowledgeVdef (Vdef (qvar, ty, exp)) = do
-  beVerboseM $ "Acknowledging definition " ++ qualifiedVar qvar
-  memorize (Left $ VdefgThunk exp) (qualifiedVar qvar)
-
--- | Acknowledges a value definition with some environment. 
-acknowledgeVdefWithin :: Env -> Vdef -> IM HeapReference
-acknowledgeVdefWithin env (Vdef (qvar, ty, exp)) = do
+acknowledgeVdef :: Vdef -> Env -> IM HeapReference
+acknowledgeVdef (Vdef (qvar, ty, exp)) env = do
   beVerboseM $ "Acknowledging definition " ++ qualifiedVar qvar
   memorize (Left $ Thunk exp env) (qualifiedVar qvar)

@@ -21,6 +21,7 @@ tested-with:
 
 executable dart-haskell
   main-is:           Main.hs
+  ghc-options:       -prof -fprof-auto
   other-modules:        
                     DART.FunctionFeeder,
                     DART.FileIO,
@@ -52,10 +53,10 @@ executable dart-haskell
                     -- base == 4.5.*, bytestring == 0.9.*, containers ==0.4.*, directory >= 1.1, unix ==2.5.*, extcore >= 1.0 <= 1.0.2
                     -- ghc-7.6.1
                        base == 4.6.*, bytestring == 0.10.*, containers ==0.5.*, directory >= 1.2, unix ==2.6.*, extcore >= 1.0 
-                    -- filesystem
+                    -- filesystem/os
                       , filepath ==1.3.*
                       , cmdargs >= 0.10 
-                      , process-conduit >= 0.5
+                      , process >= 1.1
                     -- common
                       , array >= 0.4 
                       , random >= 1.0

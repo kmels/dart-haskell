@@ -92,12 +92,12 @@ data Value = Wrong String
 newtype Pointer = MkPointer { address :: HeapAddress } deriving Show
 
 data Thunk = Thunk Exp Env -- a thunk created during the evaluation of a value definition
-           | VdefgThunk Exp -- has no environment, it will be passed by the module for efficiency
+--           | VdefgThunk Exp -- has no environment, it will be passed by the module for efficiency
 instance Show Thunk where 
   show (Thunk exp env) = let ?tab_indentation = 0 
                          in "Thunk(exp=" ++ showExp exp ++ ")"
-  show (VdefgThunk exp) = let ?tab_indentation = 0 
-                          in "VdefgThunk(exp=" ++ showExp exp ++ ")"
+  --show (VdefgThunk exp) = let ?tab_indentation = 0 
+  --                        in "VdefgThunk(exp=" ++ showExp exp ++ ")"
 
 data ModuleFunction = ModuleFunction Id Module                          
 -- cons = TyConApp (MkDataCon "Cons" [a]) [1,Nil]

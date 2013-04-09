@@ -5,10 +5,9 @@ module DART.FileIO where
 
 import           Control.Monad.IO.Class(liftIO)
 import           DART.CmdLine(beVerboseM)
+import           DART.InterpreterSettings
 import qualified Data.ByteString.Char8 as Char8
 import           Data.ByteString.Lazy.UTF8 (toString)
-import           Data.Conduit.Process
-import           DART.InterpreterSettings
 import           Language.Core.Core
 import           Language.Core.Core (Module)
 import           Language.Core.Interpreter.Acknowledge(acknowledgeTypes,acknowledgeVdefgs,acknowledgeModule)
@@ -19,7 +18,7 @@ import           System.Directory (getCurrentDirectory, doesDirectoryExist, does
 import           System.Environment
 import           System.FilePath (dropExtension,takeExtension)
 import           System.IO
-import           System.Process.QQ(cmd)
+import           System.Process(readProcess)
 readHcrFile :: (?be_verbose :: Bool) => FilePath -> IO String
 readHcrFile filepath = case takeExtension filepath of
   ".hcr" -> do
@@ -30,13 +29,16 @@ readHcrFile filepath = case takeExtension filepath of
     --let pathToFile = currentDir </> filepath
     putStrLn $ "Compiling " ++ filepath
     --putStrLn $ "in " ++ currentDir
-    inp <- [cmd|ghc --make -fext-core #{filepath} |] 
+    
+    inp <- readProcess "ghc" ["--make","-fext-core",filepath] ""
+    --inp <- [cmd|ghc --make -fext-core #{filepath} |] 
+    
     readHcrFile $ dropExtension filepath ++ ".hcr"
   ".lhs" -> do
     --currentDir <- getCurrentDirectory
     --let pathToFile = currentDir </> filepath
     putStrLn $ "Compiling " ++ filepath
-    inp <- [cmd|ghc --make -fext-core #{filepath} |] 
+    inp <- readProcess "ghc" ["--make","-fext-core",filepath] ""
     readHcrFile $ dropExtension filepath ++ ".hcr"
   ext -> error $ "Invalid extension when loading " ++ filepath ++ ". Use either an .hcr, .lhs or a .hs file, found: " ++ ext
 

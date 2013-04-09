@@ -15,26 +15,26 @@
 
 module Main where
 
-import           Language.Core.Core
-import           System.Environment
-import           Language.Core.Util(showType)
-import           Language.Core.Interpreter.Structures
-
 import           Control.Monad.State.Lazy
 import           DART.CmdLine
 import           DART.FileIO
 import           DART.FunctionFeeder
 import           DART.InterpreterSettings
 import           DART.MkRandomValue
+import qualified DART.ModuleTester as T
 import qualified Data.HashTable.IO as H
 import           Data.Maybe
+import           Language.Core.Core
 import           Language.Core.Interp
 import qualified Language.Core.Interpreter as I
-import qualified DART.ModuleTester as T
+import           Language.Core.Interpreter.Acknowledge(acknowledgeModule)
 import qualified Language.Core.Interpreter.Libraries as Libs
+import           Language.Core.Interpreter.Structures
+import           Language.Core.Util(showType)
 import           Language.Core.Vdefg
 import           System.Console.CmdArgs
 import           System.Directory(getCurrentDirectory)
+import           System.Environment
 import           Text.Encoding.Z
 
 main :: IO () 
@@ -87,13 +87,15 @@ runDART = do
   debugMStep $ "Reading module " ++ pathToModule  ++ " .."
   
   m@(Module mdlname tdefs vdefgs) <- io . readModule $ file settgs
-    
-  let env = concat lib_envs ++ ghc_defs
+  module_env <- acknowledgeModule m
+  
+  let env = concat lib_envs ++ ghc_defs ++ module_env
+      eval_funname = evaluate_function settgs      
   -- What should we eval? a function or the whole module?  
-  evaluate m env (evaluate_function settgs)
+  evaluate m env eval_funname
   
   -- What should we test? a function or the whole module?  
-  test m env (test_funcion settgs)
+  when (not (null eval_funname)) $ test m env (test_funcion settgs)
   
   where
     test :: Module -> Env -> String -> IM ()
@@ -104,6 +106,7 @@ runDART = do
       let prettyPrint :: (Id,T.TestResult) -> IM String
           prettyPrint (id,test_result) = T.showTest test_result >>= return . (++) (id ++ ": \n")
 
+      debugMStep $ "Module test results "
       mapM prettyPrint results >>= io . mapM_ putStrLn
       
       h <- gets heap
@@ -116,6 +119,7 @@ runDART = do
           prettyPrint (Just (id,test_result)) = T.showTest test_result >>= return . (++) (id ++ ": \n")
       in do
         res <- T.testFunction m fun_name env >>= prettyPrint
+        debugMStep $ "Test results of " ++ fun_name
         io . putStrLn $ res
         (gets heap >>= \h -> whenFlag show_heap $ io . printHeap $ h)
       
@@ -124,10 +128,11 @@ runDART = do
     evaluate m env [] = do
       vals <- I.evalModule m env -- interpret values
       
-      -- funtion to pretty print
+      -- funt ion to pretty print
       let prettyPrint :: (Id,Value) -> IM String
           prettyPrint (id,val) = showM val >>= return . (++) (id ++ " => ")
         
+      debugMStep $ "Module definitions evaluation: "
       mapM prettyPrint vals >>= io . mapM_ putStrLn
       
       h <- gets heap
@@ -136,7 +141,7 @@ runDART = do
   
     -- | eval fun_name
     evaluate m env fun_name = do 
-      io $ putStrLn $ show $ env
+      debugM $ "evaluate fun_name; env.size == " ++ (show . length $ env)
       result <- I.evalModuleFunction m fun_name env
       
       -- do we print the heap?
@@ -145,6 +150,7 @@ runDART = do
       when (show_heap $ st) $ io . printHeap $ h
       
       -- output computed result
+      debugMStep $ "Evaluation of " ++ fun_name
       showM result >>= io . putStrLn
 
 -- | Decode any string encoded as Z-encoded string and print it
