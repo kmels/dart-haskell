@@ -9,6 +9,7 @@ module Lists (
   , str
   , chr
   , takeTest1, takeTest2, takeTest3, takeTest4, takeTest5, takeTest6
+  , false1
   , intListLength, hundred, four
   , odd, even, evenOf10
 ) where
@@ -63,6 +64,9 @@ takeTest3 = take 500 [] -- works
 takeTest4 = take (5-5) [1,2,3]
 takeTest5 = take 1 [1]
 takeTest6 = take 2 [1,2,3]
+
+false1 :: Bool
+false1 = (takeTest2 :: [Int]) == (takeTest1 :: [Int])
 
 even 0 = True
 even x = odd (x-1)

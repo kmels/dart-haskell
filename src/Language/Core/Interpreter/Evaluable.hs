@@ -76,7 +76,7 @@ instance Evaluable Thunk where
     ti <- gets tab_indentation
     let ?tab_indentation = ti
     debugM $ "Evaluating thunk: " ++ showExp exp
-    eval exp (e ++ env)
+    eval exp (env ++ e) -- (!) passing (e ++ env) instead produces an infinite loop
 
 instance Evaluable Value where
 --  eval :: Value -> Env -> IM Value
@@ -117,11 +117,10 @@ instance Evaluable Exp where
     otherwise -> return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
 
   eval e@(App function_exp argument_exp) env = do
-    debugM $ "\t\t\t\t\t\t App.env== " ++ show env
     ti <- gets tab_indentation
     let ?tab_indentation = ti
             
-    f <- evalExpI function_exp env ("Evaluating function_exp" ++ showExp function_exp)
+    f <- evalExpI function_exp env ("Evaluating function_exp " ++ showExp function_exp)
   
     -- if the argument is a variable that is already in the env, don't make a new reference  
     case argument_exp of
@@ -130,8 +129,9 @@ instance Evaluable Exp where
         case qvar_val of
           Right (Wrong _) -> mkRefAndApply f argument_exp -- not found, 
           whnf -> do
-            debugM $ "Skipping the making of reference, " ++ (qualifiedVar qvar) ++ " is already in env"
-            apply f (qualifiedVar qvar) env --don't create thunk for variables in scope
+            debugM $ "NOT Skipping the making of reference, " ++ (qualifiedVar qvar) ++ " is already in env"
+            mkRefAndApply f argument_exp -- not found, 
+            --apply f (qualifiedVar qvar) env --don't create thunk for variables in scope
       _ -> mkRefAndApply f argument_exp
     where
     mkRefAndApply :: Value -> Exp -> IM Value
@@ -317,13 +317,16 @@ evalExpI :: Exp -> Env -> String -> IM Value
 evalExpI exp env desc = do 
   ti <- gets tab_indentation
   let ?tab_indentation = ti
-  debugMStep $ desc
+  
+  debugMStep $ desc ++ " {"
   debugSubexpression exp 
   increaseIndentation  
+  
   res <- eval exp env
   debugM $ "evalExpI#res: " ++ show res
   decreaseIndentation
-  debugMStepEnd
+  debugM $ "}" -- debugMStepEnd
+  
   return res
   
 -- | Looks for the address in the heap, evals a thunk if necessary to return a value
@@ -404,7 +407,6 @@ evalVdefg (Rec vdefs) env = mapM (flip evalVdefg env . Nonrec) vdefs >>= return 
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) env = do
   debugMStep $ "Evaluating value definition: " ++ qualifiedVar qvar
   debugM $ "doEvalVdefg; env.size == " ++ (show . length $ env)
-  debugM $ "\t\t\t\t\t\t App.env== " ++ show env
   whenFlag show_expressions $ indentExp exp >>= debugM . (++) "Expression: "
   
   increaseIndentation

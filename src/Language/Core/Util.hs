@@ -103,8 +103,8 @@ showBind (Vb (var,ty)) = var -- wrapName "Bind" $ var ++ "::" ++ showType ty
 showBind (Tb tb@(tvar,kind)) = showTbind tb
 
 showVdefg :: (?tab_indentation :: Int) => Vdefg -> String
-showVdefg (Rec vdefs) = wrapName "Rec" $ concatMap showVdef vdefs
-showVdefg (Nonrec vdef) = wrapName "Nonrec" $ showVdef vdef
+showVdefg (Rec vdefs) = wrapName " Rec" $ concatMap showVdef vdefs
+showVdefg (Nonrec vdef) = wrapName " Nonrec" $ showVdef vdef
 
 showVdef :: (?tab_indentation :: Int) => Vdef -> String
 showVdef (Vdef (qvar@(mname,var),ty,exp)) = qualifiedVar qvar ++ 

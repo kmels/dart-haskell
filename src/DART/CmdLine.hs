@@ -133,8 +133,9 @@ printHeap heap = do
 debugSubexpression :: Exp -> IM ()
 debugSubexpression e = do
   whenFlag show_subexpressions $ do
-    let ?tab_indentation = 1
-    prependStars
+    ti <- gets tab_indentation
+    let ?tab_indentation = ti
+    --prependStars
     debugM $ "Subexpression: " ++ showExp e
 
 -- | If the flag --verbose is on, prints messages about Loading, Reading and Acknowledging of modules

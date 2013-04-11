@@ -12,6 +12,10 @@ all = [ equals
         , gt, geq
         , mkMonomophier "ghc-prim:GHC.Classes.$p1Ord"
         , mkMonomophier "ghc-prim:GHC.Classes.$fOrdInt"
+        , mkMonomophier "ghc-prim:GHC.Classes.$fEq[]"
+        , mkMonomophier "ghc-prim:GHC.Classes.$fEqInt"
+        
+        , mkMonomophier "integer-gmp:GHC.Integer.Type.$fOrdInteger"
         ]
 
 -- | (==)
@@ -19,7 +23,9 @@ equals :: (Id, Either Thunk Value)
 equals = (id, Right $ Fun (monomophy_2 "(==)" valEq) "polymorphic(==)") where
    id = "ghc-prim:GHC.Classes.==" 
    valEq :: Value -> Value -> IM Value
-   valEq v w = return . Boolean $ (==) v w
+   valEq v@(Wrong _) _ = return v
+   valEq _ w@(Wrong _) = return w
+   valEq v w = return . Boolean $ (==) v w   
 
 leq :: (Id, Either Thunk Value)
 leq = (id, Right $ Fun (monomophy_2 "(<=)" leq') "(<=)") where
