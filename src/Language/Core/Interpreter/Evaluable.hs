@@ -53,7 +53,7 @@ instance Evaluable ModuleFunction where
         debugM $ "Vdefg: " ++ show vdefg
         --module_env <- acknowledgeModule m
         --let env = (module_env ++ libs)
-        [heap_ref@(_,address)] <- doEvalVdefg vdefg env  -- ++ libs) -- doEvalVdefg should return a single list
+        [heap_ref@(_,address)] <- evalVdefg vdefg env  -- ++ libs) -- doEvalVdefg should return a single list
         evalHeapAddress address env
     where
       fnames = concatMap vdefgNames vdefgs -- [String]
@@ -369,35 +369,35 @@ apply (TyConApp tycon addresses) id env =  do
 apply w@(Wrong _) _ _ = return w
 apply f x _ = return . Wrong $ "Applying " ++ show f ++ " with argument " ++ show x
 
-doEvalVdefg :: Vdefg -> Env -> IM [HeapReference]
-doEvalVdefg vdefg env = do
-  debugM $ "doEvalVdefg; env.size == " ++ (show . length $ env)
-  beforeTime <- liftIO getCurrentTime
-  h <- gets heap  
+-- evalVdefgBenchmark :: Vdefg -> Env -> IM [HeapReference]
+-- evalVdefgBenchmark vdefg env = do
+--   debugM $ "doEvalVdefg; env.size == " ++ (show . length $ env)
+--   beforeTime <- liftIO getCurrentTime
+--   h <- gets heap  
       
-  heap_refs <- evalVdefg vdefg env
+--   heap_refs <- evalVdefg vdefg env
   
-  mapM_ (benchmark beforeTime) heap_refs  
-  debugM $ "doEvalVdefg.heap_refs: " ++ show heap_refs
-  debugM $ "doEvalVdefg.heap_refs.size: " ++ show (length heap_refs)
-  return heap_refs
+--   mapM_ (benchmark beforeTime) heap_refs  
+--   debugM $ "doEvalVdefg.heap_refs: " ++ show heap_refs
+--   debugM $ "doEvalVdefg.heap_refs.size: " ++ show (length heap_refs)
+--   return heap_refs
   
-  where
-    benchmark :: UTCTime -> HeapReference -> IM ()
-    benchmark before heapRef@(id,heap_address) = do      
-      sttgs <- gets settings
-      res <- lookupMem heap_address
-      afterTime <- liftIO getCurrentTime
-      let 
-        time = afterTime `diffUTCTime` before
+--   where
+--     benchmark :: UTCTime -> HeapReference -> IM ()
+--     benchmark before heapRef@(id,heap_address) = do      
+--       sttgs <- gets settings
+--       res <- lookupMem heap_address
+--       afterTime <- liftIO getCurrentTime
+--       let 
+--         time = afterTime `diffUTCTime` before
       
-        -- TODO: replace with new flag --benchmark
-        should_print = debug sttgs && show_tmp_variables sttgs
-                       || debug sttgs && show_tmp_variables sttgs
+--         -- TODO: replace with new flag --benchmark
+--         should_print = debug sttgs && show_tmp_variables sttgs
+--                        || debug sttgs && show_tmp_variables sttgs
                      
-      (when should_print) $ do
-        debugM $ "Evaluation of " ++ id
-        debugM $ "\t.. done in " ++ show time ++ "\n\t.. and resulted in " ++ show res      
+--       (when should_print) $ do
+--         debugM $ "Evaluation of " ++ id
+--         debugM $ "\t.. done in " ++ show time ++ "\n\t.. and resulted in " ++ show res      
 
 
 -- | Evaluate a value definition, which can be either recursive or not recursive
