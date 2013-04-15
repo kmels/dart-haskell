@@ -50,6 +50,7 @@ instance Evaluable ModuleFunction where
         stgs <- gets settings
         let ?settings = stgs
         debugM $ "Found definition of " ++ fun_name
+        debugM $ "Vdefg: " ++ show vdefg
         --module_env <- acknowledgeModule m
         --let env = (module_env ++ libs)
         [heap_ref@(_,address)] <- doEvalVdefg vdefg env  -- ++ libs) -- doEvalVdefg should return a single list
@@ -377,6 +378,8 @@ doEvalVdefg vdefg env = do
   heap_refs <- evalVdefg vdefg env
   
   mapM_ (benchmark beforeTime) heap_refs  
+  debugM $ "doEvalVdefg.heap_refs: " ++ show heap_refs
+  debugM $ "doEvalVdefg.heap_refs.size: " ++ show (length heap_refs)
   return heap_refs
   
   where
