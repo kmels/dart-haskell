@@ -88,7 +88,7 @@ data Value = Wrong String
            | TyConApp DataCon [Pointer] -- heap addresses, a type constructor application to some values
            | Pointer Pointer
            | FreeTypeVariable String -- useful when converting a to SomeClass a (we ignore parameters, and it's useful to save them)
-           | MkListOfValues [Value] -- When a value definition is recursive, depends on other values
+           | MkListOfValues [(String,Value)] -- When a value definition is recursive, depends on other values
 
 newtype Pointer = MkPointer { address :: HeapAddress } deriving Show
 

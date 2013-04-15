@@ -25,7 +25,7 @@ import           Data.Time.Clock(getCurrentTime,diffUTCTime)
 import           Language.Core.Interpreter.Acknowledge
 import           Language.Core.Interpreter.Apply
 import           Language.Core.Interpreter.Structures
-import           Language.Core.Vdefg (vdefgNames)
+import           Language.Core.Vdefg (vdefgNames,vdefName)
 class Evaluable a where
   eval :: a -> Env -> IM Value
   
@@ -46,21 +46,19 @@ instance Evaluable ModuleFunction where
       error $ "evalModuleFunction: function name is empty" 
     else case maybeVdefg of
       Nothing -> return . Wrong $  "Could not find function " ++ fun_name ++ " in " ++ show mname
-      Just vdefg -> do
-        stgs <- gets settings
-        let ?settings = stgs
-        debugM $ "Found definition of " ++ fun_name
-        debugM $ "Vdefg: " ++ show vdefg
-        --module_env <- acknowledgeModule m
-        --let env = (module_env ++ libs)
+      Just one_def@(Nonrec vdef) -> do
+        [hr@(_,address)] <- evalVdefg one_def env -- this pattern match should always be error-free
+        -- than one 
+        evalHeapAddress address env
         
-        -- If the definition is recursive, fetch all the heap references
-        -- and then look for the given function (variable) name 
-        heap_refs <- evalVdefg vdefg env 
-        
-        case heap_refs of
-          [singular_heap_ref@(_,address)] -> evalHeapAddress address env
-          rfs -> mapM (\(_,address) -> evalHeapAddress address env) rfs >>= return . MkListOfValues
+      -- If the definition is recursive, fetch all the heap references
+      -- and then look for the given function (variable) name 
+      Just rdefs@(Rec defs) -> do
+        debugM $ "Found recursive definition of " ++ fun_name
+        --debugM $ "Vdefg: " ++ show vdefg
+        heap_refs <- evalVdefg rdefs env
+        vals <- mapM (\(_,address) -> evalHeapAddress address env) heap_refs
+        return . MkListOfValues $ zip (map vdefName defs) vals                    
     where
       fnames = concatMap vdefgNames vdefgs -- [String]
       fnames_vdefgs = zip fnames vdefgs 
