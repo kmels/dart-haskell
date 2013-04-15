@@ -48,7 +48,6 @@ instance Evaluable ModuleFunction where
       Nothing -> return . Wrong $  "Could not find function " ++ fun_name ++ " in " ++ show mname
       Just one_def@(Nonrec vdef) -> do
         [hr@(_,address)] <- evalVdefg one_def env -- this pattern match should always be error-free
-        -- than one 
         evalHeapAddress address env
         
       -- If the definition is recursive, fetch all the heap references
