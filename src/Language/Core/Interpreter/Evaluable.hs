@@ -53,12 +53,19 @@ instance Evaluable ModuleFunction where
         debugM $ "Vdefg: " ++ show vdefg
         --module_env <- acknowledgeModule m
         --let env = (module_env ++ libs)
-        [heap_ref@(_,address)] <- evalVdefg vdefg env  -- ++ libs) -- doEvalVdefg should return a single list
-        evalHeapAddress address env
+        
+        -- If the definition is recursive, fetch all the heap references
+        -- and then look for the given function (variable) name 
+        heap_refs <- evalVdefg vdefg env 
+        
+        case heap_refs of
+          [singular_heap_ref@(_,address)] -> evalHeapAddress address env
+          rfs -> mapM (\(_,address) -> evalHeapAddress address env) rfs >>= return . MkListOfValues
     where
       fnames = concatMap vdefgNames vdefgs -- [String]
       fnames_vdefgs = zip fnames vdefgs 
       maybeVdefg = find ((==) fun_name . fst) fnames_vdefgs >>= return . snd -- :: Maybe Vdefg
+      --maybeVdefg 
 
 -- | Given an environment, looks for the address in the heap, evals a thunk using the given environment if necessary to return a value
 evalHeapAddress :: HeapAddress -> Env -> IM Value

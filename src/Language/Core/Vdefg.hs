@@ -37,8 +37,13 @@ data FunctionApplication = FunApp String String Exp
 vdefExp :: Vdef -> Exp
 vdefExp (Vdef (_, _, exp)) = exp
 
+-- | Given a value definition, returns the full qualified name 
 vdefQualId :: Vdef -> String
 vdefQualId (Vdef (qual_var, _ , _)) = qualifiedVar qual_var
+
+-- | Similar to vdefQualId but it ignores the module name
+vdefName :: Vdef -> String
+vdefName (Vdef (qual_var, _, _)) = snd qual_var
  
 -- | Useful functions to filter types of value definitions.
 
@@ -69,6 +74,14 @@ vdefgNames :: Vdefg -> [String]
 vdefgNames (Nonrec (Vdef ((_,id), _, _))) = [id]
 vdefgNames (Rec []) = []
 vdefgNames (Rec ((Vdef ((_,id), _, _)):xs)) = id:(vdefgNames (Rec xs))
+
+-- | Looks for a value definition whose name (not qualified) is identical to the given one
+findVdefByName :: String -> Vdefg -> Maybe Vdef
+findVdefByName name (Nonrec def)   | vdefName def == name = Just def
+findVdefByName name (Nonrec def)   | otherwise = Nothing
+findVdefByName name (Rec (def:_))  | vdefName def == name = Just def
+findVdefByName name (Rec (_:defs)) | otherwise = findVdefByName name (Rec defs)
+findVdefByName name (Rec []) = Nothing
 
 -- | Given a value definition, return its name (or names if recursive) 
 vdefgQualVars :: Vdefg -> [Qual Var]
