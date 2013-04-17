@@ -26,6 +26,7 @@ import           Language.Core.Interpreter.Acknowledge
 import           Language.Core.Interpreter.Apply
 import           Language.Core.Interpreter.Structures
 import           Language.Core.Vdefg (vdefgNames,vdefName)
+import           Language.Core.Vdefg(findVdef)
 class Evaluable a where
   eval :: a -> Env -> IM Value
   
@@ -40,29 +41,30 @@ instance Evaluable Lit where
     --"Rational" -> return . Rat $ r
     _ -> return . Wrong $ "Could not evaluate literal of type " ++ showExtCoreType ty
 
+-- | If the user provides an expression to evaluate, it can be either a haskell expression
+-- that we can compile just in time, or a function name that is defined in the module
+instance Evaluable HaskellExpression where
+  eval (HaskellExpression expression_string m@(Module mname tdefs vdefgs)) env = 
+    -- | Is it a function defined within the module?
+    case (m `findVdef` expression_string) of
+      Just vdefg -> eval (ModuleFunction vdefg m) env
+      Nothing -> return . Wrong $  "Could not find function " ++ expression_string ++ " in " ++ show mname
+      
 instance Evaluable ModuleFunction where
-  eval (ModuleFunction fun_name m@(Module mname tdefs vdefgs)) env = 
-    if null fun_name then 
-      error $ "evalModuleFunction: function name is empty" 
-    else case maybeVdefg of
-      Nothing -> return . Wrong $  "Could not find function " ++ fun_name ++ " in " ++ show mname
-      Just one_def@(Nonrec vdef) -> do
+  eval (ModuleFunction vdefg m@(Module mname tdefs vdefgs)) env = 
+    case vdefg of
+      one_def@(Nonrec vdef) -> do
         [hr@(_,address)] <- evalVdefg one_def env -- this pattern match should always be error-free
         evalHeapAddress address env
         
       -- If the definition is recursive, fetch all the heap references
       -- and then look for the given function (variable) name 
-      Just rdefs@(Rec defs) -> do
-        debugM $ "Found recursive definition of " ++ fun_name
+      rdefs@(Rec defs) -> do
+        debugM $ "Found recursive definition "
         --debugM $ "Vdefg: " ++ show vdefg
         heap_refs <- evalVdefg rdefs env
         vals <- mapM (\(_,address) -> evalHeapAddress address env) heap_refs
         return . MkListOfValues $ zip (map vdefName defs) vals                    
-    where
-      fnames = concatMap vdefgNames vdefgs -- [String]
-      fnames_vdefgs = zip fnames vdefgs 
-      maybeVdefg = find ((==) fun_name . fst) fnames_vdefgs >>= return . snd -- :: Maybe Vdefg
-      --maybeVdefg 
 
 -- | Given an environment, looks for the address in the heap, evals a thunk using the given environment if necessary to return a value
 evalHeapAddress :: HeapAddress -> Env -> IM Value
@@ -141,12 +143,10 @@ instance Evaluable Exp where
     where
     mkRefAndApply :: Value -> Exp -> IM Value
     mkRefAndApply f arg_exp = do
-      debugM "mkRefAndApply"
+      debugM "Making a reference from/to the function argument "
       heap_reference@(id,arg_address) <- mkHeapReference arg_exp env
-      --decreaseIndentation
-      debugM "" >> debugM ("Argument to function has reference: " ++ show heap_reference)
+      debugM $ "Argument to function has reference: " ++ show heap_reference
   
-      -- apply f arg_address (heap_reference:env) -- Note1: the address is paassed 
       res <- apply f id (heap_reference:env) -- Note1: the address is paassed 
       return res
 

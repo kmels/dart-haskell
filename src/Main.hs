@@ -118,7 +118,7 @@ runDART = do
           prettyPrint Nothing = return $ "No test result "
           prettyPrint (Just (id,test_result)) = T.showTest test_result >>= return . (++) (id ++ ": \n")
       in do
-        res <- T.testFunction m fun_name env >>= prettyPrint
+        res <- T.testHaskellExpression m fun_name env >>= prettyPrint
         debugMStep $ "Test results of " ++ fun_name
         io . putStrLn $ res
         (gets heap >>= \h -> whenFlag show_heap $ io . printHeap $ h)
@@ -142,7 +142,7 @@ runDART = do
     -- | eval fun_name
     evaluate m env fun_name = do 
       debugM $ "evaluate fun_name; env.size == " ++ (show . length $ env)
-      result <- I.evalModuleFunction m fun_name env
+      result <- I.evalHaskellExpression m fun_name env
       
       -- do we print the heap?
       h <- gets heap

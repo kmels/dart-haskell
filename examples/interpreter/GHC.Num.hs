@@ -10,7 +10,7 @@ module FirstOrderFunctions (
   , isHundredLargerThanZero
   , tenIsEven
   , tautology1
-  , fib0, fib1, fib2, fib3, fib4, fibs, map
+  , fib0, fib1, fib2, fib3, fib4, fib23, fib25, fibs, map
   ) where
 
 import Prelude hiding (map)
@@ -37,7 +37,6 @@ isHundredLargerThanZero = 100 >= 2
 
 isEven n = n `mod` 2 == 0
 
-
 tenIsEven = 10 `mod` 2 == 0
 
 tautology1 = 10 == 10
@@ -54,6 +53,8 @@ fib4 = fib 4
 fib5 = fib 5
 fib6 = fib 6
 
+fib23 = fib 23
+fib25 = fib 25
 fibs = map fib [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
 
 map :: (a -> b) -> [a] -> [b]

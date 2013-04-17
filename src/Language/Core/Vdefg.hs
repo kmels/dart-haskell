@@ -20,20 +20,15 @@
 
 module Language.Core.Vdefg where
 
+import DART.InterpreterSettings
+import Data.List(find)
 import Language.Core.Core
 import Language.Core.Util
-import DART.InterpreterSettings
-import Text.Encoding.Z -- DELETE
-
+import Text.Encoding.Z
 -- | Let's create some data types for type safety purposes. First, lambda abstraction (function application)
-
 data FunctionApplication = FunApp String String Exp
 
---instance Show FunctionApplication where
---  show (FunApp t1 t2 exp) = ":: " ++ t1 ++ " -> " ++ t2 ++ " = " ++ showExp exp
-
 -- | Extract an expression from a value definition
-
 vdefExp :: Vdef -> Exp
 vdefExp (Vdef (_, _, exp)) = exp
 
@@ -46,11 +41,10 @@ vdefName :: Vdef -> String
 vdefName (Vdef (qual_var, _, _)) = snd qual_var
  
 -- | Useful functions to filter types of value definitions.
-
 vdefNonRecursive :: Vdefg -> Maybe Vdef
 vdefNonRecursive (Nonrec vdef) = Just vdef
 vdefNonRecursive _ = Nothing
-
+  
 vdefgToMaybeTapp :: Vdefg -> Maybe FunctionApplication
 vdefgToMaybeTapp vdefg = vdefNonRecursive vdefg >>= vdefTapp >>= \tapp -> case tapp of
   (Vdef (_, (Tapp i r), e)) -> Just $ FunApp (showExtCoreType i) (showExtCoreType r) e
@@ -83,6 +77,16 @@ findVdefByName name (Rec (def:_))  | vdefName def == name = Just def
 findVdefByName name (Rec (_:defs)) | otherwise = findVdefByName name (Rec defs)
 findVdefByName name (Rec []) = Nothing
 
+-- | Looks for value definitions with the given identifier within the module 
+-- i.e. a not qualified name. 
+findVdef :: Module -> Id -> Maybe Vdefg
+findVdef _ "" = Nothing
+findVdef m@(Module mname tdefs vdefgs) id = let  
+  fnames = concatMap vdefgNames vdefgs -- [String]
+  fnames_vdefgs = zip fnames vdefgs 
+  maybeVdefg = find ((==) id . fst) fnames_vdefgs >>= return . snd -- :: Maybe Vdefg
+  in maybeVdefg
+  
 -- | Given a value definition, return its name (or names if recursive) 
 vdefgQualVars :: Vdefg -> [Qual Var]
 vdefgQualVars (Nonrec (Vdef (qvar, _, _))) = [qvar]

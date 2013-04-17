@@ -15,7 +15,7 @@
 -----------------------------------------------------------------------------
 
 module Language.Core.Interpreter(
-  evalModule, evalModuleFunction,
+  evalModule, evalHaskellExpression,
   loadLibrary,
   module Language.Core.Interpreter.Evaluable,
   module Language.Core.Interpreter.Structures
@@ -76,8 +76,8 @@ evalModule m@(Module mname tdefs vdefgs) env = do
     evalModuleDef id = debugMStep ("Evaluating " ++ id) >> evalId id env
     
 -- | Given a module and a function name, we evaluate the function in that module and return the heap. 
-evalModuleFunction :: Module -> String -> Env -> IM Value
-evalModuleFunction m fun_name env = eval (ModuleFunction fun_name m) env
+evalHaskellExpression :: Module -> String -> Env -> IM Value
+evalHaskellExpression m expression_string env = eval (HaskellExpression expression_string m) env
   
 --bindAltVars val@(Num n) (Acon _ _ [(var,_)] _) = var `bindTo` val
 --bindAltVars t v = io . putStrLn $ " Don't know how to bind values " ++ show t ++ " to " ++ show v

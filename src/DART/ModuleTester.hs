@@ -12,7 +12,7 @@
 -----------------------------------------------------------------------------
 module DART.ModuleTester(
   -- testing
-  testModule, testFunction,
+  testModule, testHaskellExpression,
   -- util
   showTest,
   -- exports
@@ -37,10 +37,10 @@ testModule m@(Module mname tdefs vdefgs) env = do
   let results = catMaybes test_results
   return $ zip (map (qualifiedVar . vdefg_name) results) results
 
-testFunction :: Module -> String -> Env -> IM (Maybe (Id,TestResult))
-testFunction m@(Module mname tdefs vdefgs) fun_name env = do
-  result <- testMaybe (ModuleFunction fun_name m) Nothing Nothing env 
-  maybe (return Nothing) (return . Just . (,) fun_name) result
+testHaskellExpression :: Module -> String -> Env -> IM (Maybe (Id,TestResult))
+testHaskellExpression m@(Module mname tdefs vdefgs) expression_string env = do
+  result <- testMaybe (HaskellExpression expression_string m) Nothing Nothing env 
+  maybe (return Nothing) (return . Just . (,) expression_string) result
   
 showTest :: TestResult -> IM String
 showTest = return . show 

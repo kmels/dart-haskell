@@ -17,12 +17,11 @@ module DART.ModuleTester.Testable where
 import DART.CmdLine(watchTestM,debugMStep,debugM)
 import DART.ExtCore.TypeExtractor
 import DART.MkRandom
+import Data.List(find)
 import Language.Core.Core
 import Language.Core.Interpreter
 import Language.Core.Interpreter.Acknowledge
-import           Language.Core.Vdefg (vdefgNames)
-import           Data.List(find)
-
+import Language.Core.Vdefg (vdefgNames, findVdef)
 
 data TestResult = TestResult{
   vdefg_name :: Qual Var,
@@ -39,21 +38,17 @@ class TestableType t where
 class MaybeTestable a where
   testMaybe :: a -> Maybe (Qual Var) -> Maybe Exp -> Env -> IM (Maybe TestResult)
 
-instance MaybeTestable ModuleFunction where
-  testMaybe (ModuleFunction [] _) _ _ _ = return Nothing
+instance MaybeTestable HaskellExpression where
+  testMaybe (HaskellExpression expression_string m@(Module mname _ vdefgs)) _ _ env = 
+    case (m `findVdef` expression_string) of
+      Just vdefg -> debugMStep ("Testing function " ++ expression_string)
+                    >> testMaybe (ModuleFunction vdefg m) Nothing Nothing env
+      Nothing -> return Nothing --TODO
   
-  testMaybe (ModuleFunction fun_name m@(Module mname tdefs vdefgs)) _ _ env = do
-    debugMStep $ "Testing function " ++ fun_name
-        
-    case maybeVdefg of
-      Nothing -> return Nothing
-      Just vdefg -> do
-        module_env <- acknowledgeModule m
-        testMaybe vdefg Nothing Nothing (module_env ++ env)        
-    where
-      fnames = concatMap vdefgNames vdefgs -- [String]
-      fnames_vdefgs = zip fnames vdefgs 
-      maybeVdefg = find ((==) fun_name . fst) fnames_vdefgs >>= return . snd -- :: Maybe Vdefg      
+instance MaybeTestable ModuleFunction where
+  testMaybe (ModuleFunction vdefg m@(Module mname tdefs vdefgs)) _ _ env = do    
+    module_env <- acknowledgeModule m
+    testMaybe vdefg Nothing Nothing (module_env ++ env)
 
 instance MaybeTestable Vdefg where
   testMaybe (Rec vdefs) _ _ env = return Nothing -- error "Undefined Rec" --test vdefs

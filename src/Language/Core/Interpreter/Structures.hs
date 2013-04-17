@@ -28,6 +28,7 @@ module Language.Core.Interpreter.Structures(
   , Thunk (..), DataCon(..) , Value(..), Pointer(..)
   , Language.Core.Core.Id
   , ModuleFunction(..)
+  , HaskellExpression(..)
   , module Control.Monad.State
   , module Language.Core.Core
   , module Language.Core.Util
@@ -100,7 +101,10 @@ instance Show Thunk where
   --show (VdefgThunk exp) = let ?tab_indentation = 0 
   --                        in "VdefgThunk(exp=" ++ showExp exp ++ ")"
 
-data ModuleFunction = ModuleFunction Id Module                          
+data ModuleFunction = ModuleFunction Vdefg Module
+-- | Some expression from the command line that is evaluable within the scope of the
+-- provided file(s)
+data HaskellExpression = HaskellExpression String Module
 -- cons = TyConApp (MkDataCon "Cons" [a]) [1,Nil]
 
 -- RENAME THIS (DataCon)
