@@ -57,21 +57,24 @@ Value definition to mapped values
 -}
 
 evalModule :: Module -> Env -> IM [(Id, Value)]
-evalModule m@(Module mname tdefs vdefgs) libs_env = do
+evalModule m@(Module mname tdefs vdefgs) env = do
   debugMStep $ "Evaluating module " ++ show mname
   -- recognize type and value definitions
   --module_env <- acknowledgeModule m
     
   -- time to evaluate, set an environment and evaluate only those defs that are not temp
   let 
-    env = libs_env --module_env ++ libs_env    
+    --env = libs_env --module_env ++ libs_env    
     qual_vars = map vdefgQualVars vdefgs -- [[Qual Var]]
     exposed_vdefgs = concat $ filter (not . all qualIsTmp) qual_vars     --[Qual Var]
     vdefg_names = map qualifiedVar exposed_vdefgs -- exposed vdefs, [Qual Var]
     
-  vals <- mapM (flip evalId env) vdefg_names -- [Value]  
+  vals <- mapM evalModuleDef vdefg_names -- [Value]  
   return $ zip vdefg_names vals
-
+  where
+    evalModuleDef :: Id -> IM Value
+    evalModuleDef id = debugMStep ("Evaluating " ++ id) >> evalId id env
+    
 -- | Given a module and a function name, we evaluate the function in that module and return the heap. 
 evalModuleFunction :: Module -> String -> Env -> IM Value
 evalModuleFunction m fun_name env = eval (ModuleFunction fun_name m) env

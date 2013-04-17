@@ -338,6 +338,7 @@ evalExpI exp env desc = do
 evalId :: Id -> Env -> IM Value
 --evalId i e = lookupId i e >>= either (evalThunk e) return
 evalId i e = do
+  debugM $ "Evaluating variable " ++ i
   ptr <- getPointer i e 
   case ptr of
     e@(Wrong s) -> return e -- i was not found in env

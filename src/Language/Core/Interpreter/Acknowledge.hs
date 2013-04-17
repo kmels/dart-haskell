@@ -63,9 +63,14 @@ acknowledgeVdefgs vdefgs = acknowledgeVdefgs' vdefgs []
 
 -- | Acknowledges a generic value definition
 acknowledgeVdefg  :: Vdefg -> Env -> IM Env
-acknowledgeVdefg (Nonrec vdef) env = do
-  beVerboseM $ "Acknowledging non-recursive definition: " ++ vdefQualId vdef
-  sequence [(flip acknowledgeVdef env) vdef]
+acknowledgeVdefg (Nonrec vdef) env = 
+  let
+    mkList :: a -> [a]
+    mkList x = [x]
+  in
+   acknowledgeVdef vdef env >>= return . mkList
+  --beVerboseM $ "Acknowledging non-recursive definition: " ++ vdefQualId vdef
+  --sequence [(flip acknowledgeVdef env) vdef]
 acknowledgeVdefg v@(Rec vdefs) env = do
   beVerboseM $ "Acknowledging recursive definitions: " ++ (show . vdefgNames $ v)
   mapM (flip acknowledgeVdef env) vdefs
@@ -73,5 +78,5 @@ acknowledgeVdefg v@(Rec vdefs) env = do
 -- | Acknowledges a value definition. 
 acknowledgeVdef :: Vdef -> Env -> IM HeapReference
 acknowledgeVdef (Vdef (qvar, ty, exp)) env = do
-  beVerboseM $ "Acknowledging definition " ++ qualifiedVar qvar
+  beVerboseM $ "Acknowledging value definition " ++ qualifiedVar qvar
   memorize (Left $ Thunk exp env) (qualifiedVar qvar)

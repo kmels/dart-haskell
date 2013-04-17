@@ -1,8 +1,9 @@
 module RecursiveVdefg(
-  even, odd,
-  testOdd, testOdd', testOdd'',
-  testEven, testEven', testEven'', 
-  evenOf10
+  even, odd
+--  ,testOdd, testOdd', testOdd'',
+ -- testEven, testEven', testEven'', 
+  , evenOf1
+  , evenOf10
   ) where
 
 import Prelude hiding (even,odd)
@@ -16,6 +17,7 @@ odd 0 = False
 --odd 1 = True
 odd n = even (n-1)
 
+evenOf1 = even 1
 evenOf10 = even 10
 
 testOdd = odd 5
