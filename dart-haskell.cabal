@@ -23,6 +23,7 @@ executable dart-haskell
   main-is:           Main.hs
   ghc-options:       -prof -fprof-auto
   other-modules:        
+                    DART.Compiler.JIT                    
                     DART.FunctionFeeder,
                     DART.FileIO,
                     DART.InterpreterSettings,

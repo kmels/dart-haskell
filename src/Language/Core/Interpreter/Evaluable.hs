@@ -17,9 +17,10 @@
 module Language.Core.Interpreter.Evaluable where
 
 import           DART.CmdLine
+import           DART.Compiler.JIT(jitCompile)
 import           DART.InterpreterSettings
 import qualified Data.HashTable.IO as H
-import           Data.List(find)
+import           Data.List(find,inits)
 import           Data.Time.Clock
 import           Data.Time.Clock(getCurrentTime,diffUTCTime)
 import           Language.Core.Interpreter.Acknowledge
@@ -44,39 +45,56 @@ instance Evaluable Lit where
 -- | If the user provides an expression to evaluate, it can be either a haskell expression
 -- that we can compile just in time, or a function name that is defined in the module
 instance Evaluable HaskellExpression where
-  eval (HaskellExpression expression_string m@(Module mname tdefs vdefgs)) env = 
+  eval hs@(HaskellExpression expression_string m@(Module mname tdefs vdefgs)) env = 
     -- | Is it a function defined within the module?
     case (m `findVdef` expression_string) of
       Just vdefg -> eval (ModuleFunction vdefg m) env
-      Nothing -> return . Wrong $  "Could not find function " ++ expression_string ++ " in " ++ show mname
+      Nothing -> do
+        maybeVdefg <- jitCompile hs
+        case maybeVdefg of
+          Just vdefg -> eval vdefg env
+          Nothing -> return . Wrong $  "Could not evaluate " ++ expression_string ++ " in " ++ show mname
       
+instance Evaluable Vdefg where
+  eval vdefg env = do
+    refs <- evalVdefg vdefg env
+    case refs of
+      [] -> return . Wrong $ "The impossible happened"
+      [single_ref@(_,address)] -> eval address env
+      _ -> do
+        vals <- mapM (\(_,address) -> eval address env) refs
+        let mkList x = [x]
+        return . MkListOfValues $ zip (map mkList ['a'..'z']) vals 
+  
 instance Evaluable ModuleFunction where
   eval (ModuleFunction vdefg m@(Module mname tdefs vdefgs)) env = 
     case vdefg of
       one_def@(Nonrec vdef) -> do
         [hr@(_,address)] <- evalVdefg one_def env -- this pattern match should always be error-free
-        evalHeapAddress address env
+        eval address env
         
       -- If the definition is recursive, fetch all the heap references
       -- and then look for the given function (variable) name 
       rdefs@(Rec defs) -> do
         debugM $ "Found recursive definition "
         --debugM $ "Vdefg: " ++ show vdefg
-        heap_refs <- evalVdefg rdefs env
-        vals <- mapM (\(_,address) -> evalHeapAddress address env) heap_refs
+        heap_refs <- evalVdefg rdefs env 
+        vals <- mapM (\(_,address) -> eval address env) heap_refs
         return . MkListOfValues $ zip (map vdefName defs) vals                    
 
 -- | Given an environment, looks for the address in the heap, evals a thunk using the given environment if necessary to return a value
-evalHeapAddress :: HeapAddress -> Env -> IM Value
-evalHeapAddress address env = do
-  eTnkVal <- lookupMem address
-  -- if it is a thunk, eval and memorize in heap
-  val <- either (flip eval env) return eTnkVal  
-  -- re-save
-  h <- gets heap
-  io $ H.insert h address (Right val)
-  return val
-
+instance Evaluable HeapAddress where
+  eval address env = do
+    beVerboseM $ "Evaluable HeapAddress: " ++ show address
+    eTnkVal <- lookupMem address
+    -- if it is a thunk, eval and memorize in heap
+    val <- either (flip eval env) return eTnkVal  
+    -- re-save
+    h <- gets heap
+    watchReductionM $ "Saving : " ++ show val
+    io $ H.insert h address (Right val)
+    return val
+    
 instance Evaluable Thunk where
   --eval :: Thunk -> Env -> IM Value
   eval (Thunk exp env) e = do -- TODO. To comment: Why we don't care about the second env?
@@ -96,18 +114,6 @@ instance Evaluable Pointer where
   eval (MkPointer address) env = do
     debugM "Evaluable Pointer"
     eval address env
-
-instance Evaluable HeapAddress where
-  eval address env = do
-    debugM $ "Evaluable HeapAddress: " ++ show address
-    eTnkVal <- lookupMem address
-    -- if it is a thunk, eval and memorize in heap
-    val <- either (flip eval env) return eTnkVal
-    debugM $ "Saving : " ++ show val
-    -- re-save
-    h <- gets heap    
-    io $ H.insert h address (Right val)
-    return val
   
 -- | Given a Pointer HeapAddress, eval a Thunk if necessary to return a Value represented
 -- by the address 
@@ -220,7 +226,7 @@ instance Evaluable Exp where
   eval (Case exp vbind@(vbind_var,ty) gen_ty alts) env = do
     increaseIndentation
     heap_reference@(id,address) <- memorize (mkThunk exp env) vbind_var
-    exp_value <- evalHeapAddress address (heap_reference:env)
+    exp_value <- eval address (heap_reference:env)
 
     watchReductionM $ "\tDoing case analysis for " ++ show vbind_var
     maybeAlt <- findMatch exp_value alts
