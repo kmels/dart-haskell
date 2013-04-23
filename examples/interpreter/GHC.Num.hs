@@ -1,17 +1,18 @@
 module FirstOrderFunctions (
-  -- computed with Num operations
-    numberTen
-  , numberEleven
-  , numberTwenty
-  , numberTwentyTwo
-  , numberFourtyTwo
-  -- predicates on Nums
-  , isTenEven
-  , isHundredLargerThanZero
-  , tenIsEven
-  , tautology1
-  , fib0, fib1, fib2, fib3, fib4, fib23, fib25, fibs, map
-  ) where
+ -- computed with Num operations
+   numberTen
+ , numberEleven
+ , numberTwenty
+ , numberTwentyTwo
+ , numberFourtyTwo
+ -- predicates on Nums
+ , isTenEven
+ , isHundredLargerThanZero
+ , tenIsEven
+ , tautology1
+ , fib0, fib1, fib2, fib3, fib4, fib5, fib6 , fib23 --, fib25, fibs, map
+-- , five
+ ) where
 
 import Prelude hiding (map)
 
@@ -53,10 +54,13 @@ fib4 = fib 4
 fib5 = fib 5
 fib6 = fib 6
 
-fib23 = fib 23
-fib25 = fib 25
+fib23 = fib 17
+fib25 = fib 20
 fibs = map fib [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
 
 map :: (a -> b) -> [a] -> [b]
 map _ []     = []
 map f (x:xs) = f x : map f xs
+
+five :: (Num a) => a
+five = 5

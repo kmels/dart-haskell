@@ -79,4 +79,5 @@ acknowledgeVdefg v@(Rec vdefs) env = do
 acknowledgeVdef :: Vdef -> Env -> IM HeapReference
 acknowledgeVdef (Vdef (qvar, ty, exp)) env = do
   beVerboseM $ "Acknowledging value definition " ++ qualifiedVar qvar
+  beVerboseM $ "\twith env = " ++ show (map fst env)
   memorize (Left $ Thunk exp env) (qualifiedVar qvar)

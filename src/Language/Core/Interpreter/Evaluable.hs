@@ -48,10 +48,26 @@ instance Evaluable HaskellExpression where
   eval hs@(HaskellExpression expression_string m@(Module mname tdefs vdefgs)) env = 
     -- | Is it a function defined within the module?
     case (m `findVdef` expression_string) of
-      Just vdefg -> eval (ModuleFunction vdefg m) env
+      Just vdefg -> do
+        debugM $ "Found a definition of " ++ expression_string
+        eval (ModuleFunction vdefg m) env
       Nothing -> do
-        maybeVdefg <- jitCompile hs
-        case maybeVdefg of
+        debugM $ "Did not found any function named " ++ expression_string
+        let 
+          fnames = concatMap vdefgNames vdefgs -- [String]
+          fnames_vdefgs = zip fnames vdefgs  -- [(String,Vdefg)]
+          --maybeVdefg = find (\t -> fst t == id) fnames_vdefgs >>= return . snd -- :: Maybe Vdefg
+
+        debugM $ show $ fnames
+        debugM $ show $ length fnames
+        debugM $ show $ length vdefgs
+        debugM $ show $ fnames_vdefgs
+        debugM $ show $ (map fst fnames_vdefgs)
+        --debugM $ show $ maybeVdefg
+        
+        jitMaybeVdef <- jitCompile hs
+        
+        case jitMaybeVdef of
           Just vdefg -> eval vdefg env
           Nothing -> return . Wrong $  "Could not evaluate " ++ expression_string ++ " in " ++ show mname
       

@@ -193,10 +193,8 @@ memorizeVal val = mkVarName >>= memorize (mkVal val)
 -- it was stored
 memorize :: Either Thunk Value -> Id -> IM HeapReference
 memorize val id  = do
-  -- Find the an allocation address
-  hc <- gets heap_count
-  let address = hc + 1
-  modify (\st -> st { heap_count = address })
+  -- a new allocation address
+  address <- newAddress
   
   -- Put the value in the heap
   h <- gets heap
@@ -204,6 +202,22 @@ memorize val id  = do
   --watchReductionM $ "Memorized " ++ id ++ " in " ++ show address ++ " as " ++ show val
   return (id,address)
 
+-- | Gets a new address, that stores nothing
+newAddress :: IM HeapAddress
+newAddress = do
+  hc <- gets heap_count
+  modify (\st -> st { heap_count = hc + 1 })
+  return $ hc + 1
+
+-- | Allocates `n` addresses
+allocate :: Int -> IM [HeapAddress]
+allocate 0 = return []
+allocate 1 = newAddress >>= return . mkList where mkList x = [x]
+allocate n = do
+  a <- newAddress
+  as <- allocate (n-1) 
+  return $ a:as
+        
 -- | Prints a debug message with a new line at the end
 debugM :: String -> IM ()
 debugM msg = do 

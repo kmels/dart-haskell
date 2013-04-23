@@ -81,11 +81,19 @@ findVdefByName name (Rec []) = Nothing
 -- i.e. a not qualified name. 
 findVdef :: Module -> Id -> Maybe Vdefg
 findVdef _ "" = Nothing
-findVdef m@(Module mname tdefs vdefgs) id = let  
-  fnames = concatMap vdefgNames vdefgs -- [String]
-  fnames_vdefgs = zip fnames vdefgs 
-  maybeVdefg = find ((==) id . fst) fnames_vdefgs >>= return . snd -- :: Maybe Vdefg
-  in maybeVdefg
+findVdef m@(Module _ _ []) id = Nothing
+findVdef m@(Module mname _ (vdef:vs)) id = case containsId vdef of
+  True -> Just vdef
+  _ -> findVdef (Module mname [] vs) id  
+  where
+    containsId :: Vdefg -> Bool
+    containsId vdefg = any ((==) id) $ vdefgNames vdefg
+    
+
+  -- fnames = concatMap vdefgNames vdefgs -- [String]
+  -- fnames_vdefgs = zip fnames vdefgs 
+  -- maybeVdefg = find ((==) id . fst) fnames_vdefgs >>= return . snd -- :: Maybe Vdefg
+  -- in maybeVdefg
   
 -- | Given a value definition, return its name (or names if recursive) 
 vdefgQualVars :: Vdefg -> [Qual Var]
