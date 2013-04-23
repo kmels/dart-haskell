@@ -309,9 +309,19 @@ mkAltEnv val alt = do
 
 
 -- | Tries to find an alternative that matches a value. It returns the first match, if any.
+-- According to [GHC](http://hackage.haskell.org/trac/ghc/wiki/Commentary/Compiler/CoreSynType)
+-- the DEFAULT alternative must come first, then constructors, then lits
 findMatch :: Value -> [Alt] -> IM (Maybe Alt)
-findMatch val [] = return Nothing
-findMatch val (a:alts) = do  
+findMatch val [] = return Nothing -- no alt
+findMatch val (def_alt@(Adefault exp):alts) = 
+  do 
+    -- a default alt, if none of the remaining alternatives match, match always with this alternative
+    otherMatch <- findMatch val alts
+    case otherMatch of
+      found@(Just alt) -> return found
+      _ -> return . Just $ def_alt
+      
+findMatch val (a:alts) = do
   ti <- gets tab_indentation
   let ?tab_indentation = ti
   debugM $ "Comparing " ++ show val ++ " and " ++ showAlt a
@@ -324,24 +334,39 @@ findMatch val (a:alts) = do
     return . Just $ a
 
 matches :: Value -> Alt -> IM Bool
+
+-- data
 matches (TyConApp (MkDataCon n _) _) (Acon qual_dcon _ _ _) = return $ qualifiedVar qual_dcon == n
 --matches val (Alit lit exp) = return False --TODO
-matches val (Adefault _) = return True -- this is the default case, i.e. "_ -> exp " 
-(Num n) `matches` (Acon qdcon _ _ _) = do
-  watchReductionM $ "Trying to match a Num value (" ++ show n ++ ") with the type constructed by " ++ qualifiedVar qdcon    
-  let matches' = qualifiedVar qdcon == "ghc-prim:GHC.Types.I#" 
-  
-  watchReductionM $ "\t.. " ++ if matches' then " matches" else " does not match"
 
+matches val (Adefault _) = return True -- this is the default case, i.e. "_ -> exp " 
+
+-- primitives
+matches (Num n) (Acon qdcon _ _ _) = do
+  watchReductionM $ "Trying to match a Num value (" ++ show n ++ ") with the type constructed by " ++ qualifiedVar qdcon    
+  let matches' = qualifiedVar qdcon == "ghc-prim:GHC.Types.I#"   
+  watchReductionM $ "\t.. " ++ if matches' then " matches" else " does not match"
   return matches'  
+
+-- lits
+matches (Rat n) (Alit (Literal (Lrational r) _) exp) | n == r = return True  
+matches (Char c) (Alit (Literal (Lchar c2) _) exp) | c == c2 = return True
+matches (String s) (Alit (Literal (Lstring s2) _) _) | s == s2 = return True
+matches (Num n) (Alit (Literal (Lint i) _) exp) | n == i = return True
+
 matches (Boolean False) (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.False"
 matches (Boolean True) (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.True"
+
 -- We keep a String value as a separate data type, but in Haskell it is a list of chars
 matches (String _) (Acon (Just (M (P ("ghczmprim"),["GHC"],"Types")),"ZMZN") _ _ _) = return True  
 matches (String _) (Acon (Just (M (P ("ghczmprim"),["GHC"],"Types")),"ZC") tbinds vbinds exp) = return True
+
 matches e@(Wrong s) _ = return False
 
 --match against list cons
+
+
+  
 val `matches` alt = do
   ti <- gets tab_indentation
   let ?tab_indentation = ti

@@ -4,7 +4,7 @@ module RecursiveVdefg(
  -- testEven, testEven', testEven'', 
   , oddOf0
   , evenOf1
-  --, evenOf10
+  , evenOf10
   ) where
 
 import Prelude hiding (even,odd)
