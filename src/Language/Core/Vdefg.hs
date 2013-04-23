@@ -63,6 +63,9 @@ vdefTapp _ = Nothing
 -- vdefgId (Rec []) = ""
 -- vdefgId (Rec ((Vdef (qvar, _, _)):xs)) = qualifiedVar qvar ++ " and " ++ vdefgName (Rec xs)
 
+vdefId :: Vdef -> String
+vdefId (Vdef (qvar, _, _)) = qualifiedVar qvar
+
 -- | Given a value definition, return its name (or names if recursive) 
 vdefgNames :: Vdefg -> [String]
 vdefgNames (Nonrec (Vdef ((_,id), _, _))) = [id]

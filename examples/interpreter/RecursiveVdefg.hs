@@ -2,6 +2,7 @@ module RecursiveVdefg(
   even, odd
 --  ,testOdd, testOdd', testOdd'',
  -- testEven, testEven', testEven'', 
+  , oddOf0
   , evenOf1
   --, evenOf10
   ) where
@@ -17,6 +18,7 @@ odd 0 = False
 --odd 1 = True
 odd n = even (n-1)
 
+oddOf0 = odd 0 
 evenOf1 = even 1
 evenOf10 = even 10
 

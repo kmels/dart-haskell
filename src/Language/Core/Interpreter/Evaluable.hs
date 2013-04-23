@@ -104,12 +104,16 @@ instance Evaluable HeapAddress where
     beVerboseM $ "Evaluable HeapAddress: " ++ show address
     eTnkVal <- lookupMem address
     -- if it is a thunk, eval and memorize in heap
-    val <- either (flip eval env) return eTnkVal  
-    -- re-save
-    h <- gets heap
-    watchReductionM $ "Saving : " ++ show val
-    io $ H.insert h address (Right val)
-    return val
+    either (evalThnk address) return eTnkVal
+    where
+      -- evaluates a thunk and updates its value in the heap
+      evalThnk :: HeapAddress -> Thunk -> IM Value 
+      evalThnk address thunk = do
+        val <- eval thunk env
+        h <- gets heap
+        watchReductionM $ "Storing value " ++ show val ++ " in " ++ show address
+        io $ H.insert h address (Right val)
+        return val
     
 instance Evaluable Thunk where
   --eval :: Thunk -> Env -> IM Value
@@ -218,7 +222,7 @@ instance Evaluable Exp where
       mkFun id env' = do      
         ptr <- getPointer id env'
         case ptr of
-          Pointer ptr -> evalExpI exp ((var_name,address ptr):env) "Evaluating Lambda body (exp)"
+          Pointer ptr -> evalExpI exp ((var_name,ptr_address ptr):env) "Evaluating Lambda body (exp)"
           w@(Wrong _)  -> return w
         
   -- lambda abstraction over variables
@@ -258,8 +262,10 @@ instance Evaluable Exp where
         debugM $ "This is the alt env: " ++ show alt_env
         debugM "End making altEnv"
         -- TODO IN ENVIRONMENT when(isAcon alt) $ var_val `bindAltVars` alt
-        res <- eval exp (heap_reference:env ++ alt_env)
-        debugM "End making altEnv"
+        ti <- gets tab_indentation
+        let ?tab_indentation = ti
+        debugM $ "Evaluating case exp = " ++ showExp exp
+        res <- eval exp (alt_env ++ heap_reference:env)
         -- when(isAcon alt) $ deleteAltBindedVars alt
         return res
       _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
@@ -276,6 +282,15 @@ instance Evaluable Exp where
 -- | Given an alternative and a value that matches the alternative,
 -- binds the free variables in memory and returns a list of references (an environment)
 mkAltEnv :: Value -> Alt -> IM Env
+mkAltEnv v@(Num _) (Acon (_,"Izh") _ [(vbind_var,vbind_ty)] _) = 
+  do
+    -- bind a single number
+    beVerboseM $ "Binding " ++ vbind_var ++ " to val " ++ show v
+    heap_ref <- memorize (Right v) vbind_var
+    return [heap_ref]
+  
+mkAltEnv (Num n) (Acon q tbinds vbinds exp) = (debugM  $ " !!! WTF" ++ show q) >> return []
+  
 mkAltEnv (TyConApp (MkDataCon _ _) pointers) (Acon _ _ vbinds _) = do
   debugM ("pointers: " ++ show pointers)
   debugM ("Vbinds :: " ++ show vbinds)
@@ -285,9 +300,12 @@ mkAltEnv (TyConApp (MkDataCon _ _) pointers) (Acon _ _ vbinds _) = do
      debugM "CAFE" 
      -- get vals and memorize that
      let ids = (map fst vbinds)
-     return $ ids `zip` (map address pointers)
+     return $ ids `zip` (map ptr_address pointers)  
 --     mapM (uncurry memorize) (addresses `zip` (map fst vbinds))
-mkAltEnv _ _ = return []
+mkAltEnv val alt = do
+  debugM $ " (!!!) Alert, mkAltEnv, val= " ++ show val ++ "\nalt= " ++ show alt
+  debugM $ "Returning empty env (didn't bind anything)"
+  return []
 
 
 -- | Tries to find an alternative that matches a value. It returns the first match, if any.

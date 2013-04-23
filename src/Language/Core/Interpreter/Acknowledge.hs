@@ -21,7 +21,7 @@ import DART.InterpreterSettings
 import Language.Core.Core
 import Language.Core.Interpreter.Structures
 import Language.Core.Util
-import Language.Core.Vdefg(vdefgNames,vdefQualId)
+import Language.Core.Vdefg(vdefId,vdefgNames,vdefQualId)
 
 -- | Given a module, recognize type constructors and value definitions
 -- and save them in the heap
@@ -64,20 +64,28 @@ acknowledgeVdefgs vdefgs = acknowledgeVdefgs' vdefgs []
 -- | Acknowledges a generic value definition
 acknowledgeVdefg  :: Vdefg -> Env -> IM Env
 acknowledgeVdefg (Nonrec vdef) env = 
-  let
-    mkList :: a -> [a]
-    mkList x = [x]
-  in
-   acknowledgeVdef vdef env >>= return . mkList
+  let mkList x = [x]
+  in newAddress >>= storeVdef vdef env >>= return . mkList
+   
   --beVerboseM $ "Acknowledging non-recursive definition: " ++ vdefQualId vdef
   --sequence [(flip acknowledgeVdef env) vdef]
 acknowledgeVdefg v@(Rec vdefs) env = do
   beVerboseM $ "Acknowledging recursive definitions: " ++ (show . vdefgNames $ v)
-  mapM (flip acknowledgeVdef env) vdefs
+  beVerboseM $ "with env: " ++ show (map fst env)
+  
+  addresses <- allocate $ length vdefs
+  let ids = map vdefId vdefs
+  let env' = env ++ zip ids addresses
+  let vdefsWithAddress = zip vdefs addresses
+  
+  beVerboseM $ "Made extended environment: " ++ show (map fst env')  
+  mapM (\(vdef,address) -> storeVdef vdef env' address) vdefsWithAddress
+    
 
--- | Acknowledges a value definition. 
-acknowledgeVdef :: Vdef -> Env -> IM HeapReference
-acknowledgeVdef (Vdef (qvar, ty, exp)) env = do
+-- | Stores a value definition in the given address. 
+storeVdef :: Vdef -> Env -> HeapAddress -> IM HeapReference
+storeVdef (Vdef (qvar, ty, exp)) env address= do
   beVerboseM $ "Acknowledging value definition " ++ qualifiedVar qvar
   beVerboseM $ "\twith env = " ++ show (map fst env)
-  memorize (Left $ Thunk exp env) (qualifiedVar qvar)
+  beVerboseM $ "\tin address = " ++ show address
+  store address (Left $ Thunk exp env) (qualifiedVar qvar)

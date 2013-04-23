@@ -18,8 +18,9 @@ module Language.Core.Interpreter.Structures(
   io
   , idName
   , increase_number_of_reductions
-  -- heap operation
-  , memorize, memorizeVal, mkVal, mkThunk, mkHeapReference, lookupMem
+  -- heap operations
+  , store, newAddress, memorize, memorizeVal, memorizeThunk, mkVal, mkThunk, mkHeapReference, lookupMem
+  , allocate
   -- pretty printing
   , showM
   , DARTState(..)
@@ -91,7 +92,7 @@ data Value = Wrong String
            | FreeTypeVariable String -- useful when converting a to SomeClass a (we ignore parameters, and it's useful to save them)
            | MkListOfValues [(String,Value)] -- When a value definition is recursive, depends on other values
 
-newtype Pointer = MkPointer { address :: HeapAddress } deriving Show
+newtype Pointer = MkPointer { ptr_address :: HeapAddress } deriving Show
 
 data Thunk = Thunk Exp Env -- a thunk created during the evaluation of a value definition
 --           | VdefgThunk Exp -- has no environment, it will be passed by the module for efficiency
@@ -186,38 +187,48 @@ mkThunk exp env = Left $ Thunk exp env
 mkVal :: Value -> Either Thunk Value
 mkVal = Right
 
-memorizeVal :: Value -> IM HeapReference
-memorizeVal val = mkVarName >>= memorize (mkVal val)
-
--- | Stores a value/thunk in memory, returns the given name with the address where
--- it was stored
-memorize :: Either Thunk Value -> Id -> IM HeapReference
-memorize val id  = do
-  -- a new allocation address
-  address <- newAddress
-  
-  -- Put the value in the heap
+-- | Stores a value or a thunk in the given address
+store :: HeapAddress -> Either Thunk Value -> Id -> IM HeapReference
+store address val id  = do
+  -- put the value in the heap
   h <- gets heap
   io $ H.insert h address val
   --watchReductionM $ "Memorized " ++ id ++ " in " ++ show address ++ " as " ++ show val
   return (id,address)
 
+-- | Stores a value or a thunk in a new address
+memorize :: Either Thunk Value -> Id -> IM HeapReference
+memorize val id = newAddress >>= \adr -> store adr val id 
+
+memorizeVal :: Value -> IM HeapReference
+memorizeVal val = mkVarName >>= memorize (mkVal val)
+
+memorizeThunk :: Thunk -> IM HeapReference
+memorizeThunk thunk = mkVarName >>= memorize (Left thunk)
+
+--memorizeThunkAs :: Thunk -> Id -> IM HeapReference
+--memorizeThunkAs thunk id = newAddress >>= \adr -> memorize adr (Left thunk) id
+
+-- | Creates new variable for the expression, memorizes it and returns a heap reference
+mkHeapReference :: Exp -> Env -> IM HeapReference
+mkHeapReference exp env = mkVarName >>= memorize (mkThunk exp env)
+
 -- | Gets a new address, that stores nothing
 newAddress :: IM HeapAddress
-newAddress = do
-  hc <- gets heap_count
-  modify (\st -> st { heap_count = hc + 1 })
-  return $ hc + 1
+newAddress = incVarCount >> gets heap_count
 
--- | Allocates `n` addresses
+incVarCount :: IM ()
+incVarCount = gets heap_count >>= \hc -> modify (\st -> st { heap_count = hc + 1 })
+
+-- | Allocates `n` new addresses
 allocate :: Int -> IM [HeapAddress]
 allocate 0 = return []
 allocate 1 = newAddress >>= return . mkList where mkList x = [x]
 allocate n = do
   a <- newAddress
-  as <- allocate (n-1) 
+  as <- allocate $ n - 1
   return $ a:as
-        
+
 -- | Prints a debug message with a new line at the end
 debugM :: String -> IM ()
 debugM msg = do 
@@ -227,11 +238,8 @@ debugM msg = do
     let tab = replicate ti '\t' 
     in io . putStrLn $ (tab ++ msg) 
     
--- | Creates new variable for the expression, memorizes it and returns a heap reference
-mkHeapReference :: Exp -> Env -> IM HeapReference
-mkHeapReference exp env  = mkVarName >>= memorize (mkThunk exp env)
-
--- | Creates a variable name
+-- | Creates a variable name. This function is not exported since every time it is used,
+-- the variable count should be increased (done normally by memorize)
 mkVarName :: IM String
 mkVarName = gets heap_count >>= return . (++) "dartTmp" . show 
 
