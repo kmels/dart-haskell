@@ -3,7 +3,7 @@ module Lists (
   , naturals
   , first50
   , first3nats
-  , first5nats
+  , first5nats, first5nats_length
   , first10primes
   , five
   , str
@@ -36,6 +36,8 @@ str = "a string"
 
 first5nats = take 5 naturals
 first3nats = take 3 first5nats
+
+first5nats_length = length first5nats
 
 naturals = [0..]
 first10primes = take 10 $ filter isPrime naturals

@@ -51,13 +51,13 @@ initDART s = do
        base = current_dir      ++ "/lib/base/GHC/Base.hcr"
        tuples = current_dir    ++ "/lib/base/Data/Tuple.hcr"
        show = current_dir      ++ "/lib/base/GHC/Show.hcr"
+       enum = current_dir      ++ "/lib/base/GHC/Enum.hcr"
   --    ghc_list = current_dir ++ "/lib/base/Prelude.hs"  
        data_list = current_dir ++ "/lib/base/Data/List.hcr"  
 --       data_list = current_dir ++ "/lib/base-4.6.0.0/GHC/Show.hcr" 
-       enum = current_dir ++ "/lib/base/GHC/Enum.hs"  
-       absolute_includes = (map ((++) (current_dir ++ "/")) $ include s) -- ++ 
-                        ++ [enum]
-                        ++ [base,tuples,show,data_list] 
+       
+       absolute_includes = [base,tuples,show,data_list,enum] 
+                           ++ (map ((++) (current_dir ++ "/")) $ include s) -- ++ 
        --                 ++ [ghc_list]
   return $ DState {
     heap = h
@@ -91,7 +91,7 @@ runDART = do
   m@(Module mdlname tdefs vdefgs) <- io . readModule $ file settgs
   module_env <- acknowledgeModule m
   
-  let env = concat lib_envs ++ ghc_defs ++ module_env
+  let env = ghc_defs ++ module_env ++ concat lib_envs 
       eval_funname = evaluate_function settgs      
   -- What should we eval? a function or the whole module?  
   evaluate m env eval_funname

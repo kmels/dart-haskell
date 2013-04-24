@@ -1,0 +1,406 @@
+%module base:DataziMaybe
+  %data base:DataziMaybe.Maybe aa1D =
+    {base:DataziMaybe.Nothing;
+     base:DataziMaybe.Just aa1D};
+  %rec
+  {base:DataziMaybe.mapMaybe :: %forall aa7i ba7j . (aa7i ->
+                                                     base:DataziMaybe.Maybe ba7j)
+                                                    ->
+                                                    (ghczmprim:GHCziTypes.ZMZN aa7i) ->
+                                                    ghczmprim:GHCziTypes.ZMZN ba7j =
+     \ @ aj
+       @ bk
+       (dsdf6::aj -> base:DataziMaybe.Maybe bk)
+       (ds1df7::ghczmprim:GHCziTypes.ZMZN aj) ->
+         %case (ghczmprim:GHCziTypes.ZMZN bk) ds1df7
+         %of (wildXy::ghczmprim:GHCziTypes.ZMZN aj)
+           {ghczmprim:GHCziTypes.ZMZN ->
+              ghczmprim:GHCziTypes.ZMZN @ bk;
+            ghczmprim:GHCziTypes.ZC
+            (xa7M::aj) (xsa7N::ghczmprim:GHCziTypes.ZMZN aj) ->
+              %case (ghczmprim:GHCziTypes.ZMZN bk) (dsdf6 xa7M)
+              %of (wild1Xb::base:DataziMaybe.Maybe bk)
+                {base:DataziMaybe.Nothing ->
+                   base:DataziMaybe.mapMaybe @ aj @ bk dsdf6 xsa7N;
+                 base:DataziMaybe.Just (ra7P::bk) ->
+                   ghczmprim:GHCziTypes.ZC @ bk ra7P
+                   (base:DataziMaybe.mapMaybe @ aj @ bk dsdf6 xsa7N)}}};
+  base:DataziMaybe.catMaybes :: %forall aa7k . (ghczmprim:GHCziTypes.ZMZN
+                                                (base:DataziMaybe.Maybe aa7k))
+                                               -> ghczmprim:GHCziTypes.ZMZN aa7k =
+    \ @ an
+      (lsa7J::ghczmprim:GHCziTypes.ZMZN (base:DataziMaybe.Maybe an)) ->
+        %let %rec
+             {dsdfa :: (ghczmprim:GHCziTypes.ZMZN (base:DataziMaybe.Maybe an))
+                       -> ghczmprim:GHCziTypes.ZMZN an =
+                \ (ds1dfb::ghczmprim:GHCziTypes.ZMZN
+                           (base:DataziMaybe.Maybe an)) ->
+                    %case (ghczmprim:GHCziTypes.ZMZN an) ds1dfb
+                    %of (ds2Xfi::ghczmprim:GHCziTypes.ZMZN (base:DataziMaybe.Maybe an))
+                      {ghczmprim:GHCziTypes.ZMZN ->
+                         ghczmprim:GHCziTypes.ZMZN @ an;
+                       ghczmprim:GHCziTypes.ZC
+                       (ds3dfc::base:DataziMaybe.Maybe an)
+                       (ds4dfd::ghczmprim:GHCziTypes.ZMZN (base:DataziMaybe.Maybe an)) ->
+                         %case (ghczmprim:GHCziTypes.ZMZN an) ds3dfc
+                         %of (wildXE::base:DataziMaybe.Maybe an)
+                           {base:DataziMaybe.Nothing ->
+                              dsdfa ds4dfd;
+                            base:DataziMaybe.Just (xa7K::an) ->
+                              ghczmprim:GHCziTypes.ZC @ an xa7K (dsdfa ds4dfd)}}}
+        %in dsdfa lsa7J;
+  base:DataziMaybe.listToMaybe :: %forall aa7l . (ghczmprim:GHCziTypes.ZMZN
+                                                  aa7l)
+                                                 -> base:DataziMaybe.Maybe aa7l =
+    \ @ aq (dsdfh::ghczmprim:GHCziTypes.ZMZN aq) ->
+        %case (base:DataziMaybe.Maybe aq) dsdfh
+        %of (wildXy::ghczmprim:GHCziTypes.ZMZN aq)
+          {ghczmprim:GHCziTypes.ZMZN ->
+             base:DataziMaybe.Nothing @ aq;
+           ghczmprim:GHCziTypes.ZC
+           (aa7I::aq) (ds1dfi::ghczmprim:GHCziTypes.ZMZN aq) ->
+             base:DataziMaybe.Just @ aq aa7I};
+  base:DataziMaybe.maybeToList :: %forall aa7m . (base:DataziMaybe.Maybe
+                                                  aa7m)
+                                                 -> ghczmprim:GHCziTypes.ZMZN aa7m =
+    \ @ at (dsdfl::base:DataziMaybe.Maybe at) ->
+        %case (ghczmprim:GHCziTypes.ZMZN at) dsdfl
+        %of (wildXzz::base:DataziMaybe.Maybe at)
+          {base:DataziMaybe.Nothing ->
+             ghczmprim:GHCziTypes.ZMZN @ at;
+           base:DataziMaybe.Just (xa7H::at) ->
+             ghczmprim:GHCziTypes.ZC @ at xa7H
+             (ghczmprim:GHCziTypes.ZMZN @ at)};
+  base:DataziMaybe.fromMaybe :: %forall aa7n . aa7n ->
+                                               (base:DataziMaybe.Maybe aa7n) -> aa7n =
+    \ @ aw (da7E::aw) (xa7F::base:DataziMaybe.Maybe aw) ->
+        %case aw xa7F %of (wildXB::base:DataziMaybe.Maybe aw)
+          {base:DataziMaybe.Nothing ->
+             da7E;
+           base:DataziMaybe.Just (va7G::aw) ->
+             va7G};
+  base:DataziMaybe.fromJust :: %forall aa7o . (base:DataziMaybe.Maybe
+                                               aa7o)
+                                              -> aa7o =
+    \ @ azz (dsdfr::base:DataziMaybe.Maybe azz) ->
+        %case azz dsdfr %of (wildXB::base:DataziMaybe.Maybe azz)
+          {base:DataziMaybe.Nothing ->
+             base:GHCziErr.error @ azz
+             (ghczmprim:GHCziCString.unpackCStringzh
+              ("Maybe.fromJust: Nothing"::ghczmprim:GHCziPrim.Addrzh));
+           base:DataziMaybe.Just (xa7D::azz) ->
+             xa7D};
+  base:DataziMaybe.isNothing :: %forall aa7p . (base:DataziMaybe.Maybe
+                                                aa7p)
+                                               -> ghczmprim:GHCziTypes.Bool =
+    \ @ ats (dsdfu::base:DataziMaybe.Maybe ats) ->
+        %case ghczmprim:GHCziTypes.Bool dsdfu
+        %of (wildXC::base:DataziMaybe.Maybe ats)
+          {base:DataziMaybe.Nothing ->
+             ghczmprim:GHCziTypes.True;
+           base:DataziMaybe.Just (ipvsh8::ats) ->
+             ghczmprim:GHCziTypes.False};
+  base:DataziMaybe.isJust :: %forall aa7s . (base:DataziMaybe.Maybe
+                                             aa7s)
+                                            -> ghczmprim:GHCziTypes.Bool =
+    \ @ atv (dsdfy::base:DataziMaybe.Maybe atv) ->
+        %case ghczmprim:GHCziTypes.Bool dsdfy
+        %of (wildXD::base:DataziMaybe.Maybe atv)
+          {base:DataziMaybe.Nothing ->
+             ghczmprim:GHCziTypes.False;
+           base:DataziMaybe.Just (ipvshb::atv) ->
+             ghczmprim:GHCziTypes.True};
+  base:DataziMaybe.maybe :: %forall ba7t aa7u . ba7t ->
+                                                (aa7u -> ba7t) ->
+                                                (base:DataziMaybe.Maybe aa7u) -> ba7t =
+    \ @ btzz
+      @ atA
+      (na7v::btzz)
+      (dsdfC::atA -> btzz)
+      (ds1dfD::base:DataziMaybe.Maybe atA) ->
+        %case btzz ds1dfD %of (wildXH::base:DataziMaybe.Maybe atA)
+          {base:DataziMaybe.Nothing ->
+             na7v;
+           base:DataziMaybe.Just (xa7x::atA) ->
+             dsdfC xa7x};
+  zdcfmaprjE :: %forall aaeq baer . (aaeq -> baer) ->
+                                    (base:DataziMaybe.Maybe aaeq) -> base:DataziMaybe.Maybe baer =
+    \ @ at14
+      @ bt15
+      (dsdgR::at14 -> bt15)
+      (ds1dgS::base:DataziMaybe.Maybe at14) ->
+        %case (base:DataziMaybe.Maybe bt15) ds1dgS
+        %of (wildXH::base:DataziMaybe.Maybe at14)
+          {base:DataziMaybe.Nothing ->
+             base:DataziMaybe.Nothing @ bt15;
+           base:DataziMaybe.Just (aa7U::at14) ->
+             base:DataziMaybe.Just @ bt15 (dsdgR aa7U)};
+  %rec
+  {base:DataziMaybe.zdfFunctorMaybe :: base:GHCziBase.Functor
+                                       base:DataziMaybe.Maybe =
+     base:GHCziBase.DZCFunctor @ base:DataziMaybe.Maybe zdcfmaprjE
+     zdczlzdrjF;
+   zdczlzdrjF :: %forall aaew baex . aaew ->
+                                     (base:DataziMaybe.Maybe baex) -> base:DataziMaybe.Maybe aaew =
+     base:GHCziBase.zddmzlzd @ base:DataziMaybe.Maybe
+     base:DataziMaybe.zdfFunctorMaybe};
+  zdcfailrjG :: %forall aael . (ghczmprim:GHCziTypes.ZMZN
+                                ghczmprim:GHCziTypes.Char)
+                               -> base:DataziMaybe.Maybe aael =
+    \ @ at12
+      (dsdgQ::ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+        base:DataziMaybe.Nothing @ at12;
+  zdczgzgrjH :: %forall aaec baed . (base:DataziMaybe.Maybe aaec) ->
+                                    (base:DataziMaybe.Maybe baed) -> base:DataziMaybe.Maybe baed =
+    \ @ atX
+      @ btY
+      (dsdgM::base:DataziMaybe.Maybe atX)
+      (ka7S::base:DataziMaybe.Maybe btY) ->
+        %case (base:DataziMaybe.Maybe btY) dsdgM
+        %of (wildXL::base:DataziMaybe.Maybe atX)
+          {base:DataziMaybe.Nothing ->
+             base:DataziMaybe.Nothing @ btY;
+           base:DataziMaybe.Just (ds1dgN::atX) ->
+             ka7S};
+  zdczgzgzerjI :: %forall aae7 bae8 . (base:DataziMaybe.Maybe aae7)
+                                      ->
+                                      (aae7 -> base:DataziMaybe.Maybe bae8) ->
+                                      base:DataziMaybe.Maybe bae8 =
+    \ @ atU
+      @ btV
+      (dsdgJ::base:DataziMaybe.Maybe atU)
+      (ka7R::atU -> base:DataziMaybe.Maybe btV) ->
+        %case (base:DataziMaybe.Maybe btV) dsdgJ
+        %of (wildXM::base:DataziMaybe.Maybe atU)
+          {base:DataziMaybe.Nothing ->
+             base:DataziMaybe.Nothing @ btV;
+           base:DataziMaybe.Just (xa7Q::atU) ->
+             ka7R xa7Q};
+  base:DataziMaybe.zdfMonadMaybe :: base:GHCziBase.Monad
+                                    base:DataziMaybe.Maybe =
+    base:GHCziBase.DZCMonad @ base:DataziMaybe.Maybe zdczgzgzerjI
+    zdczgzgrjH base:DataziMaybe.Just zdcfailrjG;
+  zdczlzerjJ :: %forall aa1D . (ghczmprim:GHCziClasses.Eq
+                                (base:DataziMaybe.Maybe aa1D))
+                               ->
+                               (ghczmprim:GHCziClasses.Ord aa1D) ->
+                               (base:DataziMaybe.Maybe aa1D) ->
+                               (base:DataziMaybe.Maybe aa1D) -> ghczmprim:GHCziTypes.Bool =
+    \ @ aa1D
+      (zddEqadt::ghczmprim:GHCziClasses.Eq (base:DataziMaybe.Maybe aa1D))
+      (zddOrdadu::ghczmprim:GHCziClasses.Ord aa1D)
+      (aacQ::base:DataziMaybe.Maybe aa1D)
+      (bacR::base:DataziMaybe.Maybe aa1D) ->
+        %case ghczmprim:GHCziTypes.Bool aacQ
+        %of (wildXP::base:DataziMaybe.Maybe aa1D)
+          {base:DataziMaybe.Nothing ->
+             %case ghczmprim:GHCziTypes.Bool bacR
+             %of (wild1Xo::base:DataziMaybe.Maybe aa1D)
+               {base:DataziMaybe.Nothing ->
+                  ghczmprim:GHCziTypes.True;
+                base:DataziMaybe.Just (ipvshj::aa1D) ->
+                  ghczmprim:GHCziTypes.True};
+           base:DataziMaybe.Just (a1acS::aa1D) ->
+             %case ghczmprim:GHCziTypes.Bool bacR
+             %of (wild1Xp::base:DataziMaybe.Maybe aa1D)
+               {base:DataziMaybe.Nothing ->
+                  ghczmprim:GHCziTypes.False;
+                base:DataziMaybe.Just (b1acT::aa1D) ->
+                  ghczmprim:GHCziClasses.zlze @ aa1D zddOrdadu a1acS b1acT}};
+  zdczgrjK :: %forall aa1D . (ghczmprim:GHCziClasses.Eq
+                              (base:DataziMaybe.Maybe aa1D))
+                             ->
+                             (ghczmprim:GHCziClasses.Ord aa1D) ->
+                             (base:DataziMaybe.Maybe aa1D) ->
+                             (base:DataziMaybe.Maybe aa1D) -> ghczmprim:GHCziTypes.Bool =
+    \ @ aa1D
+      (zddEqadt::ghczmprim:GHCziClasses.Eq (base:DataziMaybe.Maybe aa1D))
+      (zddOrdadu::ghczmprim:GHCziClasses.Ord aa1D)
+      (aacY::base:DataziMaybe.Maybe aa1D)
+      (bacZZ::base:DataziMaybe.Maybe aa1D) ->
+        %case ghczmprim:GHCziTypes.Bool aacY
+        %of (wildXQ::base:DataziMaybe.Maybe aa1D)
+          {base:DataziMaybe.Nothing ->
+             %case ghczmprim:GHCziTypes.Bool bacZZ
+             %of (wild1Xp::base:DataziMaybe.Maybe aa1D)
+               {base:DataziMaybe.Nothing ->
+                  ghczmprim:GHCziTypes.False;
+                base:DataziMaybe.Just (ipvshp::aa1D) ->
+                  ghczmprim:GHCziTypes.False};
+           base:DataziMaybe.Just (a1ad0::aa1D) ->
+             %case ghczmprim:GHCziTypes.Bool bacZZ
+             %of (wild1Xq::base:DataziMaybe.Maybe aa1D)
+               {base:DataziMaybe.Nothing ->
+                  ghczmprim:GHCziTypes.True;
+                base:DataziMaybe.Just (b1ad1::aa1D) ->
+                  ghczmprim:GHCziClasses.zg @ aa1D zddOrdadu a1ad0 b1ad1}};
+  zdczgzerjL :: %forall aa1D . (ghczmprim:GHCziClasses.Eq
+                                (base:DataziMaybe.Maybe aa1D))
+                               ->
+                               (ghczmprim:GHCziClasses.Ord aa1D) ->
+                               (base:DataziMaybe.Maybe aa1D) ->
+                               (base:DataziMaybe.Maybe aa1D) -> ghczmprim:GHCziTypes.Bool =
+    \ @ aa1D
+      (zddEqadt::ghczmprim:GHCziClasses.Eq (base:DataziMaybe.Maybe aa1D))
+      (zddOrdadu::ghczmprim:GHCziClasses.Ord aa1D)
+      (aacU::base:DataziMaybe.Maybe aa1D)
+      (bacV::base:DataziMaybe.Maybe aa1D) ->
+        %case ghczmprim:GHCziTypes.Bool aacU
+        %of (wildXR::base:DataziMaybe.Maybe aa1D)
+          {base:DataziMaybe.Nothing ->
+             %case ghczmprim:GHCziTypes.Bool bacV
+             %of (wild1Xq::base:DataziMaybe.Maybe aa1D)
+               {base:DataziMaybe.Nothing ->
+                  ghczmprim:GHCziTypes.True;
+                base:DataziMaybe.Just (ipvshv::aa1D) ->
+                  ghczmprim:GHCziTypes.False};
+           base:DataziMaybe.Just (a1acW::aa1D) ->
+             %case ghczmprim:GHCziTypes.Bool bacV
+             %of (wild1Xr::base:DataziMaybe.Maybe aa1D)
+               {base:DataziMaybe.Nothing ->
+                  ghczmprim:GHCziTypes.True;
+                base:DataziMaybe.Just (b1acX::aa1D) ->
+                  ghczmprim:GHCziClasses.zgze @ aa1D zddOrdadu a1acW b1acX}};
+  zdczlrjM :: %forall aa1D . (ghczmprim:GHCziClasses.Eq
+                              (base:DataziMaybe.Maybe aa1D))
+                             ->
+                             (ghczmprim:GHCziClasses.Ord aa1D) ->
+                             (base:DataziMaybe.Maybe aa1D) ->
+                             (base:DataziMaybe.Maybe aa1D) -> ghczmprim:GHCziTypes.Bool =
+    \ @ aa1D
+      (zddEqadt::ghczmprim:GHCziClasses.Eq (base:DataziMaybe.Maybe aa1D))
+      (zddOrdadu::ghczmprim:GHCziClasses.Ord aa1D)
+      (aacM::base:DataziMaybe.Maybe aa1D)
+      (bacN::base:DataziMaybe.Maybe aa1D) ->
+        %case ghczmprim:GHCziTypes.Bool aacM
+        %of (wildXS::base:DataziMaybe.Maybe aa1D)
+          {base:DataziMaybe.Nothing ->
+             %case ghczmprim:GHCziTypes.Bool bacN
+             %of (wild1Xr::base:DataziMaybe.Maybe aa1D)
+               {base:DataziMaybe.Nothing ->
+                  ghczmprim:GHCziTypes.False;
+                base:DataziMaybe.Just (ipvshB::aa1D) ->
+                  ghczmprim:GHCziTypes.True};
+           base:DataziMaybe.Just (a1acO::aa1D) ->
+             %case ghczmprim:GHCziTypes.Bool bacN
+             %of (wild1Xs::base:DataziMaybe.Maybe aa1D)
+               {base:DataziMaybe.Nothing ->
+                  ghczmprim:GHCziTypes.False;
+                base:DataziMaybe.Just (b1acP::aa1D) ->
+                  ghczmprim:GHCziClasses.zl @ aa1D zddOrdadu a1acO b1acP}};
+  zdccomparerjN :: %forall aa1D . (ghczmprim:GHCziClasses.Eq
+                                   (base:DataziMaybe.Maybe aa1D))
+                                  ->
+                                  (ghczmprim:GHCziClasses.Ord aa1D) ->
+                                  (base:DataziMaybe.Maybe aa1D) ->
+                                  (base:DataziMaybe.Maybe aa1D) -> ghczmprim:GHCziTypes.Ordering =
+    \ @ aa1D
+      (zddEqadt::ghczmprim:GHCziClasses.Eq (base:DataziMaybe.Maybe aa1D))
+      (zddOrdadu::ghczmprim:GHCziClasses.Ord aa1D)
+      (aacI::base:DataziMaybe.Maybe aa1D)
+      (bacJ::base:DataziMaybe.Maybe aa1D) ->
+        %case ghczmprim:GHCziTypes.Ordering aacI
+        %of (wildXT::base:DataziMaybe.Maybe aa1D)
+          {base:DataziMaybe.Nothing ->
+             %case ghczmprim:GHCziTypes.Ordering bacJ
+             %of (wild1Xs::base:DataziMaybe.Maybe aa1D)
+               {base:DataziMaybe.Nothing ->
+                  ghczmprim:GHCziTypes.EQ;
+                base:DataziMaybe.Just (ipvshH::aa1D) ->
+                  ghczmprim:GHCziTypes.LT};
+           base:DataziMaybe.Just (a1acK::aa1D) ->
+             %case ghczmprim:GHCziTypes.Ordering bacJ
+             %of (wild1Xt::base:DataziMaybe.Maybe aa1D)
+               {base:DataziMaybe.Nothing ->
+                  ghczmprim:GHCziTypes.GT;
+                base:DataziMaybe.Just (b1acL::aa1D) ->
+                  ghczmprim:GHCziClasses.compare @ aa1D zddOrdadu a1acK b1acL}};
+  %rec
+  {base:DataziMaybe.zdfOrdMaybe :: %forall aa1D . (ghczmprim:GHCziClasses.Eq
+                                                   (base:DataziMaybe.Maybe aa1D))
+                                                  ->
+                                                  (ghczmprim:GHCziClasses.Ord aa1D) ->
+                                                  ghczmprim:GHCziClasses.Ord
+                                                  (base:DataziMaybe.Maybe aa1D) =
+     \ @ aa1D
+       (zddEqadt::ghczmprim:GHCziClasses.Eq (base:DataziMaybe.Maybe aa1D))
+       (zddOrdadu::ghczmprim:GHCziClasses.Ord aa1D) ->
+         ghczmprim:GHCziClasses.DZCOrd @ (base:DataziMaybe.Maybe aa1D)
+         zddEqadt (zdccomparerjN @ aa1D zddEqadt zddOrdadu)
+         (zdczlrjM @ aa1D zddEqadt zddOrdadu)
+         (zdczgzerjL @ aa1D zddEqadt zddOrdadu)
+         (zdczgrjK @ aa1D zddEqadt zddOrdadu)
+         (zdczlzerjJ @ aa1D zddEqadt zddOrdadu)
+         (zdcmaxrjP @ aa1D zddEqadt zddOrdadu)
+         (zdcminrjO @ aa1D zddEqadt zddOrdadu);
+   zdcminrjO :: %forall aa1D . (ghczmprim:GHCziClasses.Eq
+                                (base:DataziMaybe.Maybe aa1D))
+                               ->
+                               (ghczmprim:GHCziClasses.Ord aa1D) ->
+                               (base:DataziMaybe.Maybe aa1D) ->
+                               (base:DataziMaybe.Maybe aa1D) -> base:DataziMaybe.Maybe aa1D =
+     \ @ aa1D
+       (zddEqadt::ghczmprim:GHCziClasses.Eq (base:DataziMaybe.Maybe aa1D))
+       (zddOrdadu::ghczmprim:GHCziClasses.Ord aa1D) ->
+         ghczmprim:GHCziClasses.zddmmin @ (base:DataziMaybe.Maybe aa1D)
+         (base:DataziMaybe.zdfOrdMaybe @ aa1D zddEqadt zddOrdadu);
+   zdcmaxrjP :: %forall aa1D . (ghczmprim:GHCziClasses.Eq
+                                (base:DataziMaybe.Maybe aa1D))
+                               ->
+                               (ghczmprim:GHCziClasses.Ord aa1D) ->
+                               (base:DataziMaybe.Maybe aa1D) ->
+                               (base:DataziMaybe.Maybe aa1D) -> base:DataziMaybe.Maybe aa1D =
+     \ @ aa1D
+       (zddEqadt::ghczmprim:GHCziClasses.Eq (base:DataziMaybe.Maybe aa1D))
+       (zddOrdadu::ghczmprim:GHCziClasses.Ord aa1D) ->
+         ghczmprim:GHCziClasses.zddmmax @ (base:DataziMaybe.Maybe aa1D)
+         (base:DataziMaybe.zdfOrdMaybe @ aa1D zddEqadt zddOrdadu)};
+  zdczezerjQ :: %forall aa1D . (ghczmprim:GHCziClasses.Eq aa1D) ->
+                               (base:DataziMaybe.Maybe aa1D) ->
+                               (base:DataziMaybe.Maybe aa1D) -> ghczmprim:GHCziTypes.Bool =
+    \ @ aa1D
+      (zddEqadh::ghczmprim:GHCziClasses.Eq aa1D)
+      (dsdfK::base:DataziMaybe.Maybe aa1D)
+      (ds1dfL::base:DataziMaybe.Maybe aa1D) ->
+        %case ghczmprim:GHCziTypes.Bool dsdfK
+        %of (wildXY::base:DataziMaybe.Maybe aa1D)
+          {base:DataziMaybe.Nothing ->
+             %case ghczmprim:GHCziTypes.Bool ds1dfL
+             %of (wild1X1zz::base:DataziMaybe.Maybe aa1D)
+               {base:DataziMaybe.Nothing ->
+                  ghczmprim:GHCziTypes.True;
+                base:DataziMaybe.Just (ds2dfH::aa1D) ->
+                  ghczmprim:GHCziTypes.False};
+           base:DataziMaybe.Just (a1acA::aa1D) ->
+             %case ghczmprim:GHCziTypes.Bool ds1dfL
+             %of (wild1Xx::base:DataziMaybe.Maybe aa1D)
+               {base:DataziMaybe.Nothing ->
+                  %case ghczmprim:GHCziTypes.Bool wildXY
+                  %of (wild2Xv::base:DataziMaybe.Maybe aa1D)
+                    {base:DataziMaybe.Nothing ->
+                       ghczmprim:GHCziTypes.True;
+                     base:DataziMaybe.Just (ds2dfH::aa1D) ->
+                       ghczmprim:GHCziTypes.False};
+                base:DataziMaybe.Just (b1acB::aa1D) ->
+                  ghczmprim:GHCziClasses.zeze @ aa1D zddEqadh a1acA b1acB}};
+  %rec
+  {base:DataziMaybe.zdfEqMaybe :: %forall aa1D . (ghczmprim:GHCziClasses.Eq
+                                                  aa1D)
+                                                 ->
+                                                 ghczmprim:GHCziClasses.Eq
+                                                 (base:DataziMaybe.Maybe aa1D) =
+     \ @ aa1D (zddEqadh::ghczmprim:GHCziClasses.Eq aa1D) ->
+         ghczmprim:GHCziClasses.DZCEq @ (base:DataziMaybe.Maybe aa1D)
+         (zdczezerjQ @ aa1D zddEqadh) (zdczszerjR @ aa1D zddEqadh);
+   zdczszerjR :: %forall aa1D . (ghczmprim:GHCziClasses.Eq aa1D) ->
+                                (base:DataziMaybe.Maybe aa1D) ->
+                                (base:DataziMaybe.Maybe aa1D) -> ghczmprim:GHCziTypes.Bool =
+     \ @ aa1D (zddEqadh::ghczmprim:GHCziClasses.Eq aa1D) ->
+         %let zddEq1adq :: ghczmprim:GHCziClasses.Eq
+                           (base:DataziMaybe.Maybe aa1D) =
+                base:DataziMaybe.zdfEqMaybe @ aa1D zddEqadh
+         %in \ (aacG::base:DataziMaybe.Maybe aa1D)
+               (bacH::base:DataziMaybe.Maybe aa1D) ->
+                 ghczmprim:GHCziClasses.not
+                 (ghczmprim:GHCziClasses.zeze @ (base:DataziMaybe.Maybe aa1D)
+                  zddEq1adq aacG bacH)};
