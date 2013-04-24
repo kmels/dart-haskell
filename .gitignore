@@ -9,4 +9,5 @@ virthualenv.log
 *#
 src/*.hcr
 
-lib/*
+lib/base-4.*
+lib/base-trunk*

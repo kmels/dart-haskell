@@ -77,3 +77,9 @@ executable dart-haskell
 
   build-tools:         happy
   Hs-source-dirs:   src
+
+Test-Suite test-interpreter
+    --hs-source-dirs: test
+    type:       detailed-0.9
+    test-module: MyTest
+    build-depends: base

@@ -1,0 +1,55 @@
+%module main:DataziTuple
+  main:DataziTuple.swap :: %forall aa1w ba1x . (ghczmprim:GHCziTuple.Z2T
+                                                aa1w
+                                                ba1x)
+                                               -> ghczmprim:GHCziTuple.Z2T ba1x aa1w =
+    \ @ ae @ bf (dsd1Y::ghczmprim:GHCziTuple.Z2T ae bf) ->
+        %case (ghczmprim:GHCziTuple.Z2T bf ae) dsd1Y
+        %of (wildX9::ghczmprim:GHCziTuple.Z2T ae bf)
+          {ghczmprim:GHCziTuple.Z2T (aa1P::ae) (ba1Q::bf) ->
+             ghczmprim:GHCziTuple.Z2T @ bf @ ae ba1Q aa1P};
+  main:DataziTuple.curry :: %forall aa1B ba1C ca1D . ((ghczmprim:GHCziTuple.Z2T
+                                                       aa1B
+                                                       ba1C)
+                                                      -> ca1D)
+                                                     -> aa1B -> ba1C -> ca1D =
+    \ @ ar
+      @ bs
+      @ ct
+      (fa1K::(ghczmprim:GHCziTuple.Z2T ar bs) -> ct)
+      (xa1L::ar)
+      (ya1M::bs) ->
+        fa1K (ghczmprim:GHCziTuple.Z2T @ ar @ bs xa1L ya1M);
+  main:DataziTuple.snd :: %forall aa1E ba1F . (ghczmprim:GHCziTuple.Z2T
+                                               aa1E
+                                               ba1F)
+                                              -> ba1F =
+    \ @ ax @ by (dsd20::ghczmprim:GHCziTuple.Z2T ax by) ->
+        %case by dsd20 %of (wildXb::ghczmprim:GHCziTuple.Z2T ax by)
+          {ghczmprim:GHCziTuple.Z2T (ds1d21::ax) (ya1J::by) ->
+             ya1J};
+  main:DataziTuple.fst :: %forall aa1G ba1H . (ghczmprim:GHCziTuple.Z2T
+                                               aa1G
+                                               ba1H)
+                                              -> aa1G =
+    \ @ ats @ btt (dsd23::ghczmprim:GHCziTuple.Z2T ats btt) ->
+        %case ats dsd23 %of (wildXc::ghczmprim:GHCziTuple.Z2T ats btt)
+          {ghczmprim:GHCziTuple.Z2T (xa1I::ats) (ds1d24::btt) ->
+             xa1I};
+  main:DataziTuple.uncurry :: %forall aa1y ba1zz ca1A . (aa1y ->
+                                                         ba1zz -> ca1A)
+                                                        ->
+                                                        (ghczmprim:GHCziTuple.Z2T aa1y ba1zz) ->
+                                                        ca1A =
+    \ @ ak
+      @ bl
+      @ cm
+      (fa1N::ak -> bl -> cm)
+      (pa1O::ghczmprim:GHCziTuple.Z2T ak bl) ->
+        fa1N
+        (%case ak pa1O %of (wildXc::ghczmprim:GHCziTuple.Z2T ak bl)
+           {ghczmprim:GHCziTuple.Z2T (xa1I::ak) (dsd24::bl) ->
+              xa1I})
+        (%case bl pa1O %of (wildXb::ghczmprim:GHCziTuple.Z2T ak bl)
+           {ghczmprim:GHCziTuple.Z2T (dsd21::ak) (ya1J::bl) ->
+              ya1J});

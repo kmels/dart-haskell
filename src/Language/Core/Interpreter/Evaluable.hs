@@ -352,7 +352,9 @@ matches (Num n) (Acon qdcon _ _ _) = do
 matches (Rat n) (Alit (Literal (Lrational r) _) exp) | n == r = return True  
 matches (Char c) (Alit (Literal (Lchar c2) _) exp) | c == c2 = return True
 matches (String s) (Alit (Literal (Lstring s2) _) _) | s == s2 = return True
+
 matches (Num n) (Alit (Literal (Lint i) _) exp) | n == i = return True
+matches (Num n) (Alit (Literal (Lint i) _) exp) | otherwise = return False
 
 matches (Boolean False) (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.False"
 matches (Boolean True) (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.True"
@@ -365,8 +367,6 @@ matches e@(Wrong s) _ = return False
 
 --match against list cons
 
-
-  
 val `matches` alt = do
   ti <- gets tab_indentation
   let ?tab_indentation = ti
