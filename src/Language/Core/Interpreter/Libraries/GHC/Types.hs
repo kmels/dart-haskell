@@ -3,6 +3,7 @@ module Language.Core.Interpreter.Libraries.GHC.Types where
 import Language.Core.Interpreter.Structures
 import Language.Core.Util
 import Language.Core.Core
+import Language.Core.Interpreter(evalId)
 
 -- | Evaluates definitions found in ghc-prim:GHC.Types  
 
@@ -25,12 +26,12 @@ listConstructor = (id,Right $ TyConApp typeConstructor []) where
   typeConstructor :: DataCon
   typeConstructor = MkDataCon id typeArgs
   
-{--- | An Int constructor, receives a literal
+-- | An Int constructor, receives a literal and constructs an integer
 intConstructor :: (Id, Either Thunk Value)
-intConstructor = (id, Right . Num $ typeConstructor []) where
+intConstructor = (id, Right $ Fun mkInt "I#") where
   id = "ghc-prim:GHC.Types.I#"
-  typeConstructor :: DataCon
-  typeConstructor = MkDataCon id -}
+  mkInt :: Id -> Env -> IM Value 
+  mkInt id env = evalId id env
 
 true :: (Id, Either Thunk Value)
 true = (id, Right $ TyConApp tc []) -- has no applied values
@@ -47,6 +48,7 @@ false = (id, Right $ TyConApp tc []) -- has no applied values
 all :: [(Id, Either Thunk Value)]
 all = [ cons
         , listConstructor
+        , intConstructor
         , true
         , false
       ]
