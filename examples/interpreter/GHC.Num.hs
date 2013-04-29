@@ -1,4 +1,4 @@
-module FirstOrderFunctions (
+module Examples.GHC.Num (
  -- computed with Num operations
    numberTen
  , numberEleven

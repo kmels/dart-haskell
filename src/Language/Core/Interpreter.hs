@@ -17,6 +17,7 @@
 module Language.Core.Interpreter(
   evalModule, evalHaskellExpression,
   loadLibrary,
+  module Language.Core.Interpreter.Acknowledge,
   module Language.Core.Interpreter.Evaluable,
   module Language.Core.Interpreter.Structures
   )where

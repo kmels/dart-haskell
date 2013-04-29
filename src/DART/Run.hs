@@ -2,7 +2,7 @@
 
 ----------------------------------------------------------------------------
 -- |
--- Module      :  Language.Core.Interpreter
+-- Module      :  DART.Run
 -- Copyright   :  (c) Carlos López-Camey, University of Freiburg
 -- License     :  BSD-3
 --
@@ -10,13 +10,11 @@
 -- Stability   :  stable
 --
 --
--- This program reads a program in Haskell and evaluates value definitions in it.
+-- Runs the interpreter and the dart tester
 -----------------------------------------------------------------------------
 
-module Main where
+module DART.Run where
 
-import           Control.Monad.State.Lazy
-import           DART.CmdLine
 import           DART.FileIO
 import           DART.FunctionFeeder
 import           DART.InterpreterSettings
@@ -32,59 +30,66 @@ import qualified Language.Core.Interpreter.Libraries as Libs
 import           Language.Core.Interpreter.Structures
 import           Language.Core.Util(showType)
 import           Language.Core.Vdefg
-import           System.Console.CmdArgs
 import           System.Directory(getCurrentDirectory)
 import           System.Environment
 import           Text.Encoding.Z
-
-main :: IO () 
-main = cmdArgs interpret >>= initDART >>= evalStateT runDART 
+import           DART.CmdLine
 
 -- | Creates an initial state given the arguments given
 -- in the command line and parsed by CmdArgs
 initDART :: InterpreterSettings -> IO DARTState
-initDART s = do
+initDART settings = do
   h <- io H.new -- create a fresh new heap
   current_dir <- getCurrentDirectory 
-  let --list = current_dir ++ "/lib/base/Data/List.hs"  
-       --char = current_dir ++ "/lib/base/Data/Char.hs"
-       ghc_base = current_dir      ++ "/lib/base/GHC/Base.hcr"
-       data_tuple = current_dir    ++ "/lib/base/Data/Tuple.hcr"
-       ghc_show = current_dir      ++ "/lib/base/GHC/Show.hcr"
-       ghc_enum = current_dir      ++ "/lib/base/GHC/Enum.hcr"
-       data_maybe = current_dir    ++ "/lib/base/Data/Maybe.hcr"
-       ghc_list = current_dir      ++ "/lib/base/GHC/List.hcr"
-  --    ghc_list = current_dir ++ "/lib/base/Prelude.hs"  
-       --data_list = current_dir ++ "/lib/base/Data/List.hcr"  
---       data_list = current_dir ++ "/lib/base-4.6.0.0/GHC/Show.hcr" 
-       
-       absolute_includes = [ghc_base,data_tuple,ghc_show,ghc_enum,data_maybe,ghc_list] 
-                           ++ (map ((++) (current_dir ++ "/")) $ include s) -- ++ 
-       --                 ++ [ghc_list]
+  
+  let prependCurrentDir = (++) (current_dir ++ "/")    
+  let absolute_includes = map prependCurrentDir $ default_includes ++ (include settings)
+                             
   return $ DState {
     heap = h
     , heap_count = 0
     , number_of_reductions = 0
     , number_of_reductions_part = 0
     , tab_indentation = 1
-    , settings = s { include = (absolute_includes) }    
+    , settings = settings { include = (absolute_includes) }    
     , test_name = Nothing
   }
+
+-- | Returns a list of *relative* paths pointing to default included libraries e.g. base
+-- Use case: if we always want the function split to be in scope for programs that we are testing, then we should load Data.List in the base package
+-- The file paths are path to .hcr files, since these modules sometimes need different arguments to be compiled with -fext-core
+default_includes :: [FilePath]
+default_includes = [
+    "/lib/base/GHC/Base.hcr"
+  , "/lib/base/GHC/Base.hcr"
+  , "/lib/base/Data/Tuple.hcr"
+  , "/lib/base/GHC/Show.hcr"
+  , "/lib/base/GHC/Enum.hcr"
+  , "/lib/base/Data/Maybe.hcr"
+  , "/lib/base/GHC/List.hcr"
+  ]
+         
+-- | Assumming no library has been loaded, this function looks for the settings (often coming from the command line, except when testing), loads the includes,
+-- the base library and the builtin functions for the interpreter to work.
+-- It retuns an environment, a list of heap references that is.
+mkLibsEnv :: IM Env
+mkLibsEnv = do
+  debugMStep ("Loading includes ")
+  settings <- gets settings
+    
+  -- get the list of includes and acknowledge definitions in heap
+  let includes = include settings
+  lib_envs <- mapM loadFilePath includes -- :: [Env]
+  
+  -- builtin funs, e.g. GHC.Num.+
+  ghc_builtin_funs <- I.loadLibrary Libs.ghc_base    
+  return $ ghc_builtin_funs ++ concat lib_envs
 
 -- | After an initial state is created, evaluates according to the settings
 runDART :: IM ()
 runDART = do  
-  settgs <- gets settings  
+  settgs <- gets settings      
   
-  -- Load includes  
-  debugMStep ("Loading includes ")
-  
-  let includes = include settgs
-  lib_envs <- mapM loadFilePath includes -- read source code files
-  
-  -- Load GHC definitions like GHC.Num.+
-  ghc_defs <- I.loadLibrary Libs.ghc_base
-
   -- Evaluate specified module
   let pathToModule = file settgs
   let ?be_verbose = verbose settgs
@@ -93,7 +98,8 @@ runDART = do
   m@(Module mdlname tdefs vdefgs) <- io . readModule $ file settgs
   module_env <- acknowledgeModule m
   
-  let env = ghc_defs ++ module_env ++ concat lib_envs 
+  libs_env <- mkLibsEnv
+  let env = module_env ++ libs_env
       eval_funname = evaluate_function settgs      
   -- What should we eval? a function or the whole module?  
   evaluate m env eval_funname
@@ -157,5 +163,3 @@ runDART = do
       debugMStep $ "Evaluation of " ++ fun_name
       showM result >>= io . putStrLn
 
--- | Decode any string encoded as Z-encoded string and print it
-putZDecStrLn = putStrLn . zDecodeString
