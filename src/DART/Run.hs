@@ -105,7 +105,8 @@ runDART = do
   evaluate m env eval_funname
   
   -- What should we test? a function or the whole module?  
-  when (not (null eval_funname)) $ test m env (test_funcion settgs)
+  --when (not (null eval_funname)) $ test m env (test_function settgs)
+  test m env (test_function settgs)
   
   where
     test :: Module -> Env -> String -> IM ()

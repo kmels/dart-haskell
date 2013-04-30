@@ -138,7 +138,7 @@ showM (TyConApp tc ptrs) = showTyConApp tc ptrs
 showM val = return $ show val
 
 instance Show Value where
-  show (Wrong s) = "WRONG: " ++ s
+  show (Wrong s) = "error: " ++ s
   show (Num i) = show i
   show (Rat r) = show r
   show (Boolean b) = show b  

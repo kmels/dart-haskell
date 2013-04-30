@@ -28,14 +28,23 @@ import Language.Core.Interpreter.Structures
 testExpression :: Exp -> IM TestResult
 testExpression = undefined
 
+-- | Given a module and the necessary environment to eval its definitions,
+-- we feed functions with arguments of proper type to get test results
+-- for each of them
 testModule :: Module -> Env -> IM [(Id,TestResult)]
-testModule m@(Module mname tdefs vdefgs) env = do
+testModule m@(Module mname tdefs vdefgs) libs = do
   debugMStep $ "Testing module " ++ show mname
-  module_env <- acknowledgeModule m
-  let testVdefg = \v -> testMaybe v Nothing Nothing env
+
+  module_env <- acknowledgeModule m -- where is this used ????? 
+  let env = module_env ++ libs
+  let testVdefg vdefg = testMaybe vdefg Nothing Nothing env
+  
+  -- do the testing!
   test_results <- mapM testVdefg vdefgs -- [Maybe TestResult]  
+  
   let results = catMaybes test_results
-  return $ zip (map (qualifiedVar . vdefg_name) results) results
+      mkVdefName = qualifiedVar . vdefg_name
+  return $ zip (map mkVdefName results) results
 
 testHaskellExpression :: Module -> String -> Env -> IM (Maybe (Id,TestResult))
 testHaskellExpression m@(Module mname tdefs vdefgs) expression_string env = do

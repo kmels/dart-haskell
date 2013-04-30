@@ -17,8 +17,7 @@ module Main where
 import Control.Monad(when)
 import System.Exit (exitFailure)
 import Test.HUnit
-
---import qualified Language.Core.Interpreter.Libraries.GHC.TestNum as GHC.Num
+  
 import qualified Language.Core.Interpreter.Libraries.GHC.TestNum  as GHC.Num
 
 main = do

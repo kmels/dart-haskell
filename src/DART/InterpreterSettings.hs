@@ -6,7 +6,7 @@ import System.Console.CmdArgs
 data InterpreterSettings = InterpreterMode { 
   file :: FilePath -- The file we will read information from, it can be either .hs, .lhs or .hcr
   , evaluate_function :: String -- the interpreter evaluates some function, defined in `file`
-  , test_funcion :: String -- some function to test, defined in `file`
+  , test_function :: String -- some function to test, defined in `file`
   , debug :: Bool -- debug flags
   , verbose :: Bool -- prints messages when loading, reading and acknowledging modules
   , show_heap :: Bool
@@ -26,7 +26,7 @@ data InterpreterSettings = InterpreterMode {
 interpret = InterpreterMode {
   file = def &= typFile &= groupname "USAGE"
   , evaluate_function = def &= groupname "USAGE" &= help "The function to evaluate (if not provided, all function declarations will be evaluated)"
-  , test_funcion = def &= groupname "USAGE" &= help "The function to test (if not provided, all functions will be tested)"
+  , test_function = def &= groupname "USAGE" &= help "The function to test (if not provided, all functions will be tested)"
   , debug = def &= groupname "DEBUG" &= help "Prints messages about the interpretation and testing of module definitions"
   , verbose = def &= groupname "DEBUG" &= help "Prints messages when loading, reading and acknowledging modules or definitions"
   , show_heap = def &= groupname "DEBUG" &= help "Shows binded values in the heap"
