@@ -1,29 +1,29 @@
-%module main:GHCziBase
-  %data main:GHCziBase.Opaque =
-    {main:GHCziBase.O @aa9x aa9x};
-  %data main:GHCziBase.Monad (ma9y::(*->*)) =
-    {main:GHCziBase.DZCMonad (%forall aa9zz ba9A . (ma9y aa9zz) ->
+%module base:GHCziBase
+  %data base:GHCziBase.Opaque =
+    {base:GHCziBase.O @aa9x aa9x};
+  %data base:GHCziBase.Monad (ma9y::(*->*)) =
+    {base:GHCziBase.DZCMonad (%forall aa9zz ba9A . (ma9y aa9zz) ->
                                                    (aa9zz -> ma9y ba9A) -> ma9y ba9A)
                              (%forall aa9B ba9C . (ma9y aa9B) -> (ma9y ba9C) -> ma9y ba9C)
                              (%forall aa9D . aa9D -> ma9y aa9D)
                              (%forall aa9E . (ghczmprim:GHCziTypes.ZMZN
                                               ghczmprim:GHCziTypes.Char)
                                              -> ma9y aa9E)};
-  %data main:GHCziBase.Functor (fa9I::(*->*)) =
-    {main:GHCziBase.DZCFunctor (%forall aa9J ba9K . (aa9J -> ba9K) ->
+  %data base:GHCziBase.Functor (fa9I::(*->*)) =
+    {base:GHCziBase.DZCFunctor (%forall aa9J ba9K . (aa9J -> ba9K) ->
                                                     (fa9I aa9J) -> fa9I ba9K)
                                (%forall aa9L ba9M . aa9L -> (fa9I ba9M) -> fa9I aa9L)};
-  main:GHCziBase.zgzgze :: %forall (ma9y::(*->*)) . (main:GHCziBase.Monad
+  base:GHCziBase.zgzgze :: %forall (ma9y::(*->*)) . (base:GHCziBase.Monad
                                                      ma9y)
                                                     ->
                                                     %forall aa9zz ba9A . (ma9y aa9zz) ->
                                                                          (aa9zz -> ma9y ba9A) ->
                                                                          ma9y ba9A =
-    \ @ (ma9y::(*->*)) (tplB1::main:GHCziBase.Monad ma9y) ->
+    \ @ (ma9y::(*->*)) (tplB1::base:GHCziBase.Monad ma9y) ->
         %case (%forall aa9zz ba9A . (ma9y aa9zz) ->
                                     (aa9zz -> ma9y ba9A) -> ma9y ba9A) tplB1
-        %of (tplX4::main:GHCziBase.Monad ma9y)
-          {main:GHCziBase.DZCMonad
+        %of (tplX4::base:GHCziBase.Monad ma9y)
+          {base:GHCziBase.DZCMonad
            (tplB2::%forall aa9zz ba9A . (ma9y aa9zz) ->
                                         (aa9zz -> ma9y ba9A) -> ma9y ba9A)
            (tplB3::%forall aa9B ba9C . (ma9y aa9B) ->
@@ -33,16 +33,16 @@
                                    ghczmprim:GHCziTypes.Char)
                                   -> ma9y aa9E) ->
              tplB2};
-  main:GHCziBase.zgzg :: %forall (ma9y::(*->*)) . (main:GHCziBase.Monad
+  base:GHCziBase.zgzg :: %forall (ma9y::(*->*)) . (base:GHCziBase.Monad
                                                    ma9y)
                                                   ->
                                                   %forall aa9B ba9C . (ma9y aa9B) ->
                                                                       (ma9y ba9C) -> ma9y ba9C =
-    \ @ (ma9y::(*->*)) (tplB1::main:GHCziBase.Monad ma9y) ->
+    \ @ (ma9y::(*->*)) (tplB1::base:GHCziBase.Monad ma9y) ->
         %case (%forall aa9B ba9C . (ma9y aa9B) ->
                                    (ma9y ba9C) -> ma9y ba9C) tplB1
-        %of (tplX4::main:GHCziBase.Monad ma9y)
-          {main:GHCziBase.DZCMonad
+        %of (tplX4::base:GHCziBase.Monad ma9y)
+          {base:GHCziBase.DZCMonad
            (tplB2::%forall aa9zz ba9A . (ma9y aa9zz) ->
                                         (aa9zz -> ma9y ba9A) -> ma9y ba9A)
            (tplB3::%forall aa9B ba9C . (ma9y aa9B) ->
@@ -52,13 +52,13 @@
                                    ghczmprim:GHCziTypes.Char)
                                   -> ma9y aa9E) ->
              tplB3};
-  main:GHCziBase.return :: %forall (ma9y::(*->*)) . (main:GHCziBase.Monad
+  base:GHCziBase.return :: %forall (ma9y::(*->*)) . (base:GHCziBase.Monad
                                                      ma9y)
                                                     -> %forall aa9D . aa9D -> ma9y aa9D =
-    \ @ (ma9y::(*->*)) (tplB1::main:GHCziBase.Monad ma9y) ->
+    \ @ (ma9y::(*->*)) (tplB1::base:GHCziBase.Monad ma9y) ->
         %case (%forall aa9D . aa9D -> ma9y aa9D) tplB1
-        %of (tplX4::main:GHCziBase.Monad ma9y)
-          {main:GHCziBase.DZCMonad
+        %of (tplX4::base:GHCziBase.Monad ma9y)
+          {base:GHCziBase.DZCMonad
            (tplB2::%forall aa9zz ba9A . (ma9y aa9zz) ->
                                         (aa9zz -> ma9y ba9A) -> ma9y ba9A)
            (tplB3::%forall aa9B ba9C . (ma9y aa9B) ->
@@ -68,18 +68,18 @@
                                    ghczmprim:GHCziTypes.Char)
                                   -> ma9y aa9E) ->
              tplB4};
-  main:GHCziBase.fail :: %forall (ma9y::(*->*)) . (main:GHCziBase.Monad
+  base:GHCziBase.fail :: %forall (ma9y::(*->*)) . (base:GHCziBase.Monad
                                                    ma9y)
                                                   ->
                                                   %forall aa9E . (ghczmprim:GHCziTypes.ZMZN
                                                                   ghczmprim:GHCziTypes.Char)
                                                                  -> ma9y aa9E =
-    \ @ (ma9y::(*->*)) (tplB1::main:GHCziBase.Monad ma9y) ->
+    \ @ (ma9y::(*->*)) (tplB1::base:GHCziBase.Monad ma9y) ->
         %case (%forall aa9E . (ghczmprim:GHCziTypes.ZMZN
                                ghczmprim:GHCziTypes.Char)
                               -> ma9y aa9E) tplB1
-        %of (tplX4::main:GHCziBase.Monad ma9y)
-          {main:GHCziBase.DZCMonad
+        %of (tplX4::base:GHCziBase.Monad ma9y)
+          {base:GHCziBase.DZCMonad
            (tplB2::%forall aa9zz ba9A . (ma9y aa9zz) ->
                                         (aa9zz -> ma9y ba9A) -> ma9y ba9A)
            (tplB3::%forall aa9B ba9C . (ma9y aa9B) ->
@@ -89,62 +89,62 @@
                                    ghczmprim:GHCziTypes.Char)
                                   -> ma9y aa9E) ->
              tplB5};
-  main:GHCziBase.fmap :: %forall (fa9I::(*->*)) . (main:GHCziBase.Functor
+  base:GHCziBase.fmap :: %forall (fa9I::(*->*)) . (base:GHCziBase.Functor
                                                    fa9I)
                                                   ->
                                                   %forall aa9J ba9K . (aa9J -> ba9K) ->
                                                                       (fa9I aa9J) -> fa9I ba9K =
-    \ @ (fa9I::(*->*)) (tplB1::main:GHCziBase.Functor fa9I) ->
+    \ @ (fa9I::(*->*)) (tplB1::base:GHCziBase.Functor fa9I) ->
         %case (%forall aa9J ba9K . (aa9J -> ba9K) ->
                                    (fa9I aa9J) -> fa9I ba9K) tplB1
-        %of (tplX4::main:GHCziBase.Functor fa9I)
-          {main:GHCziBase.DZCFunctor
+        %of (tplX4::base:GHCziBase.Functor fa9I)
+          {base:GHCziBase.DZCFunctor
            (tplB2::%forall aa9J ba9K . (aa9J -> ba9K) ->
                                        (fa9I aa9J) -> fa9I ba9K)
            (tplB3::%forall aa9L ba9M . aa9L -> (fa9I ba9M) -> fa9I aa9L) ->
              tplB2};
-  main:GHCziBase.zlzd :: %forall (fa9I::(*->*)) . (main:GHCziBase.Functor
+  base:GHCziBase.zlzd :: %forall (fa9I::(*->*)) . (base:GHCziBase.Functor
                                                    fa9I)
                                                   ->
                                                   %forall aa9L ba9M . aa9L ->
                                                                       (fa9I ba9M) -> fa9I aa9L =
-    \ @ (fa9I::(*->*)) (tplB1::main:GHCziBase.Functor fa9I) ->
+    \ @ (fa9I::(*->*)) (tplB1::base:GHCziBase.Functor fa9I) ->
         %case (%forall aa9L ba9M . aa9L -> (fa9I ba9M) -> fa9I aa9L) tplB1
-        %of (tplX4::main:GHCziBase.Functor fa9I)
-          {main:GHCziBase.DZCFunctor
+        %of (tplX4::base:GHCziBase.Functor fa9I)
+          {base:GHCziBase.DZCFunctor
            (tplB2::%forall aa9J ba9K . (aa9J -> ba9K) ->
                                        (fa9I aa9J) -> fa9I ba9K)
            (tplB3::%forall aa9L ba9M . aa9L -> (fa9I ba9M) -> fa9I aa9L) ->
              tplB3};
-  main:GHCziBase.zddmfail :: %forall (ma9y::(*->*)) . (main:GHCziBase.Monad
+  base:GHCziBase.zddmfail :: %forall (ma9y::(*->*)) . (base:GHCziBase.Monad
                                                        ma9y)
                                                       ->
                                                       %forall aa9E . (ghczmprim:GHCziTypes.ZMZN
                                                                       ghczmprim:GHCziTypes.Char)
                                                                      -> ma9y aa9E =
     \ @ (ma9y::(*->*))
-      (zddMonadaex::main:GHCziBase.Monad ma9y)
+      (zddMonadaex::base:GHCziBase.Monad ma9y)
       @ at3d
       (etaB1::ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
         base:GHCziErr.error @ (ma9y at3d) etaB1;
-  main:GHCziBase.zddmzgzg :: %forall (ma9y::(*->*)) . (main:GHCziBase.Monad
+  base:GHCziBase.zddmzgzg :: %forall (ma9y::(*->*)) . (base:GHCziBase.Monad
                                                        ma9y)
                                                       ->
                                                       %forall aa9B ba9C . (ma9y aa9B) ->
                                                                           (ma9y ba9C) -> ma9y ba9C =
     \ @ (ma9y::(*->*))
-      (zddMonadaex::main:GHCziBase.Monad ma9y)
+      (zddMonadaex::base:GHCziBase.Monad ma9y)
       @ at38
       @ bt39
       (ma9F::ma9y at38)
       (ka9G::ma9y bt39) ->
-        main:GHCziBase.zgzgze @ ma9y zddMonadaex @ at38 @ bt39 ma9F
+        base:GHCziBase.zgzgze @ ma9y zddMonadaex @ at38 @ bt39 ma9F
         (\ (dsdl9::at38) -> ka9G);
-  main:GHCziBase.zd :: %forall aa9W ba9X . (aa9W -> ba9X) ->
+  base:GHCziBase.zd :: %forall aa9W ba9X . (aa9W -> ba9X) ->
                                            aa9W -> ba9X =
     \ @ at1A @ bt1B (etaB2::at1A -> bt1B) (eta1B1::at1A) ->
         etaB2 eta1B1;
-  main:GHCziBase.zi :: %forall baa1 caa2 aaa3 . (baa1 -> caa2) ->
+  base:GHCziBase.zi :: %forall baa1 caa2 aaa3 . (baa1 -> caa2) ->
                                                 (aaa3 -> baa1) -> aaa3 -> caa2 =
     \ @ bt1L
       @ ct1M
@@ -153,16 +153,16 @@
       (eta1B1::at1N -> bt1L)
       (xaaV::at1N) ->
         etaB2 (eta1B1 xaaV);
-  main:GHCziBase.assert :: %forall aaa8 . ghczmprim:GHCziTypes.Bool
+  base:GHCziBase.assert :: %forall aaa8 . ghczmprim:GHCziTypes.Bool
                                           -> aaa8 -> aaa8 =
     \ @ at1X (zupredaaO::ghczmprim:GHCziTypes.Bool) (raaP::at1X) ->
         raaP;
-  main:GHCziBase.breakpoint :: %forall aaa7 . aaa7 -> aaa7 =
+  base:GHCziBase.breakpoint :: %forall aaa7 . aaa7 -> aaa7 =
     \ @ at1V (raaQ::at1V) -> raaQ;
-  main:GHCziBase.breakpointCond :: %forall aaa6 . ghczmprim:GHCziTypes.Bool
+  base:GHCziBase.breakpointCond :: %forall aaa6 . ghczmprim:GHCziTypes.Bool
                                                   -> aaa6 -> aaa6 =
     \ @ at1T (dsdk8::ghczmprim:GHCziTypes.Bool) (raaR::at1T) -> raaR;
-  main:GHCziBase.build :: %forall aaaj . (%forall baak . (aaaj ->
+  base:GHCziBase.build :: %forall aaaj . (%forall baak . (aaaj ->
                                                           baak -> baak)
                                                          -> baak -> baak)
                                          -> ghczmprim:GHCziTypes.ZMZN aaaj =
@@ -171,7 +171,7 @@
         etaB1 @ (ghczmprim:GHCziTypes.ZMZN at2j)
         (ghczmprim:GHCziTypes.ZC @ at2j)
         (ghczmprim:GHCziTypes.ZMZN @ at2j);
-  main:GHCziBase.augment :: %forall aaah . (%forall baai . (aaah ->
+  base:GHCziBase.augment :: %forall aaah . (%forall baai . (aaah ->
                                                             baai -> baai)
                                                            -> baai -> baai)
                                            ->
@@ -182,23 +182,23 @@
       (eta1B1::ghczmprim:GHCziTypes.ZMZN at2g) ->
         etaB2 @ (ghczmprim:GHCziTypes.ZMZN at2g)
         (ghczmprim:GHCziTypes.ZC @ at2g) eta1B1;
-  main:GHCziBase.const :: %forall aaa4 baa5 . aaa4 -> baa5 -> aaa4 =
+  base:GHCziBase.const :: %forall aaa4 baa5 . aaa4 -> baa5 -> aaa4 =
     \ @ at1Q @ bt1R (xaaS::at1Q) (dsdk7::bt1R) -> xaaS;
-  main:GHCziBase.asTypeOf :: %forall aa9U . aa9U -> aa9U -> aa9U =
-    \ @ at1v -> main:GHCziBase.const @ at1v @ at1v;
-  main:GHCziBase.zddmzlzd :: %forall (fa9I::(*->*)) . (main:GHCziBase.Functor
+  base:GHCziBase.asTypeOf :: %forall aa9U . aa9U -> aa9U -> aa9U =
+    \ @ at1v -> base:GHCziBase.const @ at1v @ at1v;
+  base:GHCziBase.zddmzlzd :: %forall (fa9I::(*->*)) . (base:GHCziBase.Functor
                                                        fa9I)
                                                       ->
                                                       %forall aa9L ba9M . aa9L ->
                                                                           (fa9I ba9M) -> fa9I aa9L =
     \ @ (fa9I::(*->*))
-      (zddFunctoraeq::main:GHCziBase.Functor fa9I)
+      (zddFunctoraeq::base:GHCziBase.Functor fa9I)
       @ at2Y
       @ bt2ZZ
       (etaB1::at2Y) ->
-        main:GHCziBase.fmap @ fa9I zddFunctoraeq @ bt2ZZ @ at2Y
+        base:GHCziBase.fmap @ fa9I zddFunctoraeq @ bt2ZZ @ at2Y
         (\ (dsdk7::bt2ZZ) -> etaB1);
-  main:GHCziBase.divInt :: ghczmprim:GHCziTypes.Int ->
+  base:GHCziBase.divInt :: ghczmprim:GHCziTypes.Int ->
                            ghczmprim:GHCziTypes.Int -> ghczmprim:GHCziTypes.Int =
     \ (dsdjN::ghczmprim:GHCziTypes.Int)
       (ds1djO::ghczmprim:GHCziTypes.Int) ->
@@ -213,7 +213,7 @@
                   %of (wild2Xj::ghczmprim:GHCziPrim.Intzh)
                     {%_ ->
                        ghczmprim:GHCziTypes.Izh wild2Xj}}};
-  main:GHCziBase.flip :: %forall aa9Y ba9ZZ caa0 . (aa9Y ->
+  base:GHCziBase.flip :: %forall aa9Y ba9ZZ caa0 . (aa9Y ->
                                                     ba9ZZ -> caa0)
                                                    -> ba9ZZ -> aa9Y -> caa0 =
     \ @ at1F
@@ -223,18 +223,18 @@
       (xaaX::bt1G)
       (yaaY::at1F) ->
         f4aaW yaaY xaaX;
-  main:GHCziBase.getTag :: %forall aa9N . aa9N ->
+  base:GHCziBase.getTag :: %forall aa9N . aa9N ->
                                           ghczmprim:GHCziPrim.Intzh =
     \ @ at17 (etaB1::at17) ->
         %case ghczmprim:GHCziPrim.Intzh etaB1 %of (xXby::at17)
           {%_ ->
              ghczmprim:GHCziPrim.dataToTagzh @ at17 xXby};
-  main:GHCziBase.id :: %forall aaaa . aaaa -> aaaa =
+  base:GHCziBase.id :: %forall aaaa . aaaa -> aaaa =
     \ @ at21 (xaaM::at21) -> xaaM;
-  main:GHCziBase.lazzy :: %forall aaa9 . aaa9 -> aaa9 =
+  base:GHCziBase.lazzy :: %forall aaa9 . aaa9 -> aaa9 =
     \ @ at1ZZ (xaaN::at1ZZ) -> xaaN;
   %rec
-  {main:GHCziBase.mapFB :: %forall eltaac lstaad aaae . (eltaac ->
+  {base:GHCziBase.mapFB :: %forall eltaac lstaad aaae . (eltaac ->
                                                          lstaad -> lstaad)
                                                         ->
                                                         (aaae -> eltaac) ->
@@ -248,7 +248,7 @@
        (ysaaB::lstt28) ->
          etaB2 (eta1B1 xaaA) ysaaB};
   %rec
-  {main:GHCziBase.zpzp :: %forall aaab . (ghczmprim:GHCziTypes.ZMZN
+  {base:GHCziBase.zpzp :: %forall aaab . (ghczmprim:GHCziTypes.ZMZN
                                           aaab)
                                          ->
                                          (ghczmprim:GHCziTypes.ZMZN aaab) ->
@@ -263,8 +263,8 @@
             ghczmprim:GHCziTypes.ZC
             (xaaD::at23) (xsaaE::ghczmprim:GHCziTypes.ZMZN at23) ->
               ghczmprim:GHCziTypes.ZC @ at23 xaaD
-              (main:GHCziBase.zpzp @ at23 xsaaE ysaaC)};
-   main:GHCziBase.foldr :: %forall aaal baam . (aaal -> baam -> baam)
+              (base:GHCziBase.zpzp @ at23 xsaaE ysaaC)};
+   base:GHCziBase.foldr :: %forall aaal baam . (aaal -> baam -> baam)
                                                -> baam -> (ghczmprim:GHCziTypes.ZMZN aaal) -> baam =
      \ @ at2m
        @ bt2n
@@ -281,7 +281,7 @@
                         (yaaq::at2m) (ysaar::ghczmprim:GHCziTypes.ZMZN at2m) ->
                           etaB2 yaaq (goaen ysaar)}}
          %in goaen eta2X2;
-   main:GHCziBase.map :: %forall aaaf baag . (aaaf -> baag) ->
+   base:GHCziBase.map :: %forall aaaf baag . (aaaf -> baag) ->
                                              (ghczmprim:GHCziTypes.ZMZN aaaf) ->
                                              ghczmprim:GHCziTypes.ZMZN baag =
      \ @ at2c
@@ -295,14 +295,14 @@
             ghczmprim:GHCziTypes.ZC
             (xaaw::at2c) (xsaax::ghczmprim:GHCziTypes.ZMZN at2c) ->
               ghczmprim:GHCziTypes.ZC @ bt2d (dsdl2 xaaw)
-              (main:GHCziBase.map @ at2c @ bt2d dsdl2 xsaax)}};
-  main:GHCziBase.maxInt :: ghczmprim:GHCziTypes.Int =
+              (base:GHCziBase.map @ at2c @ bt2d dsdl2 xsaax)}};
+  base:GHCziBase.maxInt :: ghczmprim:GHCziTypes.Int =
     ghczmprim:GHCziTypes.Izh
     (9223372036854775807::ghczmprim:GHCziPrim.Intzh);
-  main:GHCziBase.minInt :: ghczmprim:GHCziTypes.Int =
+  base:GHCziBase.minInt :: ghczmprim:GHCziTypes.Int =
     ghczmprim:GHCziTypes.Izh
     (-9223372036854775808::ghczmprim:GHCziPrim.Intzh);
-  main:GHCziBase.modInt :: ghczmprim:GHCziTypes.Int ->
+  base:GHCziBase.modInt :: ghczmprim:GHCziTypes.Int ->
                            ghczmprim:GHCziTypes.Int -> ghczmprim:GHCziTypes.Int =
     \ (dsdjJ::ghczmprim:GHCziTypes.Int)
       (ds1djK::ghczmprim:GHCziTypes.Int) ->
@@ -317,16 +317,16 @@
                   %of (wild2Xu::ghczmprim:GHCziPrim.Intzh)
                     {%_ ->
                        ghczmprim:GHCziTypes.Izh wild2Xu}}};
-  main:GHCziBase.ord :: ghczmprim:GHCziTypes.Char ->
+  base:GHCziBase.ord :: ghczmprim:GHCziTypes.Char ->
                         ghczmprim:GHCziTypes.Int =
     \ (dsdkh::ghczmprim:GHCziTypes.Char) ->
         %case ghczmprim:GHCziTypes.Int dsdkh
         %of (wildX1A::ghczmprim:GHCziTypes.Char)
           {ghczmprim:GHCziTypes.Czh (czhaaH::ghczmprim:GHCziPrim.Charzh) ->
              ghczmprim:GHCziTypes.Izh (ghczmprim:GHCziPrim.ordzh czhaaH)};
-  main:GHCziBase.otherwise :: ghczmprim:GHCziTypes.Bool =
+  base:GHCziBase.otherwise :: ghczmprim:GHCziTypes.Bool =
     ghczmprim:GHCziTypes.True;
-  main:GHCziBase.iShiftRLzh :: ghczmprim:GHCziPrim.Intzh ->
+  base:GHCziBase.iShiftRLzh :: ghczmprim:GHCziPrim.Intzh ->
                                ghczmprim:GHCziPrim.Intzh -> ghczmprim:GHCziPrim.Intzh =
     \ (a4abL::ghczmprim:GHCziPrim.Intzh)
       (babM::ghczmprim:GHCziPrim.Intzh) ->
@@ -337,7 +337,7 @@
              ghczmprim:GHCziPrim.uncheckedIShiftRLzh a4abL babM;
            ghczmprim:GHCziTypes.True ->
              (0::ghczmprim:GHCziPrim.Intzh)};
-  main:GHCziBase.iShiftRAzh :: ghczmprim:GHCziPrim.Intzh ->
+  base:GHCziBase.iShiftRAzh :: ghczmprim:GHCziPrim.Intzh ->
                                ghczmprim:GHCziPrim.Intzh -> ghczmprim:GHCziPrim.Intzh =
     \ (a4abJ::ghczmprim:GHCziPrim.Intzh)
       (babK::ghczmprim:GHCziPrim.Intzh) ->
@@ -354,7 +354,7 @@
                   (0::ghczmprim:GHCziPrim.Intzh);
                 ghczmprim:GHCziTypes.True ->
                   (-1::ghczmprim:GHCziPrim.Intzh)}};
-  main:GHCziBase.iShiftLzh :: ghczmprim:GHCziPrim.Intzh ->
+  base:GHCziBase.iShiftLzh :: ghczmprim:GHCziPrim.Intzh ->
                               ghczmprim:GHCziPrim.Intzh -> ghczmprim:GHCziPrim.Intzh =
     \ (a4abH::ghczmprim:GHCziPrim.Intzh)
       (babI::ghczmprim:GHCziPrim.Intzh) ->
@@ -365,7 +365,7 @@
              ghczmprim:GHCziPrim.uncheckedIShiftLzh a4abH babI;
            ghczmprim:GHCziTypes.True ->
              (0::ghczmprim:GHCziPrim.Intzh)};
-  main:GHCziBase.divModIntzh :: ghczmprim:GHCziPrim.Intzh ->
+  base:GHCziBase.divModIntzh :: ghczmprim:GHCziPrim.Intzh ->
                                 ghczmprim:GHCziPrim.Intzh ->
                                 ghczmprim:GHCziPrim.Z2H
                                 ghczmprim:GHCziPrim.Intzh
@@ -445,7 +445,7 @@
                        (ghczmprim:GHCziPrim.zmzh qabzz (1::ghczmprim:GHCziPrim.Intzh))
                        (ghczmprim:GHCziPrim.zpzh (ghczmprim:GHCziPrim.zpzh rabA yzhaby)
                         (1::ghczmprim:GHCziPrim.Intzh))}}};
-  main:GHCziBase.divModInt :: ghczmprim:GHCziTypes.Int ->
+  base:GHCziBase.divModInt :: ghczmprim:GHCziTypes.Int ->
                               ghczmprim:GHCziTypes.Int ->
                               ghczmprim:GHCziTuple.Z2T
                               ghczmprim:GHCziTypes.Int
@@ -562,7 +562,7 @@
                                  (ghczmprim:GHCziTypes.Izh
                                   (ghczmprim:GHCziPrim.zpzh (ghczmprim:GHCziPrim.zpzh rabA yabu)
                                    (1::ghczmprim:GHCziPrim.Intzh)))}}}}};
-  main:GHCziBase.quotInt :: ghczmprim:GHCziTypes.Int ->
+  base:GHCziBase.quotInt :: ghczmprim:GHCziTypes.Int ->
                             ghczmprim:GHCziTypes.Int -> ghczmprim:GHCziTypes.Int =
     \ (etaB2::ghczmprim:GHCziTypes.Int)
       (eta1B1::ghczmprim:GHCziTypes.Int) ->
@@ -577,7 +577,7 @@
                   %of (wild2XE::ghczmprim:GHCziPrim.Intzh)
                     {%_ ->
                        ghczmprim:GHCziTypes.Izh wild2XE}}};
-  main:GHCziBase.quotRemInt :: ghczmprim:GHCziTypes.Int ->
+  base:GHCziBase.quotRemInt :: ghczmprim:GHCziTypes.Int ->
                                ghczmprim:GHCziTypes.Int ->
                                ghczmprim:GHCziTuple.Z2T
                                ghczmprim:GHCziTypes.Int
@@ -616,7 +616,7 @@
                             ghczmprim:GHCziTuple.Z2T @ ghczmprim:GHCziTypes.Int
                             @ ghczmprim:GHCziTypes.Int (ghczmprim:GHCziTypes.Izh qabr)
                             (ghczmprim:GHCziTypes.Izh rabs)}}}};
-  main:GHCziBase.remInt :: ghczmprim:GHCziTypes.Int ->
+  base:GHCziBase.remInt :: ghczmprim:GHCziTypes.Int ->
                            ghczmprim:GHCziTypes.Int -> ghczmprim:GHCziTypes.Int =
     \ (etaB2::ghczmprim:GHCziTypes.Int)
       (eta1B1::ghczmprim:GHCziTypes.Int) ->
@@ -643,11 +643,11 @@
         ghczmprim:GHCziPrim.Z2H
         @ (ghczmprim:GHCziPrim.Statezh ghczmprim:GHCziPrim.RealWorld)
         @ at1t sab5 xab4;
-  main:GHCziBase.returnIO :: %forall aa9T . aa9T ->
+  base:GHCziBase.returnIO :: %forall aa9T . aa9T ->
                                             ghczmprim:GHCziTypes.IO aa9T =
     %cast (arpB)
     (%forall at1t . at1t -> %sym (ghczmprim:GHCziTypes.NTCoZCIO at1t));
-  main:GHCziBase.shiftLzh :: ghczmprim:GHCziPrim.Wordzh ->
+  base:GHCziBase.shiftLzh :: ghczmprim:GHCziPrim.Wordzh ->
                              ghczmprim:GHCziPrim.Intzh -> ghczmprim:GHCziPrim.Wordzh =
     \ (a4abD::ghczmprim:GHCziPrim.Wordzh)
       (babE::ghczmprim:GHCziPrim.Intzh) ->
@@ -658,7 +658,7 @@
              ghczmprim:GHCziPrim.uncheckedShiftLzh a4abD babE;
            ghczmprim:GHCziTypes.True ->
              (0::ghczmprim:GHCziPrim.Wordzh)};
-  main:GHCziBase.shiftRLzh :: ghczmprim:GHCziPrim.Wordzh ->
+  base:GHCziBase.shiftRLzh :: ghczmprim:GHCziPrim.Wordzh ->
                               ghczmprim:GHCziPrim.Intzh -> ghczmprim:GHCziPrim.Wordzh =
     \ (a4abF::ghczmprim:GHCziPrim.Wordzh)
       (babG::ghczmprim:GHCziPrim.Intzh) ->
@@ -672,7 +672,7 @@
   a1rpC :: %forall at1c . (ghczmprim:GHCziTypes.IO at1c) ->
                           ghczmprim:GHCziTypes.IO at1c =
     \ @ at1c (dsdjZZ::ghczmprim:GHCziTypes.IO at1c) -> dsdjZZ;
-  main:GHCziBase.unIO :: %forall aa9O . (ghczmprim:GHCziTypes.IO
+  base:GHCziBase.unIO :: %forall aa9O . (ghczmprim:GHCziTypes.IO
                                          aa9O)
                                         ->
                                         (ghczmprim:GHCziPrim.Statezh ghczmprim:GHCziPrim.RealWorld)
@@ -719,7 +719,7 @@
                   (%cast (kabc)
                    (ghczmprim:GHCziTypes.NTCoZCIO bt1j))
                   newzusabe}};
-  main:GHCziBase.thenIO :: %forall aa9P ba9Q . (ghczmprim:GHCziTypes.IO
+  base:GHCziBase.thenIO :: %forall aa9P ba9Q . (ghczmprim:GHCziTypes.IO
                                                 aa9P)
                                                ->
                                                (ghczmprim:GHCziTypes.IO ba9Q) ->
@@ -764,7 +764,7 @@
                   (%cast (kab7 a4aba)
                    (ghczmprim:GHCziTypes.NTCoZCIO bt1q))
                   newzusab9}};
-  main:GHCziBase.bindIO :: %forall aa9R ba9S . (ghczmprim:GHCziTypes.IO
+  base:GHCziBase.bindIO :: %forall aa9R ba9S . (ghczmprim:GHCziTypes.IO
                                                 aa9R)
                                                ->
                                                (aa9R -> ghczmprim:GHCziTypes.IO ba9S) ->
@@ -773,7 +773,7 @@
     (%forall at1p bt1q . (ghczmprim:GHCziTypes.IO at1p) ->
                          (at1p -> ghczmprim:GHCziTypes.IO bt1q) ->
                          %sym (ghczmprim:GHCziTypes.NTCoZCIO bt1q));
-  main:GHCziBase.unsafeChr :: ghczmprim:GHCziTypes.Int ->
+  base:GHCziBase.unsafeChr :: ghczmprim:GHCziTypes.Int ->
                               ghczmprim:GHCziTypes.Char =
     \ (dsdkj::ghczmprim:GHCziTypes.Int) ->
         %case ghczmprim:GHCziTypes.Char dsdkj
@@ -781,7 +781,7 @@
           {ghczmprim:GHCziTypes.Izh (izhaaG::ghczmprim:GHCziPrim.Intzh) ->
              ghczmprim:GHCziTypes.Czh (ghczmprim:GHCziPrim.chrzh izhaaG)};
   %rec
-  {main:GHCziBase.until :: %forall aa9V . (aa9V ->
+  {base:GHCziBase.until :: %forall aa9V . (aa9V ->
                                            ghczmprim:GHCziTypes.Bool)
                                           -> (aa9V -> aa9V) -> aa9V -> aa9V =
      \ @ at1x
@@ -790,21 +790,21 @@
        (xab3::at1x) ->
          %case at1x (pab1 xab3) %of (wildX2a::ghczmprim:GHCziTypes.Bool)
            {ghczmprim:GHCziTypes.False ->
-              main:GHCziBase.until @ at1x pab1 f4ab2 (f4ab2 xab3);
+              base:GHCziBase.until @ at1x pab1 f4ab2 (f4ab2 xab3);
             ghczmprim:GHCziTypes.True ->
               xab3}};
   %rec
-  {main:GHCziBase.zdfFunctorZLzmzgZR :: %forall rac5 . main:GHCziBase.Functor
+  {base:GHCziBase.zdfFunctorZLzmzgZR :: %forall rac5 . base:GHCziBase.Functor
                                                        (ghczmprim:GHCziPrim.ZLzmzgZR rac5) =
      \ @ rac5 ->
-         main:GHCziBase.DZCFunctor @ (ghczmprim:GHCziPrim.ZLzmzgZR rac5)
-         (\ @ at4h @ bt4i -> main:GHCziBase.zi @ at4h @ bt4i @ rac5)
+         base:GHCziBase.DZCFunctor @ (ghczmprim:GHCziPrim.ZLzmzgZR rac5)
+         (\ @ at4h @ bt4i -> base:GHCziBase.zi @ at4h @ bt4i @ rac5)
          (zdczlzdrpG @ rac5);
    frpF :: %forall rac5 at2Y bt2ZZ . (bt2ZZ -> at2Y) ->
                                      (rac5 -> bt2ZZ) -> rac5 -> at2Y =
      \ @ rac5 @ at2Y @ bt2ZZ ->
-         main:GHCziBase.fmap @ (ghczmprim:GHCziPrim.ZLzmzgZR rac5)
-         (main:GHCziBase.zdfFunctorZLzmzgZR @ rac5) @ bt2ZZ @ at2Y;
+         base:GHCziBase.fmap @ (ghczmprim:GHCziPrim.ZLzmzgZR rac5)
+         (base:GHCziBase.zdfFunctorZLzmzgZR @ rac5) @ bt2ZZ @ at2Y;
    zdczlzdrpG :: %forall rac5 aa9L ba9M . aa9L ->
                                           (rac5 -> ba9M) -> rac5 -> aa9L =
      \ @ rac5 @ at2Y @ bt2ZZ (xXd1::at2Y) ->
@@ -823,12 +823,12 @@
                                     -> rac1 -> aa9E =
     \ @ rac1 @ at3d -> base:GHCziErr.error @ (rac1 -> at3d);
   %rec
-  {main:GHCziBase.zdfMonadZLzmzgZR :: %forall rac1 . main:GHCziBase.Monad
+  {base:GHCziBase.zdfMonadZLzmzgZR :: %forall rac1 . base:GHCziBase.Monad
                                                      (ghczmprim:GHCziPrim.ZLzmzgZR rac1) =
      \ @ rac1 ->
-         main:GHCziBase.DZCMonad @ (ghczmprim:GHCziPrim.ZLzmzgZR rac1)
+         base:GHCziBase.DZCMonad @ (ghczmprim:GHCziPrim.ZLzmzgZR rac1)
          (zdczgzgzerpH @ rac1) (zdczgzgrpJ @ rac1)
-         (\ @ at4d -> main:GHCziBase.const @ at4d @ rac1)
+         (\ @ at4d -> base:GHCziBase.const @ at4d @ rac1)
          (\ @ at3d -> base:GHCziErr.error @ (rac1 -> at3d));
    zdczgzgrpJ :: %forall rac1 aa9B ba9C . (rac1 -> aa9B) ->
                                           (rac1 -> ba9C) -> rac1 -> ba9C =
@@ -837,8 +837,8 @@
        @ ba9C
        (etaB2::rac1 -> aa9B)
        (eta1B1::rac1 -> ba9C) ->
-         main:GHCziBase.zgzgze @ (ghczmprim:GHCziPrim.ZLzmzgZR rac1)
-         (main:GHCziBase.zdfMonadZLzmzgZR @ rac1) @ aa9B @ ba9C etaB2
+         base:GHCziBase.zgzgze @ (ghczmprim:GHCziPrim.ZLzmzgZR rac1)
+         (base:GHCziBase.zdfMonadZLzmzgZR @ rac1) @ aa9B @ ba9C etaB2
          (\ (dsdl9::aa9B) -> eta1B1)};
   zdcfmaprpK :: %forall aabX a1a9J ba9K . (a1a9J -> ba9K) ->
                                           (ghczmprim:GHCziTuple.Z2T aabX a1a9J) ->
@@ -853,33 +853,33 @@
           {ghczmprim:GHCziTuple.Z2T (xabZZ::aabX) (yac0::a1t45) ->
              ghczmprim:GHCziTuple.Z2T @ aabX @ bt46 xabZZ (f4abY yac0)};
   %rec
-  {main:GHCziBase.zdfFunctorZLz2cUZR :: %forall aabX . main:GHCziBase.Functor
+  {base:GHCziBase.zdfFunctorZLz2cUZR :: %forall aabX . base:GHCziBase.Functor
                                                        (ghczmprim:GHCziTuple.Z2T aabX) =
      \ @ aabX ->
-         main:GHCziBase.DZCFunctor @ (ghczmprim:GHCziTuple.Z2T aabX)
+         base:GHCziBase.DZCFunctor @ (ghczmprim:GHCziTuple.Z2T aabX)
          (zdcfmaprpK @ aabX) (zdczlzd1rpM @ aabX);
    f1rpL :: %forall aabX a1t2Y bt2ZZ . (bt2ZZ -> a1t2Y) ->
                                        (ghczmprim:GHCziTuple.Z2T aabX bt2ZZ) ->
                                        ghczmprim:GHCziTuple.Z2T aabX a1t2Y =
      \ @ aabX @ a1t2Y @ bt2ZZ ->
-         main:GHCziBase.fmap @ (ghczmprim:GHCziTuple.Z2T aabX)
-         (main:GHCziBase.zdfFunctorZLz2cUZR @ aabX) @ bt2ZZ @ a1t2Y;
+         base:GHCziBase.fmap @ (ghczmprim:GHCziTuple.Z2T aabX)
+         (base:GHCziBase.zdfFunctorZLz2cUZR @ aabX) @ bt2ZZ @ a1t2Y;
    zdczlzd1rpM :: %forall aabX a1a9L ba9M . a1a9L ->
                                             (ghczmprim:GHCziTuple.Z2T aabX ba9M) ->
                                             ghczmprim:GHCziTuple.Z2T aabX a1a9L =
      \ @ aabX @ a1t2Y @ bt2ZZ (xXd9::a1t2Y) ->
          f1rpL @ aabX @ a1t2Y @ bt2ZZ (\ (dsdk7::bt2ZZ) -> xXd9)};
   %rec
-  {main:GHCziBase.zdfFunctorZMZN :: main:GHCziBase.Functor
+  {base:GHCziBase.zdfFunctorZMZN :: base:GHCziBase.Functor
                                     ghczmprim:GHCziTypes.ZMZN =
-     main:GHCziBase.DZCFunctor @ ghczmprim:GHCziTypes.ZMZN
-     main:GHCziBase.map zdczlzd2rpO;
+     base:GHCziBase.DZCFunctor @ ghczmprim:GHCziTypes.ZMZN
+     base:GHCziBase.map zdczlzd2rpO;
    f2rpN :: %forall at2Y bt2ZZ . (bt2ZZ -> at2Y) ->
                                  (ghczmprim:GHCziTypes.ZMZN bt2ZZ) ->
                                  ghczmprim:GHCziTypes.ZMZN at2Y =
      \ @ at2Y @ bt2ZZ ->
-         main:GHCziBase.fmap @ ghczmprim:GHCziTypes.ZMZN
-         main:GHCziBase.zdfFunctorZMZN @ bt2ZZ @ at2Y;
+         base:GHCziBase.fmap @ ghczmprim:GHCziTypes.ZMZN
+         base:GHCziBase.zdfFunctorZMZN @ bt2ZZ @ at2Y;
    zdczlzd2rpO :: %forall aa9L ba9M . aa9L ->
                                       (ghczmprim:GHCziTypes.ZMZN ba9M) ->
                                       ghczmprim:GHCziTypes.ZMZN aa9L =
@@ -914,7 +914,7 @@
                          ghczmprim:GHCziTypes.ZMZN @ bt3O;
                        ghczmprim:GHCziTypes.ZC
                        (yaaq::at3N) (ysaar::ghczmprim:GHCziTypes.ZMZN at3N) ->
-                         main:GHCziBase.zpzp @ bt3O kabV (goaen ysaar)}}
+                         base:GHCziBase.zpzp @ bt3O kabV (goaen ysaar)}}
         %in goaen mabU;
   zdczgzgze1rpS :: %forall aa9zz ba9A . (ghczmprim:GHCziTypes.ZMZN
                                          aa9zz)
@@ -935,11 +935,11 @@
                          ghczmprim:GHCziTypes.ZMZN @ bt3F;
                        ghczmprim:GHCziTypes.ZC
                        (yaaq::at3E) (ysaar::ghczmprim:GHCziTypes.ZMZN at3E) ->
-                         main:GHCziBase.zpzp @ bt3F (kabT yaaq) (goaen ysaar)}}
+                         base:GHCziBase.zpzp @ bt3F (kabT yaaq) (goaen ysaar)}}
         %in goaen mabS;
-  main:GHCziBase.zdfMonadZMZN :: main:GHCziBase.Monad
+  base:GHCziBase.zdfMonadZMZN :: base:GHCziBase.Monad
                                  ghczmprim:GHCziTypes.ZMZN =
-    main:GHCziBase.DZCMonad @ ghczmprim:GHCziTypes.ZMZN zdczgzgze1rpS
+    base:GHCziBase.DZCMonad @ ghczmprim:GHCziTypes.ZMZN zdczgzgze1rpS
     zdczgzg1rpR zdcreturnrpQ zdcfail1rpP;
   zdcfail2rpT :: %forall aa9E . (ghczmprim:GHCziTypes.ZMZN
                                  ghczmprim:GHCziTypes.Char)
@@ -961,9 +961,9 @@
                          (aX3O -> ghczmprim:GHCziTypes.IO bX3Q) ->
                          %sym (ghczmprim:GHCziTypes.NTCoZCIO bX3Q));
   %rec
-  {main:GHCziBase.zdfMonadIO :: main:GHCziBase.Monad
+  {base:GHCziBase.zdfMonadIO :: base:GHCziBase.Monad
                                 ghczmprim:GHCziTypes.IO =
-     main:GHCziBase.DZCMonad @ ghczmprim:GHCziTypes.IO
+     base:GHCziBase.DZCMonad @ ghczmprim:GHCziTypes.IO
      (%cast (a3rpE)
       (%forall aX3P bX3R . (ghczmprim:GHCziTypes.IO aX3P) ->
                            (aX3P -> ghczmprim:GHCziTypes.IO bX3R) ->
@@ -980,8 +980,8 @@
        @ ba9C
        (etaB2::ghczmprim:GHCziTypes.IO aa9B)
        (eta1B1::ghczmprim:GHCziTypes.IO ba9C) ->
-         main:GHCziBase.zgzgze @ ghczmprim:GHCziTypes.IO
-         main:GHCziBase.zdfMonadIO @ aa9B @ ba9C etaB2
+         base:GHCziBase.zgzgze @ ghczmprim:GHCziTypes.IO
+         base:GHCziBase.zdfMonadIO @ aa9B @ ba9C etaB2
          (\ (dsdla::aa9B) -> eta1B1)};
   zdcfmap1rpX :: %forall aa9J ba9K . (aa9J -> ba9K) ->
                                      (ghczmprim:GHCziTypes.IO aa9J) ->
@@ -990,29 +990,29 @@
       @ bt3t
       (f4abQ::at3s -> bt3t)
       (xabR::ghczmprim:GHCziTypes.IO at3s) ->
-        main:GHCziBase.zgzgze @ ghczmprim:GHCziTypes.IO
-        main:GHCziBase.zdfMonadIO @ at3s @ bt3t xabR
+        base:GHCziBase.zgzgze @ ghczmprim:GHCziTypes.IO
+        base:GHCziBase.zdfMonadIO @ at3s @ bt3t xabR
         (%let f5aaT :: bt3t -> ghczmprim:GHCziTypes.IO bt3t =
-                main:GHCziBase.return @ ghczmprim:GHCziTypes.IO
-                main:GHCziBase.zdfMonadIO @ bt3t
+                base:GHCziBase.return @ ghczmprim:GHCziTypes.IO
+                base:GHCziBase.zdfMonadIO @ bt3t
          %in \ (x1aaV::at3s) -> f5aaT (f4abQ x1aaV));
   %rec
-  {main:GHCziBase.zdfFunctorIO :: main:GHCziBase.Functor
+  {base:GHCziBase.zdfFunctorIO :: base:GHCziBase.Functor
                                   ghczmprim:GHCziTypes.IO =
-     main:GHCziBase.DZCFunctor @ ghczmprim:GHCziTypes.IO zdcfmap1rpX
+     base:GHCziBase.DZCFunctor @ ghczmprim:GHCziTypes.IO zdcfmap1rpX
      zdczlzd3rpZZ;
    f3rpY :: %forall at2Y bt2ZZ . (bt2ZZ -> at2Y) ->
                                  (ghczmprim:GHCziTypes.IO bt2ZZ) -> ghczmprim:GHCziTypes.IO at2Y =
      \ @ at2Y @ bt2ZZ ->
-         main:GHCziBase.fmap @ ghczmprim:GHCziTypes.IO
-         main:GHCziBase.zdfFunctorIO @ bt2ZZ @ at2Y;
+         base:GHCziBase.fmap @ ghczmprim:GHCziTypes.IO
+         base:GHCziBase.zdfFunctorIO @ bt2ZZ @ at2Y;
    zdczlzd3rpZZ :: %forall aa9L ba9M . aa9L ->
                                        (ghczmprim:GHCziTypes.IO ba9M) ->
                                        ghczmprim:GHCziTypes.IO aa9L =
      \ @ at2Y @ bt2ZZ (xXdp::at2Y) ->
          f3rpY @ at2Y @ bt2ZZ (\ (dsdk7::bt2ZZ) -> xXdp)};
   %rec
-  {main:GHCziBase.eqString :: (ghczmprim:GHCziTypes.ZMZN
+  {base:GHCziBase.eqString :: (ghczmprim:GHCziTypes.ZMZN
                                ghczmprim:GHCziTypes.Char)
                               ->
                               (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
@@ -1043,4 +1043,4 @@
                    ghczmprim:GHCziClasses.zaza
                    (ghczmprim:GHCziClasses.zeze @ ghczmprim:GHCziTypes.Char
                     ghczmprim:GHCziClasses.zdfEqChar c1aaI c2aaK)
-                   (main:GHCziBase.eqString cs1aaJ cs2aaL)}}};
+                   (base:GHCziBase.eqString cs1aaJ cs2aaL)}}};
