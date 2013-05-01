@@ -19,7 +19,7 @@ import DART.FileIO
 import DART.InterpreterSettings
 import Language.Core.Core
 import Language.Core.Interpreter.Structures
-import Language.Core.Vdefg(vdefgNames, findVdef)
+import Language.Core.Vdefg(vdefgNames, findVdefg)
 import Text.Regex.Posix
   
 -- | A function that receives an expression of the form `exp`,
@@ -38,7 +38,7 @@ jitCompile (HaskellExpression expression_string menv@(Module _ _ env_defs)) = do
   case modl of
     Module _ _ vdefs  -> do
        debugM $ "JIT-Compiled module, looking for the definition of " ++ def_name
-       return $ findVdef modl def_name
+       return $ findVdefg modl def_name
   where
     def_name :: String
     def_name = "jitDef"

@@ -52,6 +52,7 @@ library
                  Language.Core.Interpreter.Libraries.GHC.Tuple,
                  Language.Core.Interpreter.Libraries.GHC.Types,
                  Language.Core.Interpreter.Util
+                 Language.Core.Module
                  Language.Core.Vdefg
  build-depends:
                       ghc >= 7.6.1 ,     

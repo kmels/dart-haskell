@@ -26,8 +26,8 @@ import           Data.Time.Clock(getCurrentTime,diffUTCTime)
 import           Language.Core.Interpreter.Acknowledge
 import           Language.Core.Interpreter.Apply
 import           Language.Core.Interpreter.Structures
-import           Language.Core.Vdefg (vdefgNames,vdefName)
-import           Language.Core.Vdefg(findVdef)
+import           Language.Core.Vdefg (findVdefByName,vdefgNames,vdefName)
+import           Language.Core.Module
 class Evaluable a where
   eval :: a -> Env -> IM Value
   
@@ -47,10 +47,11 @@ instance Evaluable Lit where
 instance Evaluable HaskellExpression where
   eval hs@(HaskellExpression expression_string m@(Module mname tdefs vdefgs)) env = 
     -- | Is it a function defined within the module?
-    case (m `findVdef` expression_string) of
-      Just vdefg -> do
+    case (m `moduleFindVdefByName` expression_string) of
+      Just vdef -> do
         debugM $ "Found a definition of " ++ expression_string
-        eval (ModuleFunction vdefg m) env
+        --eval (ModuleFunction vdef m) env
+        eval (Nonrec vdef) env
       Nothing -> do
         debugM $ "Did not found any function named " ++ expression_string
         let 
@@ -82,21 +83,22 @@ instance Evaluable Vdefg where
         let mkList x = [x]
         return . MkListOfValues $ zip (map mkList ['a'..'z']) vals 
   
-instance Evaluable ModuleFunction where
-  eval (ModuleFunction vdefg m@(Module mname tdefs vdefgs)) env = 
-    case vdefg of
-      one_def@(Nonrec vdef) -> do
-        [hr@(_,address)] <- evalVdefg one_def env -- this pattern match should always be error-free
-        eval address env
+--instance Evaluable ModuleFunction where
+  --eval (ModuleFunction vdef m@(Module mname tdefs vdefgs)) env = evalVdef
+  -- eval (ModuleFunction vdefg m@(Module mname tdefs vdefgs)) env = 
+  --   case vdefg of
+  --     one_def@(Nonrec vdef) -> do
+  --       [hr@(_,address)] <- evalVdefg one_def env -- this pattern match should always be error-free
+  --       eval address env
         
-      -- If the definition is recursive, fetch all the heap references
-      -- and then look for the given function (variable) name 
-      rdefs@(Rec defs) -> do
-        debugM $ "Found recursive definition "
-        --debugM $ "Vdefg: " ++ show vdefg
-        heap_refs <- evalVdefg rdefs env 
-        vals <- mapM (\(_,address) -> eval address env) heap_refs
-        return . MkListOfValues $ zip (map vdefName defs) vals                    
+  --     -- If the definition is recursive, fetch all the heap references
+  --     -- and then look for the given function (variable) name 
+  --     rdefs@(Rec defs) -> do
+  --       debugM $ "Found recursive definition "
+  --       --debugM $ "Vdefg: " ++ show vdefg
+  --       heap_refs <- evalVdefg defs env 
+  --       vals <- mapM (\(_,address) -> eval address env) heap_refs
+  --      return . MkListOfValues $ zip (map vdefName defs) vals                    
 
 -- | Given an environment, looks for the address in the heap, evals a thunk using the given environment if necessary to return a value
 instance Evaluable HeapAddress where

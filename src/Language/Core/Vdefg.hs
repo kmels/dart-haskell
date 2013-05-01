@@ -82,17 +82,16 @@ findVdefByName name (Rec []) = Nothing
 
 -- | Looks for value definitions with the given identifier within the module 
 -- i.e. a not qualified name. 
-findVdef :: Module -> Id -> Maybe Vdefg
-findVdef _ "" = Nothing
-findVdef m@(Module _ _ []) id = Nothing
-findVdef m@(Module mname _ (vdef:vs)) id = case containsId vdef of
+findVdefg :: Module -> Id -> Maybe Vdefg
+findVdefg _ "" = Nothing
+findVdefg m@(Module _ _ []) id = Nothing
+findVdefg m@(Module mname _ (vdef:vs)) id = case containsId vdef of
   True -> Just vdef
-  _ -> findVdef (Module mname [] vs) id  
+  _ -> findVdefg (Module mname [] vs) id  
   where
     containsId :: Vdefg -> Bool
     containsId vdefg = any ((==) id) $ vdefgNames vdefg
     
-
   -- fnames = concatMap vdefgNames vdefgs -- [String]
   -- fnames_vdefgs = zip fnames vdefgs 
   -- maybeVdefg = find ((==) id . fst) fnames_vdefgs >>= return . snd -- :: Maybe Vdefg

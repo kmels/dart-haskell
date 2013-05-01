@@ -21,7 +21,7 @@ import Data.List(find)
 import Language.Core.Core
 import Language.Core.Interpreter
 import Language.Core.Interpreter.Acknowledge
-import Language.Core.Vdefg (vdefgNames, findVdef)
+import Language.Core.Vdefg (vdefgNames, findVdefg)
 
 data TestResult = TestResult{
   vdefg_name :: Qual Var,
@@ -51,33 +51,6 @@ instance TestableType LambdaAbstraction where
 class MaybeTestable a where
   testMaybe :: a -> Maybe (Qual Var) -> Maybe Exp -> Env -> IM (Maybe TestResult)
 
-instance MaybeTestable HaskellExpression where
-  testMaybe (HaskellExpression expression_string m@(Module mname _ vdefgs)) _ _ env = 
-    case (m `findVdef` expression_string) of
-      Just vdefg -> debugMStep ("Testing function " ++ expression_string)
-                    >> testMaybe (ModuleFunction vdefg m) Nothing Nothing env
-      Nothing -> return Nothing --TODO
-  
-instance MaybeTestable ModuleFunction where
-  testMaybe (ModuleFunction vdefg m@(Module mname tdefs vdefgs)) _ _ env = do    
-    module_env <- acknowledgeModule m
-    testMaybe vdefg Nothing Nothing (module_env ++ env)
-
-instance MaybeTestable Vdefg where
-  testMaybe (Rec vdefs) _ _ env = return Nothing -- error "Undefined Rec" --test vdefs
-  testMaybe (Nonrec vdef) _ _ env = testMaybe vdef Nothing Nothing env
-  
-instance MaybeTestable Vdef where
-  testMaybe (Vdef (qual_var,ty,exp)) _ _ env = do
-    debugMStep $ "Testing value definition : " ++ qualifiedVar qual_var
-    case extractType ty of 
-      Just l@(Lambda _) -> testMaybe l (Just qual_var) (Just exp) env
-      -- concrete types e.g. Int, Char, [Int], [Bool], etc., are not testable
-      Just (CType concrete_type) -> return Nothing
-      -- parse error
-      Nothing -> error $ "Could not understand type : " ++ show ty 
-      Just x -> error $ " Undefined Testable: " ++ show x
-  
 instance MaybeTestable GeneralType where  
   testMaybe (Lambda lambda_abstraction) (Just qual_var) (Just exp) env = testType lambda_abstraction exp env >>= return . Just . mkTestResult qual_var exp
   testMaybe ty _ _ _ = error $ "undefined "  ++ show ty

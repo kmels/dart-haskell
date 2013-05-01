@@ -11,3 +11,10 @@ src/*.hcr
 
 lib/base-4.*
 lib/base-trunk*
+
+#profiling and debugging
+output*
+*.hp
+*.prof
+
+
