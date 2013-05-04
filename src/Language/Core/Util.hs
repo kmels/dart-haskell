@@ -29,6 +29,7 @@ showExtCoreType :: Ty -> String
 showExtCoreType (Tvar t) = t
 showExtCoreType (Tcon qcon) = qualifiedVar qcon
 showExtCoreType (Tapp t1 t2) = showExtCoreType t1 ++ showExtCoreType t2
+showExtCoreType (Tforall tbind ty) = "forall." ++ showTbind tbind ++ showExtCoreType ty
 showExtCoreType _ = "UNKNOWN"
 
 -- | Given a type string representation from ext core e.g. ghc-prim:GHC.Prim.(->) ghc-prim:GHC.Types.[] ghc-prim:GHC.Types.Int ghc-prim:GHC.Types.Int we transform it in a more readable string form e.g. [Int] -> Int
@@ -123,7 +124,7 @@ showAlt (Acon qcon tbinds vbinds exp) = snd qcon  ++
 -- wrapName "Acon" $ showMname mname ++ ", " ++ dcon ++ ", " ++ concatMap (\tb -> showTbind tb ++ ",") tbinds ++ concatMap (\vb ->showVbind vb ++ ",") vbinds ++ showExp exp
 
 showTbind :: (Tvar,Kind) -> String
-showTbind (tvar,kind) = tvar ++ " :: " ++ showKind kind
+showTbind (tvar,kind) = tvar ++ "::" ++ showKind kind
 
 showVbind :: Vbind -> String
 showVbind (var,ty) = wrapName "Vbind" $ var ++ "::" ++ showType ty

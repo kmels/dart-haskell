@@ -16,6 +16,7 @@
 module DART.ExtCore.TypeExtractor(
   extractType,
   module DART.ExtCore.TypeExtractor.DataTypes
+  , showExtCoreType
   )where
 
 -- | We use Parsec to do the parsing.
@@ -68,6 +69,7 @@ concreteType :: Parser ConcreteType
 concreteType = 
   (try primitiveList >>= return . PList)
   <|> (primitiveType >>= return . PType)
+  
 
 -- | A Lambda abstraction is a ready-to-be beta-reduced lambda abstraction. That is, there is no unapplied arguments to the function arrow, and has kind *.
 

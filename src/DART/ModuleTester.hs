@@ -25,8 +25,9 @@ import DART.ModuleTester.Testable
 import Data.Maybe
 import Language.Core.Interpreter.Acknowledge(acknowledgeModule)
 import Language.Core.Interpreter.Structures
-import Language.Core.Vdefg(findVdefByName)
+import Language.Core.Vdefg(findVdefByName,vdefId)
 import Language.Core.Module(moduleFindVdefByName)
+
 testExpression :: Exp -> IM TestResult
 testExpression = undefined
 
@@ -49,22 +50,28 @@ testModule m@(Module mname tdefs vdefgs) libs = do
   return $ zip (map mkVdefName results) results
 
 testVdefg :: Vdefg -> Env -> IM (Maybe TestResult)
-testVdefg (Nonrec vdef) env = testVdef vdef env
-testVdefg (Rec _) env = error "TODO: testVdefg@Rec"
+testVdefg (Nonrec vdef) env = do
+  debugMStep $ "Testing definition " ++ vdefId vdef
+  testVdef vdef env
+testVdefg (Rec vdefs) env = do
+  debugMStep $ "Testing recursive definition"
+  mapM (flip testVdefg env . Nonrec) vdefs >>= return . Just . TestResultList . catMaybes
 
 testVdef :: Vdef -> Env -> IM (Maybe TestResult)
-testVdef (Vdef (qvar,ty,exp)) env = 
+testVdef (Vdef (qvar,ty,exp)) env = do
+  debugM $ "Extracted type: " ++ show typ
   -- check whether the type of this definition is testable.
-  case extractType ty of
+  case typ of
     -- concrete types e.g. Int, Char, [Int], [Bool], etc., are not testable
     Just (CType concrete_type) -> return Nothing
     -- a lambda abstraction is testable
     Just l@(Lambda _) -> testMaybe l (Just qvar) (Just exp) env        
     -- parse error
-    Nothing -> error $ "Could not understand type : " ++ show ty 
+    Nothing -> error $ "Could not parse type : " ++ showExtCoreType ty 
     -- otherwise.. we don't know yet
     Just x -> error $ " Undefined Testable: " ++ show x
-
+  where 
+    typ = extractType ty
 -- testModuleFunction :: ModuleFunction -> Env -> IM (Maybe (Id,TestResult))
 -- testModuleFunction (ModuleFunction vdef m) env = do
 --   m_env <- acknowledgeModule m 

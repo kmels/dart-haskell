@@ -14,20 +14,20 @@
 
 module Language.Core.Interpreter.Libraries.GHC.TestNum(test) where
 
-import Test.HUnit hiding (test)
 import DART.TestUtils
+--import Test.HUnit hiding (test)
 
 type Result = (Id,Value)
 type ExpectedResult = (Id,Value)
 
 expected_nums :: [ExpectedResult]
-expected_nums = [ ("main:Examples.GHC.Num.numberTen", Num 10)
-                  , ("main:Examples.GHC.Num.numberEleven", Num 11)
-                  , ("main:Examples.GHC.Num.numberTwentyTwo", Num 22)
+expected_nums = [ ("main:DART.Examples.GHC.Num.numberTen", Num 10)
+                  , ("main:DART.Examples.GHC.Num.numberEleven", Num 11)
+                  , ("main:DART.Examples.GHC.Num.numberTwentyTwo", Num 22)
                   ]
 
-checkExpected :: [Result] -> ExpectedResult -> Test
-checkExpected results expected = lookup (fst expected) results ~=? (Just $ snd expected)
+--checkExpected :: [Result] -> ExpectedResult -> Test
+--checkExpected results expected = lookup (fst expected) results ~=? (Just $ snd expected)
 
 -- | This function loads the file located in examples/interpreter/GHC.Num.hs and verifies the expected results
 testIO :: IO Test 
@@ -40,12 +40,13 @@ testIO = do
       prettyPrint (id,val) = show id ++ " => " ++ show val
           
   mapM (putStrLn . prettyPrint) results
-  return $ TestList $ map (checkExpected results) expected
+  return $ checkExpected results expected_nums
+  --TestList $ map (checkExpected results) expected
 
 evalFile :: FilePath -> IO [(Id,Value)]
 evalFile filepath = initDART interpret >>= evalStateT evalFile'
   where
-  evalFile' :: IM [Result]
+  evalFile' :: IM [(Id,Value)]
   evalFile' = do
     let ?be_verbose = False
     modul <- io . readModule $ filepath

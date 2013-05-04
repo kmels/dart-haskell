@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------
 -- |
--- Module      :  Main (located in test/Language.Core.TestInterpreter)
+-- Module      :  Language.Core.TestInterpreter
 -- Copyright   :  (c) Carlos López-Camey, University of Freiburg
 -- License     :  BSD-3
 --
@@ -12,15 +12,11 @@
 -----------------------------------------------------------------------------
 
 {-# LANGUAGE FlexibleInstances #-}
-module Main where
+module Language.Core.TestInterpreter(test) where
 
-import Control.Monad(when)
-import System.Exit (exitFailure)
-import Test.HUnit
+import Test.HUnit(Test(..))
   
 import qualified Language.Core.Interpreter.Libraries.GHC.TestNum  as GHC.Num
 
-main = do
-  counts <- runTestTT $ TestList [GHC.Num.test]  
-  when (errors counts > 0 || failures counts > 0)
-    exitFailure
+test :: Test
+test = TestList [GHC.Num.test]

@@ -27,7 +27,7 @@ data TestResult = TestResult{
   vdefg_name :: Qual Var,
   test_expression :: Exp,
   test_value :: Value
-} 
+} | TestResultList [TestResult]
 
 instance Show TestResult where
   show (TestResult name exp val) = qualifiedVar name ++ " => " ++ show val

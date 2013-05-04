@@ -93,14 +93,15 @@ executable dart-haskell
                 , mtl >= 2.1.1 
                 , dart-haskell
 
-Test-Suite test-interpreter
+Test-Suite test-dart-haskell
     type:       exitcode-stdio-1.0
     hs-source-dirs: test, src
-    main-is:    Language/Core/TestInterpreter.hs    
+    main-is:    TestAll.hs
     other-modules: 
                 DART.TestUtils, 
-                --Language.Core.Interpreter.Libraries.GHC.TestNum
+                Language.Core.TestInterpreter
                 Language.Core.Interpreter.Libraries.GHC.TestNum
+                Language.Core.Ty
     build-depends: base, 
 --                   dart-haskell == 0.1
                    -- Ideally, this wouldn't be needed, but listing `dart-haskell` as a dependency is not enough..

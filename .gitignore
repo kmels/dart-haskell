@@ -1,13 +1,11 @@
-dist
-cabal-dev
-*.o
-*.hi
 *.chi
 *.chs.h
 .virthualenv
 virthualenv.log
 *#
 src/*.hcr
+examples/interpreter/*.hcr
+examples/testing/*.hcr
 
 lib/base-4.*
 lib/base-trunk*
@@ -17,4 +15,12 @@ output*
 *.hp
 *.prof
 
-
+#tools
+.hsenv
+dist
+cabal-dev
+*.o
+*.hi
+.dist-buildwrapper
+.project
+report.org

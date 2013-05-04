@@ -1,16 +1,18 @@
-module Examples.GHC.Num (
+module DART.Examples.GHC.Num (
  -- computed with Num operations
    numberTen
  , numberEleven
  , numberTwenty
  , numberTwentyTwo
  , numberFourtyTwo
+ , fib0, fib1, fib2, fib3, fib4, fib5, fib6 , fib23 --, fib25, fibs, map
  -- predicates on Nums
  , isTenEven
  , isHundredLargerThanZero
  , tenIsEven
  , tautology1
- , fib0, fib1, fib2, fib3, fib4, fib5, fib6 , fib23 --, fib25, fibs, map
+ -- operations
+ , sumPlusOne 
 -- , five
  ) where
 
@@ -21,6 +23,11 @@ numberTwenty = twice $ numberTen -- DONE
 
 plusOneInt :: Int -> Int --TODO, remove type signature
 plusOneInt n = n + 1
+
+-- | A function of arity 3, x `sumPlusOne` y = x + y + 1
+sumPlusOne :: Int -> Int -> Int
+sumPlusOne x y = plusOneInt $ x + y 
+
 twice :: Int -> Int --TODO, remove type signature
 twice n = n * 2
 

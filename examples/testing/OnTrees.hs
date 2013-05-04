@@ -13,22 +13,33 @@
 -- >>DETAILED DESC<<
 -----------------------------------------------------------------------------
 
-module DART.Examples.Testing.OnTrees(
-  sumTree
-  ,failOnEvenSum
-  ,failOnOddSum) where
+module DART.Examples.Testing.OnTrees(  
+  sumTreeI
+  --, sumTree
+  ,failOnEvenSumI
+  ,failOnOddSumI) where
 
-data IntTree Int = Leaf Int | Branch IntTree IntTree
+import Data.Monoid
+data IntTree = Leaf Int | Branch IntTree IntTree
+
+-- | A polymorphic version of a tree that is sumable
+data SumableTree a = PLeaf a | PBranch (SumableTree a) (SumableTree a)
 
 -- | Transverses an IntTree and sums every node value
-sumTree :: IntTree -> Int
-sumTree (Leaf n) = n
-sumTree (Branch t r) = sumTree t + sumTree r
+sumTreeI :: IntTree -> Int
+sumTreeI (Leaf n) = n
+sumTreeI (Branch t r) = sumTreeI t + sumTreeI r
 
 -- | Function that fails if a tree sum is even, otherwise returns the sum
-failOnEvenSum :: IntTree -> Int
-failOnEvenSum tree = let sum = sumTree in if (sum `mod` 2 /= 0) then sum else error $ "Sum is even: " ++ show sum
+failOnEvenSumI :: IntTree -> Int
+failOnEvenSumI tree = let sum = sumTreeI tree in if (sum `mod` 2 /= 0) then sum else error $ "Sum is even: " ++ show sum
 
 -- | Function that fails if a tree sum is odd, otherwise returns the sum
-failOnOddSum :: IntTree -> Int
-failOnOddSum tree = let sum = sumTree in if (sum `mod` 2 == 0) then sum else error $ "Sum is odd: " ++ show sum
+failOnOddSumI :: IntTree -> Int
+failOnOddSumI tree = let sum = sumTreeI tree in if (sum `mod` 2 == 0) then sum else error $ "Sum is odd: " ++ show sum
+
+-- | Transverses an IntTree and sums every node value
+-- sumTree :: Monoid a => SumableTree a -> a
+-- sumTree (PLeaf a) = a
+-- sumTree (PBranch t r) = sumTree t <> sumTree r
+
