@@ -18,7 +18,7 @@ module DART.TestUtils(
   , module DART.InterpreterSettings
   , module DART.Run
   , module Test.HUnit
-  , checkExpected, checkExpectedProperties
+  , checkExpected, checkExpectedProperties, (@@)
 ) where
 
 import DART.FileIO
@@ -33,7 +33,7 @@ checkExpected results expected = TestList $ map check expected
   where
     -- Checks one expected
     check :: (Eq a, Show a) => (Id,a) -> Test
-    check (id,val) = lookup id results ~=? (Just $ val)
+    check (id,val) = (Just $ val) ~=? lookup id results
 
 checkExpectedProperties :: forall a . (Eq a, Show a) => [(Id,a)] -> [(Id,a -> Bool)] -> Test
 checkExpectedProperties results expectedProps = TestList $ map check expectedProps
@@ -43,4 +43,7 @@ checkExpectedProperties results expectedProps = TestList $ map check expectedPro
     check (id,testProperty) = case lookup id results of
       Just val -> TestCase . assert . testProperty $ val
       Nothing -> TestCase $ assertFailure $ "The identifier " ++ id ++ " was not found in the results"
-    
+
+-- | Given a module and an id, form a qualified identifier `module.id`    
+(@@) :: String -> String -> String
+(@@) m id = m ++ ("." ++ id)

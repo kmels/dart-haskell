@@ -53,13 +53,14 @@ primitiveIntType = string "ghc-prim:GHC.Types.Int" >>= return . PrimitiveIntType
 primitiveBoolType :: Parser PrimitiveType
 primitiveBoolType = string "ghc-prim:GHC.Types.Bool" >>= return . PrimitiveBoolType
 
-primitiveType = try primitiveIntType <|> try primitiveCharType <|> try primitiveBoolType
+--primitiveType = try primitiveIntType <|> try primitiveCharType <|> try primitiveBoolType
 
 dataType :: Parser String
 dataType = do
   string "Tcon"
   char '('
   id <- tconId 
+  char ')'
   return $ id
   where 
     -- Parses anything until a closing parens
@@ -70,26 +71,26 @@ dataType = do
       }
 
 -- | A Primitive list has kind * and no parametric polymorphism associated. That is, it represents a list of primitive types.
-primitiveList :: Parser PrimitiveList
-primitiveList = let
-  listConstructor = string $ "ghc-prim:GHC.Types.[]"
-  in do
-    lc <- listConstructor 
-    pt <- primitiveType
-    return $ PrimitiveList pt
+-- primitiveList :: Parser PrimitiveList
+-- primitiveList = let
+--   listConstructor = string $ "ghc-prim:GHC.Types.[]"
+--   in do
+--     lc <- listConstructor 
+--     pt <- primitiveType
+--     return $ PrimitiveList pt
 
 -- | A concrete type is any type of kind *.
 concreteType :: Parser ConcreteType
 concreteType = 
-  (try primitiveList >>= return . PList)
-  <|> (primitiveType >>= return . PType)
-  <|> (dataType >>= return . DataType)
+--  (try dataList >>= return . PList)
+--  <|> (try primitiveType >>= return . PType)
+  (try dataType >>= return . DType . DataType)
 
 -- | A Lambda abstraction is a ready-to-be beta-reduced lambda abstraction. That is, there is no unapplied arguments to the function arrow, and has kind *.
 
 lambdaAbstraction :: Parser LambdaAbstraction
 lambdaAbstraction = do
-  functionConstructor <- string $ "ghc-prim:GHC.Prim.(->)"
+  functionConstructor <- string $ "Tcon(ghc-prim:GHC.Prim.(->))"
   functionDomain <- concreteType
   functionCodomain <- generalType
   return $ LambdaAbstraction functionDomain functionCodomain
@@ -99,5 +100,5 @@ generalType :: Parser GeneralType
 generalType = do 
   fa <- try lambdaAbstraction
   return $ Lambda fa
-  <|>(try primitiveList >>= return . CType . PList)
+  -- <|>(try primitiveList >>= return . CType . PList)
   <|> (concreteType >>= return . CType)

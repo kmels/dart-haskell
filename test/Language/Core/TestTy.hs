@@ -23,12 +23,14 @@ test = unsafePerformIO $ testIO
   
 testIO :: IO Test
 testIO = do
+  -- trees
   onTreesTys <- getDefTypes "examples/testing/OnTrees.hs"
+  let trees_test = checkExpectedProperties onTreesTys expectedTyPropertiesOnTrees
+  
+  -- nums
   onNumsTys <- getDefTypes "examples/interpreter/GHC.Num.hs"
-  mapM (putStrLn . show) onNumsTys
-  let onTreesTest = checkExpectedProperties onTreesTys expectedTyPropertiesOnTrees
-      onNumsTest = checkExpectedProperties onNumsTys expectedTyPropertiesOnNums
-  return $ TestList [onTreesTest] --, onNumsTest]
+  let nums_test = checkExpectedProperties onNumsTys expectedTyPropertiesOnNums
+  return $ TestList [trees_test] --, onNumsTest]
 
 -- | Properties that we expect on the types of definitions in OnTrees
 expectedTyPropertiesOnTrees :: [(Id,Ty -> Bool)]

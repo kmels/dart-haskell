@@ -17,13 +17,19 @@ module DART.Examples.Testing.OnTrees(
   sumTreeI
   --, sumTree
   ,failOnEvenSumI
-  ,failOnOddSumI) where
+  ,failOnOddSumI
+  ,myTree) where
 
 import Data.Monoid
 data IntTree = Leaf Int | Branch IntTree IntTree
 
 -- | A polymorphic version of a tree that is sumable
 data SumableTree a = PLeaf a | PBranch (SumableTree a) (SumableTree a)
+
+myLeaf1 = Leaf 1
+myLeaf2 = Leaf 2
+myLeaf3 = Leaf 3
+myTree = Branch myLeaf1 (Branch myLeaf2 myLeaf3)
 
 -- | Transverses an IntTree and sums every node value
 sumTreeI :: IntTree -> Int

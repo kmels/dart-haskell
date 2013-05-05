@@ -20,8 +20,9 @@ import Test.HUnit
   
 import qualified Language.Core.TestInterpreter  as Interpreter
 import qualified Language.Core.TestTy  as ExtCore.Ty
+import qualified DART.TestTypeExtractor  as TypeExtractor
 
 main = do
-  counts <- runTestTT $ TestList [Interpreter.test, ExtCore.Ty.test]  
+  counts <- runTestTT $ TestList [Interpreter.test, ExtCore.Ty.test, TypeExtractor.test]  
   when (errors counts > 0 || failures counts > 0)
     exitFailure

@@ -40,7 +40,7 @@ class TestableType t where
 
 instance TestableType LambdaAbstraction where
   testType (LambdaAbstraction concrete_type general_type) lambda_exp env = case concrete_type of
-    PList _ -> error "undefined PList"
+    --PList _ -> error "undefined PList"
     PType ty@(PrimitiveIntType ty_str) -> do
       watchTestM $ " Testing Int: " ++ ty_str
       fun <- eval lambda_exp env
