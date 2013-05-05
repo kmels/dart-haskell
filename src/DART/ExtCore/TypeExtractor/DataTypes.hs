@@ -15,7 +15,7 @@ module DART.ExtCore.TypeExtractor.DataTypes where
 
 data GeneralType = CType ConcreteType | Lambda LambdaAbstraction | NoType String
 
-data ConcreteType = PList PrimitiveList | PType PrimitiveType
+data ConcreteType = PList PrimitiveList | PType PrimitiveType | DataType String
 
 data PrimitiveList = PrimitiveList PrimitiveType
 

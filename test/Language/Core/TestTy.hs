@@ -44,7 +44,7 @@ expectedTyPropertiesOnNums = [("main:DART.Examples.GHC.Num.numberTen", isPrimiti
                              , ("main:DART.Examples.GHC.Num.isTenEven", isLambdaArrow)
                              , ("main:DART.Examples.GHC.Num.plusOneIntreX", isLambdaArrow)
                              , ("main:DART.Examples.GHC.Num.sumPlusOne", isLambdaArrow)
-                             ]                              
+                             ]
 
 -- | Given a file, extract all the identifiers with its types
 getDefTypes :: FilePath -> IO [(Id,Ty)]

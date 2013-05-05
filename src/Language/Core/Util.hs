@@ -27,7 +27,7 @@ import Text.Encoding.Z
 
 showExtCoreType :: Ty -> String
 showExtCoreType (Tvar t) = t
-showExtCoreType (Tcon qcon) = qualifiedVar qcon
+showExtCoreType (Tcon qcon) = wrapName "Tcon" $ qualifiedVar qcon
 showExtCoreType (Tapp t1 t2) = showExtCoreType t1 ++ showExtCoreType t2
 showExtCoreType (Tforall tbind ty) = "forall." ++ showTbind tbind ++ showExtCoreType ty
 showExtCoreType _ = "UNKNOWN"

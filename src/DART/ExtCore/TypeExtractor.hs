@@ -33,7 +33,7 @@ import Debug.Trace
 
 -- | A function to extract a type from external core to a data type of our own
 extractType :: Ty -> Maybe GeneralType
-extractType = extractZDecodedType . zDecodeString . showExtCoreType 
+extractType  = extractZDecodedType . zDecodeString . showExtCoreType 
 
 -- | A function to extract a type. The first argument must be a z-decoded string.
 extractZDecodedType :: String -> Maybe GeneralType
@@ -55,6 +55,20 @@ primitiveBoolType = string "ghc-prim:GHC.Types.Bool" >>= return . PrimitiveBoolT
 
 primitiveType = try primitiveIntType <|> try primitiveCharType <|> try primitiveBoolType
 
+dataType :: Parser String
+dataType = do
+  string "Tcon"
+  char '('
+  id <- tconId 
+  return $ id
+  where 
+    -- Parses anything until a closing parens
+    tconId :: Parser String
+    tconId = do { 
+      c <- noneOf ")"; 
+      do { cs <- tconId; return (c:cs) } <|> return [c]
+      }
+
 -- | A Primitive list has kind * and no parametric polymorphism associated. That is, it represents a list of primitive types.
 primitiveList :: Parser PrimitiveList
 primitiveList = let
@@ -69,7 +83,7 @@ concreteType :: Parser ConcreteType
 concreteType = 
   (try primitiveList >>= return . PList)
   <|> (primitiveType >>= return . PType)
-  
+  <|> (dataType >>= return . DataType)
 
 -- | A Lambda abstraction is a ready-to-be beta-reduced lambda abstraction. That is, there is no unapplied arguments to the function arrow, and has kind *.
 
