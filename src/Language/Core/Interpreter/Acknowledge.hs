@@ -26,9 +26,11 @@ import Language.Core.Vdefg(vdefId,vdefgNames,vdefQualId)
 -- | Given a module, recognize type constructors and value definitions
 -- and save them in the heap
 acknowledgeModule :: Module -> IM Env
-acknowledgeModule modl@(Module _ tdefs vdefgs) = do
-  tycons_env <- acknowledgeTypes tdefs
-  vdefs_env <- acknowledgeVdefgs vdefgs
+acknowledgeModule modl@(Module mname tdefs vdefgs) = do
+  tycons_env <- acknowledgeTypes tdefs -- type constructors
+  vdefs_env <- acknowledgeVdefgs vdefgs -- value definitions
+  io . putStrLn $ "Types of: " ++ show mname
+  mapM (io . putStrLn) $ map fst tycons_env
   return $ tycons_env ++ vdefs_env
 
 -- | Given a module, recognize type constructors and put them in the heap 
@@ -42,16 +44,27 @@ acknowledgeTypes tdefs = mapM acknowledgeType tdefs >>= return . concat
 acknowledgeType :: Tdef -> IM Env
 acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) = 
   do
-    beVerboseM $ "Acknowledging type " ++ qualifiedVar qdname
-    mapM insertTyCon cdefs
-  where  
-    insertTyCon :: Cdef -> IM HeapReference
-    insertTyCon tcon@(Constr qcname tbinds' types) = do
-      h <- get       
-      let 
-        tyConName = qualifiedVar qcname
-        tyCon = MkDataCon tyConName types        
-      memorize (mkVal $ TyConApp tyCon []) (tyConName)
+    let type_name = qualifiedVar qdname    
+        type_constructors = map mkDataCon cdefs
+        
+    beVerboseM $ "Acknowledging type " ++ type_name
+    
+    tyCon_refs <- mapM insertTyCon type_constructors 
+    
+    -- the sum type itself
+    sumtype_ref <- mkDataTypeRef type_constructors type_name
+    
+    -- make overall env
+    return (sumtype_ref:tyCon_refs)
+  where
+    mkDataTypeRef :: [DataCon] -> Id -> IM HeapReference
+    mkDataTypeRef cons tname = memorize (mkVal . SumType $ cons) tname
+    
+    mkDataCon :: Cdef -> DataCon
+    mkDataCon tcon@(Constr qcname tbinds' types) = MkDataCon (qualifiedVar qcname) types
+      
+    insertTyCon :: DataCon -> IM HeapReference
+    insertTyCon tyCon@(MkDataCon tyConName tys) = memorize (mkVal $ TyConApp tyCon []) (tyConName)
     
 -- | Given a module, recognize all of its value definitions, functions, and put them in the heap so that we can evaluate them when required. 
 acknowledgeVdefgs :: [Vdefg] -> IM Env

@@ -22,6 +22,7 @@ import Language.Core.Core
 import Language.Core.Interpreter
 import Language.Core.Interpreter.Acknowledge
 import Language.Core.Vdefg (vdefgNames, findVdefg)
+import Text.Encoding.Z(zEncodeString)
 
 data TestResult = TestResult{
   vdefg_name :: Qual Var,
@@ -47,6 +48,13 @@ instance TestableType LambdaAbstraction where
       heap_ref@(rndval_id,_) <- mkRandomHR ty
       apply fun rndval_id (heap_ref:env)
     PType primType -> error $ "undefined PType " ++ show primType
+    
+    DType (DataType id) -> do
+      typ <- lookupId id env -- :: Either Thunk Value
+
+
+      error $ "TODO: TestableType LambdaAbstraction " ++ show typ
+    yat -> error $ "TODO: TestableType LambdaAbstraction " ++ show yat
 
 class MaybeTestable a where
   testMaybe :: a -> Maybe (Qual Var) -> Maybe Exp -> Env -> IM (Maybe TestResult)

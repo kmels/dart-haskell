@@ -38,7 +38,7 @@ testModule :: Module -> Env -> IM [(Id,TestResult)]
 testModule m@(Module mname tdefs vdefgs) libs = do
   debugMStep $ "Testing module " ++ show mname
 
-  module_env <- acknowledgeModule m -- where is this used ????? 
+  module_env <- acknowledgeModule m
   let env = module_env ++ libs
   --let testVdefg vdefg = testMaybe vdefg Nothing Nothing env
   

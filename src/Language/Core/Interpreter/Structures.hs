@@ -91,6 +91,7 @@ data Value = Wrong String
            | Pointer Pointer
            | FreeTypeVariable String -- useful when converting a to SomeClass a (we ignore parameters, and it's useful to save them)
            | MkListOfValues [(String,Value)] -- When a value definition is recursive, depends on other values
+           | SumType [DataCon] -- A data type with reference to its constructors, created only from type constructors when reading modules (see Interpreter/Acknowledge).
 
 newtype Pointer = MkPointer { ptr_address :: HeapAddress } deriving Show
 
@@ -156,6 +157,10 @@ instance Show Value where
   show (MkListOfValues vals) = let
     myIntersperse sep = foldr ((++) . (++) sep) []
     in myIntersperse "\n\t" (map show vals)
+  show (SumType cons) = "SumType of " ++ myIntersperse "|" constructor_names
+    where
+      myIntersperse sep = foldr ((++) . (++) sep) []
+      constructor_names = map (\(MkDataCon id _) -> id) cons
 
 instance Show DataCon where
   show (MkDataCon id []) = idName id
