@@ -18,6 +18,7 @@ module DART.Examples.Testing.OnTrees(
   --, sumTree
   ,failOnEvenSumI
   ,failOnOddSumI
+  ,sumOfTreeSums
   ,myTree) where
 
 import Data.Monoid
@@ -43,6 +44,9 @@ failOnEvenSumI tree = let sum = sumTreeI tree in if (sum `mod` 2 /= 0) then sum 
 -- | Function that fails if a tree sum is odd, otherwise returns the sum
 failOnOddSumI :: IntTree -> Int
 failOnOddSumI tree = let sum = sumTreeI tree in if (sum `mod` 2 == 0) then sum else error $ "Sum is odd: " ++ show sum
+
+sumOfTreeSums :: [IntTree] -> Int
+sumOfTreeSums = sum . map sumTreeI
 
 -- | Transverses an IntTree and sums every node value
 -- sumTree :: Monoid a => SumableTree a -> a
