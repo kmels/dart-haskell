@@ -32,6 +32,13 @@ showExtCoreType (Tapp t1 t2) = showExtCoreType t1 ++ showExtCoreType t2
 showExtCoreType (Tforall tbind ty) = "forall." ++ showTbind tbind ++ showExtCoreType ty
 showExtCoreType _ = "UNKNOWN"
 
+showExtCoreTypeVerbose :: Ty -> String
+showExtCoreTypeVerbose (Tvar t) = wrapName "Tvar" t
+showExtCoreTypeVerbose (Tcon qcon) = wrapName "Tcon" $ qualifiedVar qcon
+showExtCoreTypeVerbose (Tapp t1 t2) = wrapName "Tapp" $ "\n\t" ++ showExtCoreTypeVerbose t1 ++ ",\n\t" ++ showExtCoreTypeVerbose t2
+showExtCoreTypeVerbose (Tforall tbind ty) = "forall." ++ showTbind tbind ++ showExtCoreTypeVerbose ty
+showExtCoreTypeVerbose _ = "UNKNOWN"
+
 -- | Given a type string representation from ext core e.g. ghc-prim:GHC.Prim.(->) ghc-prim:GHC.Types.[] ghc-prim:GHC.Types.Int ghc-prim:GHC.Types.Int we transform it in a more readable string form e.g. [Int] -> Int
 
 showType :: Ty -> String
