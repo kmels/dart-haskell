@@ -63,7 +63,9 @@ testVdef (Vdef (qvar,ty,exp)) env = do
   -- check whether the type of this definition is testable.
   case typ of
     -- concrete types e.g. Int, Char, [Int], [Bool], etc., are not testable
-    Just (CType concrete_type) -> return Nothing
+    Just (CType concrete_type) -> do
+      debugM $ "Not testing concrete type " ++ show concrete_type
+      return Nothing
     -- a lambda abstraction is testable
     Just l@(Lambda _) -> testMaybe l (Just qvar) (Just exp) env        
     -- parse error

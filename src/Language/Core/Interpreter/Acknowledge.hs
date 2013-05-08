@@ -29,8 +29,8 @@ acknowledgeModule :: Module -> IM Env
 acknowledgeModule modl@(Module mname tdefs vdefgs) = do
   tycons_env <- acknowledgeTypes tdefs -- type constructors
   vdefs_env <- acknowledgeVdefgs vdefgs -- value definitions
-  io . putStrLn $ "Types of: " ++ show mname
-  mapM (io . putStrLn) $ map fst tycons_env
+  --io . putStrLn $ "Types of: " ++ show mname
+  --mapM (io . putStrLn) $ map fst tycons_env
   return $ tycons_env ++ vdefs_env
 
 -- | Given a module, recognize type constructors and put them in the heap 
@@ -46,7 +46,9 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) =
   do
     let type_name = qualifiedVar qdname    
         type_constructors = map mkDataCon cdefs
-        
+    
+    --io . putStrLn $ "Type constructors: " ++ show type_constructors
+    --printTypesCons type_constructors
     beVerboseM $ "Acknowledging type " ++ type_name
     
     tyCon_refs <- mapM insertTyCon type_constructors 
@@ -57,6 +59,12 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) =
     -- make overall env
     return (sumtype_ref:tyCon_refs)
   where
+    printTypesCons :: [DataCon] -> IM ()
+    printTypesCons [] = return ()
+    printTypesCons ((MkDataCon id tys):ds) = do
+      io . putStrLn  $ id ++ " expects " ++ show tys 
+      printTypesCons ds
+    
     mkDataTypeRef :: [DataCon] -> Id -> IM HeapReference
     mkDataTypeRef cons tname = memorize (mkVal . SumType $ cons) tname
     

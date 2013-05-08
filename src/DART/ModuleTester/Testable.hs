@@ -40,21 +40,11 @@ class TestableType t where
   testType :: t -> Exp -> Env -> IM Value
 
 instance TestableType LambdaAbstraction where
-  testType (LambdaAbstraction concrete_type general_type) lambda_exp env = case concrete_type of
-    --PList _ -> error "undefined PList"
-    PType ty@(PrimitiveIntType ty_str) -> do
-      watchTestM $ " Testing Int: " ++ ty_str
-      fun <- eval lambda_exp env
-      heap_ref@(rndval_id,_) <- mkRandomHR ty
-      apply fun rndval_id (heap_ref:env)
-    PType primType -> error $ "undefined PType " ++ show primType
-    
-    DType (DataType id) -> do
-      typ <- lookupId id env -- :: Either Thunk Value
-
-
-      error $ "TODO: TestableType LambdaAbstraction " ++ show typ
-    yat -> error $ "TODO: TestableType LambdaAbstraction " ++ show yat
+  testType (LambdaAbstraction concrete_type general_type) lambda_exp env = do
+    --watchTestM $ " Generating a " ++ concrete_type
+    fun <- eval lambda_exp env
+    heap_ref@(rndval_id,_) <- mkRandomHR concrete_type
+    apply fun rndval_id (heap_ref:env)
 
 class MaybeTestable a where
   testMaybe :: a -> Maybe (Qual Var) -> Maybe Exp -> Env -> IM (Maybe TestResult)

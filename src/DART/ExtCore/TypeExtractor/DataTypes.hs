@@ -13,7 +13,7 @@
 
 module DART.ExtCore.TypeExtractor.DataTypes where
 
-data GeneralType = CType ConcreteType | Lambda LambdaAbstraction deriving Eq
+data GeneralType = CType ConcreteType | Lambda LambdaAbstraction deriving Eq -- should dissapear, a lambda is acknowledged when an expression is evaluated
 
 data ConcreteType = DList DataList | PType PrimitiveType | DType DataType deriving Eq
 

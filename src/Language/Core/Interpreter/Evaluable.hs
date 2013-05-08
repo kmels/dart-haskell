@@ -293,11 +293,11 @@ mkAltEnv v@(Num _) (Acon (_,"Izh") _ [(vbind_var,vbind_ty)] _) =
   
 mkAltEnv (Num n) (Acon q tbinds vbinds exp) = (debugM  $ " !!! WTF" ++ show q) >> return []
   
-mkAltEnv (TyConApp (MkDataCon _ _) pointers) (Acon _ _ vbinds _) = do
+mkAltEnv (TyConApp (MkDataCon id _) pointers) (Acon _ _ vbinds _) = do
   debugM ("pointers: " ++ show pointers)
   debugM ("Vbinds :: " ++ show vbinds)
   if (length pointers /= length vbinds)
-  then error "length vals /= length vbinds"
+  then error $ "The impossible happened @mkAltEnv, length vals /= length vbinds," ++ id
   else do
      debugM "CAFE" 
      -- get vals and memorize that

@@ -69,6 +69,7 @@ data DARTState = DState {
 }
 
 type Heap = H.CuckooHashTable HeapAddress (Either Thunk Value)
+--type HeapTypes = H.CuckooHashTable HeapAddress Type
 --type Heap = H.CuckooHashTable HeapAddress (GeneralType)
 type HeapAddress = Int
 type Env = [(Id,HeapAddress)]
@@ -114,7 +115,10 @@ data HaskellExpression = HaskellExpression String Module
 
 -- | A data type constructor that has normally a qualified name and a list of
 -- types that it expects. 
-data DataCon = MkDataCon Id [Ty]
+data DataCon = MkDataCon {
+  dataConId :: Id,
+  dataConTys :: [Ty]
+  }
 
 type Description = String
 
