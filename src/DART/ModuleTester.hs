@@ -69,7 +69,11 @@ testVdef (Vdef (qvar,ty,exp)) env = do
     -- a lambda abstraction is testable
     Just l@(Lambda _) -> testMaybe l (Just qvar) (Just exp) env        
     -- parse error
-    Nothing -> error $ "Could not parse type : " ++ showExtCoreType ty 
+    Nothing -> return . Just $ TestResult {
+    	    vdefg_name = qvar,
+	    test_expression = exp,
+	    test_value = Wrong $ "Could not parse type : " ++ showExtCoreType ty 
+	    }  
     -- otherwise.. we don't know yet
     Just x -> error $ " Undefined Testable: " ++ show x
   where 
