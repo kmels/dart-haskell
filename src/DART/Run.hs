@@ -67,6 +67,7 @@ default_includes = [
   , "/lib/base/GHC/Enum.hcr"
   , "/lib/base/Data/Maybe.hcr"
   , "/lib/base/GHC/List.hcr"
+  , "/lib/base/Data/List.hcr"
   ]
          
 -- | Assumming no library has been loaded, this function looks for the settings (often coming from the command line, except when testing), loads the includes,
