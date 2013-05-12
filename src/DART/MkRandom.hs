@@ -17,6 +17,7 @@ import Language.Core.Interpreter.Structures
 import Language.Core.Interpreter
 import System.Random
 import DART.ExtCore.TypeExtractor
+import Data.List((!!))
 
 -- | Randomize on external core types. An environment might be needed in case there is a reference to the heap as an identifier in e.g. a data type
 tyMkRandom :: Ty -> Env -> Maybe (IM Value)
@@ -46,8 +47,11 @@ mkRandomVal (DType (DataType id)) env = do
 -- value of type of the sum type
 sumTypeMkRandom :: [DataCon] -> Env -> IM Value
 sumTypeMkRandom [] _ = return . Wrong $ "@dconsMkRandom: No data constructor"
-sumTypeMkRandom (dc:ds) env = do -- TODO, consider other data cons (pick one randomly)
-  tyConMkRandom dc env
+sumTypeMkRandom tcs@(dc:ds) env = do -- TODO, consider other data cons (pick one randomly)
+  -- pick a random data constructor
+  typecons_idx <- io . getStdRandom $ randomR (0,length ds)
+  let typecons = tcs !! typecons_idx
+  tyConMkRandom typecons env
 
 -- | Creates a value using a type constructor, exhausting every type argument
 -- an environment might be needed in case the types in the type constructors
@@ -79,22 +83,6 @@ mkRandomHR ct env = mkHeapRef $ mkRandomVal ct env
 -- | Given a value, stores it in the heap and returns a heap reference
 mkHeapRef :: IM Value -> IM HeapReference
 mkHeapRef = (=<<) memorizeVal
-
---mkRandomHRTy :: Ty -> IM HeapReference
---mkRandomHRTy ty = do
---  let extractedType = extractType ty -- :: Maybe GeneralType
-  -- do we have a randomizable instance for extractedType?
-
-
--- instance RandomizableType PrimitiveType where
---   mkRandomVal (PrimitiveIntType _) = io rndInt >>= return . Num . toInteger
-  
--- -- | Given a type constructor, generate a value
--- instance RandomizableType DataCon where
---   mkRandomVal dc@(MkDataCon id ty) = do  
---     -- TODO
---     fst <- mkRandomHR ty
---     return $ TyConApp dc []
 
 -- | From the documentation of Haskell's Int:
 -- "A fixed-precision integer type with at least the range [-2^29 .. 2^29-1]. The exact range for a given implementation can be determined by using Prelude.minBound and Prelude.maxBound from the Prelude.Bounded class. "
