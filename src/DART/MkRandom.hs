@@ -14,55 +14,67 @@
 module DART.MkRandom where
 
 import Language.Core.Interpreter.Structures
+import Language.Core.Interpreter
 import System.Random
 import DART.ExtCore.TypeExtractor
 
--- | A type class for types that gives us a function to randomize on types
---class RandomizableType t where 
---mkRandomVal :: someTyp -> IM Value
---mkRandomVal (PrimitiveIntType _) = io rndInt >>= return . Num . toInteger
-
-tyMkRandom :: Ty -> Maybe (IM Value)
-tyMkRandom ty = extractType ty >>= \et -> case et of
-  (CType ctype) -> Just . mkRandomVal $ ctype
+-- | Randomize on external core types. An environment might be needed in case there is a reference to the heap as an identifier in e.g. a data type
+tyMkRandom :: Ty -> Env -> Maybe (IM Value)
+tyMkRandom ty env = extractType ty >>= \et -> case et of
+  (CType ctype) -> Just $ mkRandomVal ctype env 
   --gtyp -> error $ "The impossible happened @tyMkRandom: It should not be called upon types that are not concrete (We are unpredicative), received " ++ show gtyp
   _ -> Nothing
 
 -- | A function that generates a random value given a type.
 -- We could have type classes on RandomizableTypes but it would imply using template haskell
 -- as there are Ty's in DataCons and they're not pattern match friendly (we have indeed an extractor)
-mkRandomVal :: ConcreteType -> IM Value
-mkRandomVal (DType (DataType "ghc-prim:GHC.Types.Int")) = io rndInt >>= return . Num . toInteger
-mkRandomVal (DType (DataType id)) = error $ "TODO: dtMkRandomVal " ++ id
-
+mkRandomVal :: ConcreteType -> Env -> IM Value
+mkRandomVal (DType (DataType "ghc-prim:GHC.Types.Int")) _ = io rndInt >>= return . Num . toInteger
+mkRandomVal (DType (DataType id)) env = do
+  type_constructors <- fetchDataCons id env
+  sumTypeMkRandom type_constructors env
+    where
+      fetchDataCons :: Id -> Env -> IM [DataCon]
+      fetchDataCons id env = do
+        -- look for the data type
+        msumtype <- lookupId id env
+        return $ case msumtype of
+          (Right (SumType datacons)) -> datacons
+          _ -> []
+        
 -- | Given a list of data constructors (that form a sum type), make a random
 -- value of type of the sum type
-sumTypeMkRandom :: [DataCon] -> IM Value
-sumTypeMkRandom [] = return . Wrong $ "@dconsMkRandom: No data constructor"
-sumTypeMkRandom (dc:ds) = do -- TODO, consider other data cons (pick one randomly)
-  tyConMkRandom dc
+sumTypeMkRandom :: [DataCon] -> Env -> IM Value
+sumTypeMkRandom [] _ = return . Wrong $ "@dconsMkRandom: No data constructor"
+sumTypeMkRandom (dc:ds) env = do -- TODO, consider other data cons (pick one randomly)
+  tyConMkRandom dc env
 
 -- | Creates a value using a type constructor, exhausting every type argument
-tyConMkRandom :: DataCon -> IM Value
-tyConMkRandom dc@(MkDataCon id []) = return $ TyConApp dc []
-tyConMkRandom dc@(MkDataCon id tys) = do
-  ptrs <- mapM tyRndValPtr tys -- :: [Pointer] where the generated random vals are
+-- an environment might be needed in case the types in the type constructors
+-- contain references to some data type in the heap as an identifier
+-- TODO: MkDataCon should contain a list of ConcreteType and no Ty's
+tyConMkRandom :: DataCon -> Env -> IM Value
+tyConMkRandom dc@(MkDataCon id []) env = return $ TyConApp dc []
+tyConMkRandom dc@(MkDataCon id tys) env = do
+  ptrs <- mapM (flip tyRndValPtr env) tys -- :: [Pointer] where the generated random vals are
   return $ TyConApp dc ptrs
 
-tyRndValPtr :: Ty -> IM Pointer
-tyRndValPtr ty = do
-  val <- tyGetRandom ty
+-- | Makes a random value from a type and returns a pointer to it
+tyRndValPtr :: Ty -> Env -> IM Pointer
+tyRndValPtr ty env = do
+  val <- tyGetRandom ty env
   heap_ref@(_,addr) <- memorizeVal val
   return . MkPointer $ addr
 
-tyGetRandom :: Ty -> IM Value
-tyGetRandom ty = case tyMkRandom ty of
+-- | Version of tyMkRandom that returns an error value in case the given type is not understood
+tyGetRandom :: Ty -> Env -> IM Value
+tyGetRandom ty env = case tyMkRandom ty env of
   Nothing -> return . Wrong $ "tyGetRandom: Could not generate random value from " ++ show ty
-  Just rndval -> rndval
+  Just rndval -> rndval 
 
--- | Given a type, creates a random value, stores it in the heap and returns a heap reference
-mkRandomHR :: ConcreteType -> IM HeapReference
-mkRandomHR = mkHeapRef . mkRandomVal
+-- | Given a type, creates a random value, stores it in the heap and returns a heap reference. An environment might be needed in case the type is a reference to the heap
+mkRandomHR :: ConcreteType -> Env -> IM HeapReference
+mkRandomHR ct env = mkHeapRef $ mkRandomVal ct env
 
 -- | Given a value, stores it in the heap and returns a heap reference
 mkHeapRef :: IM Value -> IM HeapReference

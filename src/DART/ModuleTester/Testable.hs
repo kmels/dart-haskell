@@ -43,7 +43,7 @@ instance TestableType LambdaAbstraction where
   testType (LambdaAbstraction concrete_type general_type) lambda_exp env = do
     --watchTestM $ " Generating a " ++ concrete_type
     fun <- eval lambda_exp env
-    heap_ref@(rndval_id,_) <- mkRandomHR concrete_type
+    heap_ref@(rndval_id,_) <- mkRandomHR concrete_type env
     apply fun rndval_id (heap_ref:env)
 
 class MaybeTestable a where

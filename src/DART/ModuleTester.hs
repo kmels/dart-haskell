@@ -44,10 +44,13 @@ testModule m@(Module mname tdefs vdefgs) libs = do
   
   -- do the testing!
   test_results <- mapM (flip testVdefg env) vdefgs -- [Maybe TestResult]  
-  
-  let results = catMaybes test_results
-      mkVdefName = qualifiedVar . vdefg_name
-  return $ zip (map mkVdefName results) results
+
+  return . collectResults . catMaybes $ test_results
+  where
+    collectResults :: [TestResult] -> [(Id,TestResult)]
+    collectResults [] = []
+    collectResults (t@(TestResult name _ val):ts) = (qualifiedVar name,t):(collectResults ts)
+    collectResults (t@(TestResultList ts):ts') = collectResults ts ++ collectResults ts'
 
 testVdefg :: Vdefg -> Env -> IM (Maybe TestResult)
 testVdefg (Nonrec vdef) env = do
@@ -104,4 +107,6 @@ testHaskellExpression m@(Module mname tdefs vdefgs) expression_string env =
 --       Nothing -> return Nothing --TODO
       
 showTest :: TestResult -> IM String
-showTest = return . show 
+showTest tr@(TestResult qvar exp val) = do
+  return $ show $ tr
+showTest tr = return $ show $ "LIST"
