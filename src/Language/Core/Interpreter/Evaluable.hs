@@ -251,6 +251,7 @@ instance Evaluable Exp where
     exp_value <- eval address (heap_reference:env)
 
     watchReductionM $ "\tDoing case analysis for " ++ show vbind_var
+    
     maybeAlt <- findMatch exp_value alts
     let exp = maybeAlt >>= Just . altExp -- Maybe Exp
   
@@ -270,7 +271,10 @@ instance Evaluable Exp where
         res <- eval exp (alt_env ++ heap_reference:env)
         -- when(isAcon alt) $ deleteAltBindedVars alt
         return res
-      _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
+      _ -> -- check if the error happens because we are comparing an error, and propagate that one instead of a new one
+        case exp_value of
+          e@(Wrong _) -> return e
+          _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
 
   eval (Lit lit) _ = eval lit []
 
