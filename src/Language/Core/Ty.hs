@@ -60,6 +60,7 @@ functionTyArgs (Tapp i r) = extractArrowArg i >>= return . append (extractArrowR
     extractArrowReturnTy :: Ty -> [Ty]
     extractArrowReturnTy ty | isFunctionTy ty = fromJust $ functionTyArgs ty
                             | otherwise = [ty]
+functionTyArgs _ = Nothing
 
 isFunctionTy :: Ty -> Bool
 isFunctionTy (Tapp i _) = isJust . extractArrowArg $ i

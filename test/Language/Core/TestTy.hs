@@ -22,17 +22,58 @@ test :: Test
 test = unsafePerformIO $ testIO 
   
 testIO :: IO Test
-testIO = do      
+testIO = do
+  let
+    -- map an id,type to id,function signature    
+    funSignature :: (Id,Ty) -> (Id,Maybe [Ty])
+    funSignature (id,ty) = (id, functionTyArgs ty)
+                               
   -- trees
   onTreesTys <- getDefTypes "examples/testing/OnTrees.hs"
-  let trees_test = checkExpectedProperties onTreesTys expectedTyPropertiesOnTrees
+  let
+    trees_funsignatures_test = checkExpected (map funSignature onTreesTys) onTreesFunSignatures
+    trees_typeproperties_test = checkExpectedProperties onTreesTys expectedTyPropertiesOnTrees
+    trees_test = TestList [ trees_typeproperties_test, trees_funsignatures_test]
   
   -- nums
   onNumsTys <- getDefTypes "examples/interpreter/GHC.Num.hs"
-  let nums_test = checkExpectedProperties onNumsTys expectedTyPropertiesOnNums
+  let
+    nums_test_funsignatures = checkExpected (map funSignature onNumsTys) onNumsFunSignatures
+    nums_test_typroperties = checkExpectedProperties onNumsTys expectedTyPropertiesOnNums
+    nums_test = TestList [nums_test_typroperties, nums_test_funsignatures]
 
+  putStrLn $ case lookup "plusOneIntreG" (map funSignature onNumsTys) of
+    Just _ -> "found ty"
+    Nothing -> "Found nothing ty"
+
+  mapM (putStrLn . show) $ map funSignature onTreesTys
+  
   return $ TestList [trees_test,nums_test]
 
+-- | Expected function signatures on DART.Examples.GHC.Num
+onNumsFunSignatures :: [(Id, Maybe [Ty])]
+onNumsFunSignatures = [
+  ("plusOneIntreG", Just [intTy,intTy])
+  , ("twicereI", Just [intTy,intTy])
+  ,  (mdl_name @@ "sumPlusOne", Just [intTy,intTy,intTy])
+  ]
+  where
+    mdl_name = "main:DART.Examples.GHC.Num"
+
+-- | Expected function signatures on DART.Examples.GHC.Num
+onTreesFunSignatures :: [(Id, Maybe [Ty])]
+onTreesFunSignatures = [
+  (mdl_name @@ "depthFirstSearch", Just [intTreeTy,listOfTy intTy])
+  , (mdl_name @@ "sumTreeI", Just [intTreeTy,intTy])
+  , (mdl_name @@ "sumOfTreeSums", Just [listOfTy $ intTreeTy,intTy])
+  , (mdl_name @@ "failOnOddSumI", Just [intTreeTy, intTy])
+  , (mdl_name @@ "failOnEvenSumI", Just [intTreeTy, intTy])
+  , (mdl_name @@ "takeElems", Just [intTreeTy, intTy, maybeTy $ listOfTy intTy])
+  , (mdl_name @@ "foldFold", Just [maybeTy $ listOfTy $ intTy,intTy])
+  ]
+  where
+    mdl_name = "main:DART.Examples.Testing.OnTrees"
+    
 -- | Properties that we expect on the types of definitions in OnTrees
 expectedTyPropertiesOnTrees :: [(Id,Ty -> Bool)]
 expectedTyPropertiesOnTrees = [("main:DART.Examples.Testing.OnTrees.sumTreeI", not . isPrimitive)
@@ -61,3 +102,16 @@ getDefTypes filepath = do
     extractTypes (Rec []) = []
     extractTypes (Rec (vdef@(Vdef(qvar, ty, _)):vs)) = [(qualifiedVar qvar, ty)] ++ extractTypes (Rec vs)
     
+intTy :: Ty
+intTy = mkTcon "ghczmprim" ["GHC"] "Types" "Int"
+
+listOfTy :: Ty -> Ty
+listOfTy t = Tapp (mkTcon "ghczmprim" ["GHC"] "Types" "ZMZN") t
+
+intTreeTy = mkTcon "main" ["DART","Examples","Testing"] "OnTrees" "IntTree"
+
+mkTcon :: String -> [String] -> String -> String -> Ty
+mkTcon pkg_name pkg_ids modl_id tcon_id = Tcon (Just (M (P (pkg_name),pkg_ids,modl_id)), tcon_id)
+
+maybeTy :: Ty -> Ty
+maybeTy t = Tapp (mkTcon "base" ["Data"] "Maybe" "Maybe") t

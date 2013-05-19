@@ -15,6 +15,7 @@
 
 module DART.Examples.Testing.OnTrees(  
   sumTreeI
+  , myLeaf1,myLeaf2
   --, sumTree
   ,failOnEvenSumI
   ,failOnOddSumI
