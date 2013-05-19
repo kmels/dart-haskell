@@ -18,8 +18,10 @@ module ExtCore.TypeOf where
 
 import DART.FileIO
 import Language.Core.Core
-import Language.Core.Util(qualifiedVar)
+import Language.Core.Util(qualifiedVar,showExtCoreTypeVerbose)
 import Text.Encoding.Z(zDecodeString)
+import Data.Maybe(fromJust)
+import System.IO.Unsafe(unsafePerformIO)
 
 typeOf :: FilePath -> Id -> IO (Maybe Ty)
 typeOf filepath fname = do
@@ -35,6 +37,7 @@ typeOf filepath fname = do
     types (Rec []) = []
     types (Rec (vdef@(Vdef(qvar, ty, _)):vs)) = [(qualifiedVar qvar, ty)] ++ types (Rec vs)
   
+printTypeOf f i = mapM putStrLn $ lines $ showExtCoreTypeVerbose . fromJust $ unsafePerformIO $ typeOf f i
 
 -- type Name = String
 -- data Red = TApp Red Red | Tvar Name

@@ -3,18 +3,21 @@ module Lists (
   , naturals
   , first50
   , first3nats
+  , first2, first0
   , first5nats, first5nats_length
   , first10primes
   , five
   , str
   , chr
+  , sumfifty
   , takeTest1, takeTest2, takeTest3, takeTest4, takeTest5, takeTest6
   , false1
   , intListLength, hundred, four
   , odd, even, evenOf10
 ) where
 
-import Prelude hiding (even,odd,take)
+import Prelude hiding (even,odd)
+
 data List a = Nil | Cons a (List a)
 
 listHead :: List a -> a 
@@ -67,6 +70,8 @@ takeTest4 = take (5-5) [1,2,3]
 takeTest5 = take 1 [1]
 takeTest6 = take 2 [1,2,3]
 
+sumfifty = sum [1..50]
+  
 false1 :: Bool
 false1 = (takeTest2 :: [Int]) == (takeTest1 :: [Int])
 
@@ -93,6 +98,10 @@ evenOf10 = even 10
 --            | length xs == length ys && null (xs \\ ys) = MEQ
 --            | otherwise = MIN
 
-take n _      | n <= 0 =  []
-take _ []              =  []
-take n (x:xs)          =  x : take (n-1) xs
+--take n _      | n <= 0 =  []
+--take _ []              =  []
+--take n (x:xs)          =  x : take (n-1) xs
+
+
+first2 = take 2 [1,2,3,4,5]
+first0 = take 0 [1,2]

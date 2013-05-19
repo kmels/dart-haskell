@@ -22,7 +22,7 @@ test :: Test
 test = unsafePerformIO $ testIO 
   
 testIO :: IO Test
-testIO = do
+testIO = do      
   -- trees
   onTreesTys <- getDefTypes "examples/testing/OnTrees.hs"
   let trees_test = checkExpectedProperties onTreesTys expectedTyPropertiesOnTrees
@@ -30,22 +30,23 @@ testIO = do
   -- nums
   onNumsTys <- getDefTypes "examples/interpreter/GHC.Num.hs"
   let nums_test = checkExpectedProperties onNumsTys expectedTyPropertiesOnNums
-  return $ TestList [trees_test] --, onNumsTest]
+
+  return $ TestList [trees_test,nums_test]
 
 -- | Properties that we expect on the types of definitions in OnTrees
 expectedTyPropertiesOnTrees :: [(Id,Ty -> Bool)]
 expectedTyPropertiesOnTrees = [("main:DART.Examples.Testing.OnTrees.sumTreeI", not . isPrimitive)
-                              , ("main:DART.Examples.Testing.OnTrees.sumTreeI", isLambdaArrow)
-                              , ("main:DART.Examples.Testing.OnTrees.failOnOddSumI", isLambdaArrow)
+                              , ("main:DART.Examples.Testing.OnTrees.sumTreeI", isFunctionTy)
+                              , ("main:DART.Examples.Testing.OnTrees.failOnOddSumI", isFunctionTy)
                               ]
 
 -- | Properties that we expect on the types of definitions in OnTrees
 expectedTyPropertiesOnNums :: [(Id,Ty -> Bool)]
 expectedTyPropertiesOnNums = [("main:DART.Examples.GHC.Num.numberTen", isPrimitive)
                              , ("main:DART.Examples.GHC.Num.fib0", isPrimitive)
-                             , ("main:DART.Examples.GHC.Num.isTenEven", isLambdaArrow)
-                             , ("main:DART.Examples.GHC.Num.plusOneIntreX", isLambdaArrow)
-                             , ("main:DART.Examples.GHC.Num.sumPlusOne", isLambdaArrow)
+                             , ("main:DART.Examples.GHC.Num.isTenEven", not . isFunctionTy)
+                             , ("plusOneIntreG", isFunctionTy)
+                             , ("main:DART.Examples.GHC.Num.sumPlusOne", isFunctionTy)
                              ]
 
 -- | Given a file, extract all the identifiers with its types

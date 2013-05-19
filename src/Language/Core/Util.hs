@@ -156,6 +156,8 @@ qualifiedVar :: Qual Var -> String
 qualifiedVar (Nothing,var) = var
 qualifiedVar (Just mname,var) = zDecodeString $ show mname ++ "." ++ var
 
+showQualified = qualifiedVar
+
 qualIsTmp :: Qual Var -> Bool
 qualIsTmp (Nothing,_) = True
 qualIsTmp _ = False

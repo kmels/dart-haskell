@@ -101,13 +101,19 @@ runDART = do
   
   libs_env <- mkLibsEnv
   let env = module_env ++ libs_env
-      eval_funname = evaluate_function settgs      
-  -- What should we eval? a function or the whole module?  
-  evaluate m env eval_funname
+      eval_funname = evaluate_function settgs
+      test_funname = test_function settgs
+
+  io . putStrLn $ eval_funname
+  io . putStrLn $ test_funname
+  
+  -- What should we eval? a function or the whole module?
+  unless (not $ null test_funname) $
+    evaluate m env eval_funname
   
   -- What should we test? a function or the whole module?  
-  --when (not (null eval_funname)) $ test m env (test_function settgs)
-  test m env (test_function settgs)
+  unless (not $ null eval_funname) $ 
+    test m env test_funname
   
   where
     test :: Module -> Env -> String -> IM ()
@@ -118,7 +124,9 @@ runDART = do
       let prettyPrint :: (Id,T.TestResult) -> IM String
           prettyPrint (id,test_result) = T.showTest test_result >>= return . (++) (id ++ ": \n")
 
-      debugMStep $ "Module test results "
+      io . putStrLn $ "**************************************************"      
+      io . putStrLn $ "Module test results "
+      io . putStrLn $ "**************************************************"      
       mapM prettyPrint results >>= io . mapM_ putStrLn
       
       h <- gets heap
@@ -131,7 +139,9 @@ runDART = do
           prettyPrint (Just (id,test_result)) = T.showTest test_result >>= return . (++) (id ++ ": \n")
       in do
         res <- T.testHaskellExpression m fun_name env >>= prettyPrint
-        debugMStep $ "Test results of " ++ fun_name
+        io . putStrLn $ "**************************************************"
+        io . putStrLn $ "Test results of " ++ fun_name
+        io . putStrLn $ "**************************************************"
         io . putStrLn $ res
         (gets heap >>= \h -> whenFlag show_heap $ io . printHeap $ h)
       
@@ -143,8 +153,11 @@ runDART = do
       -- funt ion to pretty print
       let prettyPrint :: (Id,Value) -> IM String
           prettyPrint (id,val) = showM val >>= return . (++) (id ++ " => ")
-        
-      debugMStep $ "Module definitions evaluation: "
+      
+      io . putStrLn $ "**************************************************"      
+      io . putStrLn $ "Module definitions evaluation: "
+      io . putStrLn $ "**************************************************"
+      
       mapM prettyPrint vals >>= io . mapM_ putStrLn
       
       h <- gets heap
@@ -162,6 +175,8 @@ runDART = do
       when (show_heap $ st) $ io . printHeap $ h
       
       -- output computed result
-      debugMStep $ "Evaluation of " ++ fun_name
+      io . putStrLn $ "**************************************************"
+      io . putStrLn $ "Evaluation of " ++ fun_name      
+      io . putStrLn $ "**************************************************"
       showM result >>= io . putStrLn
 

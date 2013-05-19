@@ -47,10 +47,11 @@ mkRandomVal (DType (DataType id)) env = do
 -- value of type of the sum type
 sumTypeMkRandom :: [DataCon] -> Env -> IM Value
 sumTypeMkRandom [] _ = return . Wrong $ "@dconsMkRandom: No data constructor"
-sumTypeMkRandom tcs@(dc:ds) env = do -- TODO, consider other data cons (pick one randomly)
-  -- pick a random data constructor
-  typecons_idx <- io . getStdRandom $ randomR (0,length ds)
-  let typecons = tcs !! typecons_idx
+sumTypeMkRandom tcs@(dc:dcs) env = do 
+  -- randomly pick one data constructor
+  typecons_idx <- io . getStdRandom $ randomR (0,length dcs)
+  let typecons@(MkDataCon typecons_id _) = tcs !! typecons_idx
+  --io . putStrLn $ "Picked type cons: " ++ typecons_id
   tyConMkRandom typecons env
 
 -- | Creates a value using a type constructor, exhausting every type argument

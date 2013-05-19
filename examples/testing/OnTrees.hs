@@ -19,7 +19,7 @@ module DART.Examples.Testing.OnTrees(
   ,failOnEvenSumI
   ,failOnOddSumI
   ,sumOfTreeSums
-  ,myTree) where
+  ,myTree,takeElems,depthFirstSearch,foldFold) where
 
 import Data.Monoid
 data IntTree = Leaf Int | Branch IntTree IntTree
@@ -47,6 +47,24 @@ failOnOddSumI tree = let sum = sumTreeI tree in if (sum `mod` 2 == 0) then sum e
 
 sumOfTreeSums :: [IntTree] -> Int
 sumOfTreeSums = sum . map sumTreeI
+
+-- | Given a tree and a number `n`, return its first `n` elements (depth first search).
+-- returns a Just iff the given tree is of size n
+takeElems :: IntTree -> Int -> Maybe [Int]
+takeElems t n = let elems = depthFirstSearch t
+                in if (length elems > n)
+                   then Just $ take n elems
+                   else Nothing
+
+-- | Perform depth-first search on an int tree, return its elements
+depthFirstSearch :: IntTree -> [Int]
+depthFirstSearch (Leaf i) = [i]
+depthFirstSearch (Branch t r) = depthFirstSearch t ++ depthFirstSearch r
+
+foldFold :: Maybe [Int] -> Int
+foldFold Nothing = error "Got nothing"
+foldFold (Just []) = error "Empty list"
+foldFold (Just (x:_)) = x
 
 -- | Transverses an IntTree and sums every node value
 -- sumTree :: Monoid a => SumableTree a -> a
