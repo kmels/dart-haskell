@@ -49,23 +49,14 @@ instance Evaluable HaskellExpression where
     -- | Is it a function defined within the module?
     case (m `moduleFindVdefByName` expression_string) of
       Just vdef -> do
-        debugM $ "Found a definition of " ++ expression_string
-        --eval (ModuleFunction vdef m) env
+        watchReductionM $ "Found a definition of " ++ expression_string
         eval (Nonrec vdef) env
       Nothing -> do
         debugM $ "Did not found any function named " ++ expression_string
         let 
           fnames = concatMap vdefgNames vdefgs -- [String]
           fnames_vdefgs = zip fnames vdefgs  -- [(String,Vdefg)]
-          --maybeVdefg = find (\t -> fst t == id) fnames_vdefgs >>= return . snd -- :: Maybe Vdefg
-
-        debugM $ show $ fnames
-        debugM $ show $ length fnames
-        debugM $ show $ length vdefgs
-        debugM $ show $ fnames_vdefgs
-        debugM $ show $ (map fst fnames_vdefgs)
-        --debugM $ show $ maybeVdefg
-        
+                  
         jitMaybeVdef <- jitCompile hs
         
         case jitMaybeVdef of
@@ -82,23 +73,6 @@ instance Evaluable Vdefg where
         vals <- mapM (\(_,address) -> eval address env) refs
         let mkList x = [x]
         return . MkListOfValues $ zip (map mkList ['a'..'z']) vals 
-  
---instance Evaluable ModuleFunction where
-  --eval (ModuleFunction vdef m@(Module mname tdefs vdefgs)) env = evalVdef
-  -- eval (ModuleFunction vdefg m@(Module mname tdefs vdefgs)) env = 
-  --   case vdefg of
-  --     one_def@(Nonrec vdef) -> do
-  --       [hr@(_,address)] <- evalVdefg one_def env -- this pattern match should always be error-free
-  --       eval address env
-        
-  --     -- If the definition is recursive, fetch all the heap references
-  --     -- and then look for the given function (variable) name 
-  --     rdefs@(Rec defs) -> do
-  --       debugM $ "Found recursive definition "
-  --       --debugM $ "Vdefg: " ++ show vdefg
-  --       heap_refs <- evalVdefg defs env 
-  --       vals <- mapM (\(_,address) -> eval address env) heap_refs
-  --      return . MkListOfValues $ zip (map vdefName defs) vals                    
 
 -- | Given an environment, looks for the address in the heap, evals a thunk using the given environment if necessary to return a value
 instance Evaluable HeapAddress where
@@ -122,7 +96,7 @@ instance Evaluable Thunk where
   eval (Thunk exp env) e = do -- TODO. To comment: Why we don't care about the second env?
     ti <- gets tab_indentation
     let ?tab_indentation = ti
-    debugM $ "Evaluating thunk: " ++ showExp exp
+    watchReductionM $ "Evaluating thunk: " ++ showExp exp
     eval exp (env ++ e) -- (!) passing (e ++ env) instead produces an infinite loop
 
 instance Evaluable Value where
@@ -132,17 +106,7 @@ instance Evaluable Value where
   eval v env = return $ Wrong $ "Wrong Evaluable Value: " ++ show v
   
 instance Evaluable Pointer where
---  eval :: Pointer -> Env -> IM Value
-  eval (MkPointer address) env = do
-    debugM "Evaluable Pointer"
-    eval address env
-  
--- | Given a Pointer HeapAddress, eval a Thunk if necessary to return a Value represented
--- by the address 
--- evalPointer :: Value -> Env -> IM Value
--- evalPointer (Pointer address) env = evalHeapAddress address env
--- evalPointer e@(Wrong s) _ = return e
--- evalPointer _ _ = return . Wrong $ "evalPointer: The impossible happened"
+  eval (MkPointer address) env = eval address env
 
 instance Evaluable Exp where
   -- Integer,Char construction
@@ -164,16 +128,16 @@ instance Evaluable Exp where
         case qvar_val of
           Right (Wrong _) -> mkRefAndApply f argument_exp -- not found, 
           whnf -> do
-            debugM $ "NOT Skipping the making of reference, " ++ (qualifiedVar qvar) ++ " is already in env"
+            watchReductionM $ "NOT Skipping the making of reference, " ++ (qualifiedVar qvar) ++ " is already in env"
             mkRefAndApply f argument_exp -- not found, 
             --apply f (qualifiedVar qvar) env --don't create thunk for variables in scope
       _ -> mkRefAndApply f argument_exp
     where
     mkRefAndApply :: Value -> Exp -> IM Value
     mkRefAndApply f arg_exp = do
-      debugM "Making a reference from/to the function argument "
+      watchReductionM "Making a reference from/to the function argument "
       heap_reference@(id,arg_address) <- mkHeapReference arg_exp env
-      debugM $ "Argument to function has reference: " ++ show heap_reference
+      watchReductionM $ "Argument to function has reference: " ++ show heap_reference
   
       res <- apply f id (heap_reference:env) -- Note1: the address is paassed 
       return res
@@ -182,8 +146,6 @@ instance Evaluable Exp where
   eval e@(Appt exp ty) env = do 
     ti <- gets tab_indentation  
     let ?tab_indentation = ti
-    debugM $ showExp exp
-    debugM $ showType ty
     case exp of
       (Var qvar) -> evalExpI exp env "Typed Var application "
       (Dcon qvar) -> evalExpI exp env $ "Typed Dcon application  " ++ qualifiedVar qvar
@@ -202,7 +164,7 @@ instance Evaluable Exp where
   -- returns a Fun value
   eval e@(Lam (Vb (var_name,ty)) exp) env = do
     --whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
-    debugM $ "Making function from lambda abstraction \\" ++ var_name ++ " :: " ++ showType ty ++ " -> exp "
+    watchReductionM $ "Making function from lambda abstraction \\" ++ var_name ++ " :: " ++ showType ty ++ " -> exp "
   
     -- If we abstract over a variable with a free type variable  
     -- e.g. \zddNumTmp :: Num a 
@@ -210,8 +172,8 @@ instance Evaluable Exp where
     
     case exp of
       App _ (Var x) -> if (qualifiedVar x == showType ty)
-                       then debugM ("HOLA" ++ showType ty ++" . " ++ qualifiedVar x) >> return (Fun mkFun $ "\\" ++ var_name ++ " -> exp")
-                       else debugM ("HOLA" ++ showType ty ++" . " ++ qualifiedVar x) >> return (Fun mkFun $ "\\" ++ var_name ++ " -> exp")
+                       then return (Fun mkFun $ "\\" ++ var_name ++ " -> exp")
+                       else return (Fun mkFun $ "\\" ++ var_name ++ " -> exp")
       exp' -> do
         ti <- gets tab_indentation
         let ?tab_indentation = ti
@@ -231,7 +193,7 @@ instance Evaluable Exp where
   -- ignores the type argument, evaluating the expression
   eval e@(Lam (Tb (var_name,_)) exp) env = do
     whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
-    debugM $ "Saving type "   ++ var_name ++ " as a free type var"
+    watchReductionM $ "Saving type "   ++ var_name ++ " as a free type var"
     free_type_ref <- memorize (Right . FreeTypeVariable $ var_name) var_name
     evalExpI exp (free_type_ref:env) "Evaluating lambda body (exp)"
       
@@ -255,19 +217,17 @@ instance Evaluable Exp where
     maybeAlt <- findMatch exp_value alts
     let exp = maybeAlt >>= Just . altExp -- Maybe Exp
   
-    --debugM $ "EXP: "++ show exp
     case maybeAlt of
       Just alt -> do -- a matched alternative was found, in case it's a constructor, bind its arguments
         let exp = altExp alt
       
-        debugM "Making altEnv"
+        watchReductionM "Making altEnv"
         alt_env <- mkAltEnv exp_value alt
-        debugM $ "This is the alt env: " ++ show alt_env
-        debugM "End making altEnv"
+        watchReductionM $ "This is the alt env: " ++ show alt_env
         -- TODO IN ENVIRONMENT when(isAcon alt) $ var_val `bindAltVars` alt
         ti <- gets tab_indentation
         let ?tab_indentation = ti
-        debugM $ "Evaluating case exp = " ++ showExp exp
+        watchReductionM $ "Evaluating case exp = " ++ showExp exp
         res <- eval exp (alt_env ++ heap_reference:env)
         -- when(isAcon alt) $ deleteAltBindedVars alt
         return res
@@ -298,19 +258,15 @@ mkAltEnv v@(Num _) (Acon (_,"Izh") _ [(vbind_var,vbind_ty)] _) =
 mkAltEnv (Num n) (Acon q tbinds vbinds exp) = (debugM  $ " !!! WTF" ++ show q) >> return []
   
 mkAltEnv (TyConApp (MkDataCon id _) pointers) (Acon _ _ vbinds _) = do
-  debugM ("pointers: " ++ show pointers)
-  debugM ("Vbinds :: " ++ show vbinds)
   if (length pointers /= length vbinds)
   then error $ "The impossible happened @mkAltEnv, length vals /= length vbinds," ++ id
   else do
-     debugM "CAFE" 
      -- get vals and memorize that
      let ids = (map fst vbinds)
      return $ ids `zip` (map ptr_address pointers)  
 --     mapM (uncurry memorize) (addresses `zip` (map fst vbinds))
 mkAltEnv val alt = do
-  debugM $ " (!!!) Alert, mkAltEnv, val= " ++ show val ++ "\nalt= " ++ show alt
-  debugM $ "Returning empty env (didn't bind anything)"
+  watchReductionM $ "Returning empty env (didn't bind anything)"
   return []
 
 
@@ -330,13 +286,13 @@ findMatch val (def_alt@(Adefault exp):alts) =
 findMatch val (a:alts) = do
   ti <- gets tab_indentation
   let ?tab_indentation = ti
-  debugM $ "Comparing " ++ show val ++ " and " ++ showAlt a
+  watchReductionM $ "Comparing " ++ show val ++ " and " ++ showAlt a
   matches <- val `matches` a
   
   if (not matches)
   then val `findMatch` alts   
   else do
-    debugM $ "Found case match for" ++ show val
+    watchReductionM $ "Found case match for" ++ show val
     return . Just $ a
 
 matches :: Value -> Alt -> IM Bool
@@ -394,14 +350,14 @@ evalExpI exp env desc = do
   ti <- gets tab_indentation
   let ?tab_indentation = ti
   
-  debugMStep $ desc ++ " {"
+  watchReductionM $ desc ++ " {"
   debugSubexpression exp 
   increaseIndentation  
   
   res <- eval exp env
-  debugM $ "evalExpI#res: " ++ show res
+  watchReductionM $ "evalExpI#res: " ++ show res
   decreaseIndentation
-  debugM $ "}" -- debugMStepEnd
+  watchReductionM $ "}" -- debugMStepEnd
   
   return res
   
@@ -409,13 +365,12 @@ evalExpI exp env desc = do
 evalId :: Id -> Env -> IM Value
 --evalId i e = lookupId i e >>= either (evalThunk e) return
 evalId i e = do
-  debugM $ "Evaluating variable " ++ i
+  watchReductionM $ "Evaluating variable " ++ i
   ptr <- getPointer i e 
   case ptr of
     e@(Wrong s) -> return e -- i was not found in env
     Pointer (MkPointer heap_address) -> do -- we know something about i in env
       eTnkVal <- lookupMem heap_address
-      --debugM $ "lookupId " ++ i ++ " = " ++ show eTnkVal
       whnf <- case eTnkVal of  -- evaluate to weak head normal form
         Left thunk -> do
           val <- eval thunk e
@@ -423,7 +378,7 @@ evalId i e = do
           io $ H.insert h heap_address (Right val)
           return val
         Right val -> return val  -- it is already in weak head normal form
-      debugM (show i ++ " ~> " ++ show whnf)
+      watchReductionM (show i ++ " ~> " ++ show whnf)
       return whnf
   
 -- | Function application
@@ -485,7 +440,6 @@ evalVdefg (Rec vdefs) env = mapM (flip evalVdefg env . Nonrec) vdefs >>= return 
   
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) env = do
   debugMStep $ "Evaluating value definition: " ++ qualifiedVar qvar
-  debugM $ "doEvalVdefg; env.size == " ++ (show . length $ env)
   whenFlag show_expressions $ indentExp exp >>= debugM . (++) "Expression: "
   
   increaseIndentation

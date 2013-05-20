@@ -75,8 +75,7 @@ default_includes = [
 -- the base library and the builtin functions for the interpreter to work.
 -- It retuns an environment, a list of heap references that is.
 mkLibsEnv :: IM Env
-mkLibsEnv = do
-  debugMStep ("Loading includes ")
+mkLibsEnv = do  
   settings <- gets settings
     
   -- get the list of includes and acknowledge definitions in heap
@@ -100,13 +99,12 @@ runDART = do
   m@(Module mdlname tdefs vdefgs) <- io . readModule $ file settgs
   module_env <- acknowledgeModule m
   
+  debugMStep ("Loading includes ")
   libs_env <- mkLibsEnv
+  
   let env = module_env ++ libs_env
       eval_funname = evaluate_function settgs
       test_funname = test_function settgs
-
-  io . putStrLn $ eval_funname
-  io . putStrLn $ test_funname
   
   -- What should we eval? a function or the whole module?
   unless (not $ null test_funname) $
