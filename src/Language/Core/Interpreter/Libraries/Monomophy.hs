@@ -20,7 +20,7 @@ module Language.Core.Interpreter.Libraries.Monomophy(
 import DART.CmdLine
 import Language.Core.Interpreter(evalId)
 import Language.Core.Interpreter.Structures
-import Language.Core.Interpreter.Util(return')
+import Language.Core.Interpreter.Util(return',idName)
 -- | Create a function that is indented to be passed to a polymorphic function
 -- to create a monomorphic function. 
 mkMonomophier :: Id -> (Id, Either Thunk Value)

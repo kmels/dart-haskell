@@ -28,6 +28,7 @@ import qualified Language.Core.Interpreter as I
 import           Language.Core.Interpreter.Acknowledge(acknowledgeModule)
 import qualified Language.Core.Interpreter.Libraries as Libs
 import           Language.Core.Interpreter.Structures
+import           Language.Core.Interpreter.Util(showM)
 import           Language.Core.Util(showType)
 import           Language.Core.Vdefg
 import           System.Directory(getCurrentDirectory)

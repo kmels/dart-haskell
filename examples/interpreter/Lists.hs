@@ -98,10 +98,6 @@ evenOf10 = even 10
 --            | length xs == length ys && null (xs \\ ys) = MEQ
 --            | otherwise = MIN
 
---take n _      | n <= 0 =  []
---take _ []              =  []
---take n (x:xs)          =  x : take (n-1) xs
-
-
-first2 = take 2 [1,2,3,4,5]
+first2 = let xs = [1..5] in xs `seq` (take 5 xs) --take 2 [1,2,3,4,5]
 first0 = take 0 [1,2]
+

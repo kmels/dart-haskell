@@ -16,13 +16,11 @@
 
 module Language.Core.Interpreter.Structures(
   io
-  , idName
   , increase_number_of_reductions
   -- heap operations
-  , store, newAddress, memorize, memorizeVal, memorizeThunk, mkVal, mkThunk, mkHeapReference, lookupMem
+  , store, newAddress, memorize, memorizeVal, memorizeThunk, mkVal, mkThunk, mkHeapReference
   , allocate
   -- pretty printing
-  , showM
   , DARTState(..)
   , Heap, Env, HeapAddress, HeapReference
   , IM
@@ -35,24 +33,27 @@ module Language.Core.Interpreter.Structures(
   , module Language.Core.Util
 ) where
 
--- Prelude and control
+--------------------------------------------------------------------------------
+-- control
 import           Control.Monad.Primitive
 import           Control.Monad.State
-import           Data.Char (isUpper)
+--------------------------------------------------------------------------------
+-- base type funs
 import           Data.Either(partitionEithers,rights)
 import           Data.List(intersperse)
-import           Data.List(findIndices)
-import           Prelude hiding (showList)
+import Data.Char (isUpper)
+import Data.List(findIndices)
+--------------------------------------------------------------------------------
 -- DART
 import           DART.InterpreterSettings
 -- Language.Core
 import           Language.Core.Core
 import           Language.Core.Util --(showType,showExtCoreType,showExp,wrapName)
 import           System.IO.Unsafe(unsafePerformIO)
+--------------------------------------------------------------------------------
 -- mutable hash tables; 
 -- package [hashtables](http://hackage.haskell.org/package/hashtables)
 import qualified Data.HashTable.IO as H
---import qualified Data.HashTable.ST.Cuckoo as C
 
 -- | A State passed around the interpreter
 data DARTState = DState {
@@ -137,57 +138,6 @@ instance Eq Value where
 --     (TyConApp tc addresses) -> showTyConApp tc addresses        
 --     otherVal -> return $ show otherVal -- wrong, num, string, fun, etc..
 
--- | There are some values that contain addresses for which we must, in order to
--- pretty print the given value, look up their actual value in the heap
-showM :: Value -> IM String
-showM (TyConApp tc ptrs) = showTyConApp tc ptrs
-showM val = return $ show val
-
-instance Show Value where
-  show (Wrong s) = "error: " ++ s
-  show (Num i) = show i
-  show (Rat r) = show r
-  show (Boolean b) = show b  
-  show (Char c) = show c
-  show (String s) = show s
-  show (Pair a b) = show (a,b)
-  show (Fun f ('$':s)) = drop (lastUpperIndex s) s where -- monomophied function, cut from the last upper case
-    lastUpperIndex = last . findIndices isUpper
-  show (Fun f s) = s  
---  show (List vs) = show vs  
-  show (TyConApp tc addresses) = "TyConApp(" ++ show tc ++ ", " ++ show addresses ++ ")"
-  show (Pointer address) = "Pointer to " ++ show address
-  show (FreeTypeVariable type_var) = type_var
-  show (MkListOfValues vals) = let
-    myIntersperse sep = foldr ((++) . (++) sep) []
-    in myIntersperse "\n\t" (map show vals)
-  show (SumType cons) = "SumType of " ++ myIntersperse "|" constructor_names
-    where
-      myIntersperse sep = foldr ((++) . (++) sep) []
-      constructor_names = map (\(MkDataCon id _) -> id) cons
-
-instance Show DataCon where
-  show (MkDataCon id []) = idName id
-  show (MkDataCon id types) = idName id ++ " :: " ++ types' where
-    types' :: String
-    types' | length types == 1 = show types 
-           | otherwise = concatMap (\t -> show t ++ " -> ") types
-
--- Take a qualified name and return only its last name. E.g. idName "main.Module.A" = "A"
-
-idName :: Id -> String
-idName id = let 
-  name = drop (lastDotIndex id + 1) id 
-  in case name of 
-    ":" -> "(:)"
-    _ -> name
-  where
-    isDot = ((==) '.')
-    dotIndexes = findIndices isDot
-    lastDotIndex = last . dotIndexes
-
-wrapInParenthesis s = "(" ++ s ++ ")"
-
 io :: MonadIO m => IO a -> m a
 io = liftIO
 
@@ -256,50 +206,49 @@ mkVarName = gets heap_count >>= return . (++) "dartTmp" . show
 increase_number_of_reductions :: DARTState -> DARTState
 increase_number_of_reductions s = s { number_of_reductions = number_of_reductions s + 1 }
 
-showList :: [Either Thunk Value] -> String
-showList elems = case partitionEithers elems of
-  ([],[]) -> "" -- no thunks, no vals
-  ([],(head:t:[])) -> "[" ++ show head ++ showTail t ++ "]" -- no thunks
-  _ -> show elems
+
+instance Show Value where
+  show (Wrong s) = "error: " ++ s
+  show (Num i) = show i
+  show (Rat r) = show r
+  show (Boolean b) = show b  
+  show (Char c) = show c
+  show (String s) = show s
+  show (Pair a b) = show (a,b)
+  -- If the function description is prepended by a $, it's a monomophied function, we should everything until we find the last upper case letter
+  show (Fun f ('$':s)) = 
+    let lastUpperIndex = last . findIndices isUpper
+    in  drop (lastUpperIndex s) s
+    
+  show (Fun f s) = s  
+  show (TyConApp tc addresses) = "TyConApp(" ++ show tc ++ ", " ++ show addresses ++ ")"
+  show (Pointer address) = "Pointer to " ++ show address
+  show (FreeTypeVariable type_var) = type_var
+  show (MkListOfValues vals) = let
+    myIntersperse sep = foldr ((++) . (++) sep) []
+    in myIntersperse "\n\t" (map show vals)
+  show (SumType cons) = "SumType of " ++ myIntersperse "|" constructor_names
+    where
+      myIntersperse sep = foldr ((++) . (++) sep) []
+      constructor_names = map (\(MkDataCon id _) -> id) cons
+
+instance Show DataCon where
+  show (MkDataCon id []) = idName id
+  show (MkDataCon id types) = idName id ++ " :: " ++ types' where
+    types' :: String
+    types' | length types == 1 = show types 
+           | otherwise = concatMap (\t -> show t ++ " -> ") types
+           
+
+-- | Take a qualified name and return only its last name. E.g. idName "main.Module.A" = "A"
+idName :: Id -> String
+idName id = let 
+  name = drop (lastDotIndex id + 1) id 
+  in case name of 
+    ":" -> "(:)"
+    _ -> name
   where
-    showTail :: Value -> String    
---    showTail (TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ((Right th):(Right tt):[])) = "," ++ show th ++ showTail tt
---    showTail (TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) = ""
-    showTail w@(Wrong _) = "," ++ show w
-    showTail xs = "????\t\t\t" ++ show xs ++ " \t\t\t"
-
-showTyConApp :: DataCon-> [Pointer] -> IM String
-showTyConApp tycon pointers = do
-  values <- mapM lookupPtr pointers
-  return $ showTyConVals tycon values
-  where
-    showTyConVals :: DataCon-> [Either Thunk Value] -> String
-    showTyConVals (MkDataCon "ghc-prim:GHC.Types.[]" []) [] = "[]" -- empty list
-    showTyConVals (MkDataCon "ghc-prim:GHC.Types.:" _) cns = showList cns -- lists
-    showTyConVals (MkDataCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = show (x,y) -- tuples
-    -- otherwise
-    showTyConVals (MkDataCon tycon_name []) vals = idName tycon_name ++ " " ++ showVals vals
-    showTyConVals (MkDataCon tycon_name _) vals = idName tycon_name ++ " " ++ showVals vals
-
-showVals :: [Either Thunk Value] -> String
-showVals vs = case partitionEithers vs of
-  ([],vals) -> concatMap (wrapCons) vals
-  (tnks,vals) -> concatMap (\tnk -> show tnk ++ " ") tnks ++ " ; " ++ concatMap (wrapCons) vals
-  where
-    wrapCons :: Value -> String
-    wrapCons t@(TyConApp (MkDataCon _ []) _) = show $ t -- if tycon expects no types, don't wrap
-    wrapCons t@(TyConApp _ _) = wrapInParenthesis . show $ t
-    wrapCons v = show v ++ " "
-
-lookupPtr :: Pointer -> IM (Either Thunk Value)
-lookupPtr (MkPointer address) = lookupMem address
-
-lookupMem :: HeapAddress -> IM (Either Thunk Value)
-lookupMem address = do
-  h <- gets heap
-  val <- io $ H.lookup h address
-  --watchReductionM $ " lookupMem: " ++ show val   
-  maybe fail return val 
-  where 
-    fail :: IM (Either Thunk Value)
-    fail = return . Right . Wrong $ "lookupH could not find heap reference " ++ show address
+    isDot = ((==) '.')
+    dotIndexes = findIndices isDot
+    lastDotIndex = last . dotIndexes
+    

@@ -29,7 +29,6 @@ import           Language.Core.Interpreter.Acknowledge(acknowledgeModule,
                                                        acknowledgeTypes, 
                                                        acknowledgeVdefgs,
                                                        acknowledgeVdefg)
-import           Language.Core.Interpreter.Util(return')
 import           Language.Core.Interpreter.Structures
 import           Language.Core.Interpreter.Evaluable
   
