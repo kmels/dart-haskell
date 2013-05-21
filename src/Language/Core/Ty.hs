@@ -49,8 +49,8 @@ isPrimitive _ = False
 -- e.g. a function whose signature is `Tree->Int->Maybe Int` returns
 -- Just [Tcon("Tree"),Tcon("Int"),(TApp (Tcon "Maybe") (Tcon "Int"))]
 -- Nothing is returned if the given type is not a function type
-functionTyArgs :: Ty -> Maybe [Ty]
-functionTyArgs (Tapp i r) = extractArrowArg i >>= return . append (extractArrowReturnTy r)
+funTyArgs :: Ty -> Maybe [Ty]
+funTyArgs (Tapp i r) = funArgTy i >>= return . append (extractArrowReturnTy r)
   where
     append :: [a] -> a -> [a]
     append = flip (:)
@@ -58,16 +58,16 @@ functionTyArgs (Tapp i r) = extractArrowArg i >>= return . append (extractArrowR
     -- | Given a function type, return the types in its signature
     -- given another type, returns the type
     extractArrowReturnTy :: Ty -> [Ty]
-    extractArrowReturnTy ty | isFunctionTy ty = fromJust $ functionTyArgs ty
+    extractArrowReturnTy ty | isFunctionTy ty = fromJust $ funTyArgs ty
                             | otherwise = [ty]
-functionTyArgs _ = Nothing
+                            
+funTyArgs _ = Nothing
 
 isFunctionTy :: Ty -> Bool
-isFunctionTy (Tapp i _) = isJust . extractArrowArg $ i
+isFunctionTy (Tapp i _) = isJust . funArgTy $ i
 isFunctionTy _ = False
 
 -- | Given a type that is the applied arrow to some other type, return the other type. e.g. extractArrowArg `(-> a)` returns the type `a`. Returns nothing if the type is not the applied arrow
-extractArrowArg :: Ty -> Maybe Ty
-extractArrowArg (Tapp (Tcon ((Just (M (P ("ghczmprim"),["GHC"],"Prim"))),"ZLzmzgZR")) ty) = Just ty
-extractArrowArg _ = Nothing
-
+funArgTy :: Ty -> Maybe Ty
+funArgTy (Tapp (Tcon ((Just (M (P ("ghczmprim"),["GHC"],"Prim"))),"ZLzmzgZR")) ty) = Just ty
+funArgTy _ = Nothing

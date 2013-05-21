@@ -18,7 +18,8 @@ ackermannE :: Int -> Int -> Int
 ackermannE m n | m == 0 = n + 1
                | m > 0 && n == 0 = ackermann (m-1) 1
                | m > 0 && n > 0 = ackermann (m-1) (ackermann m (n-1))
-               | otherwise = error "undefined"
+               | otherwise = error $ "undefined for m= " ++
+                             show m ++", n= " ++ show n
                              
 -- | The two-argument Ackermann-Péter function. This function is total computable but not a primitive recursive function. It is undefined for m
 -- fails with undefined

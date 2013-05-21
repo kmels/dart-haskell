@@ -20,8 +20,8 @@ import DART.ExtCore.TypeExtractor
 import Data.List((!!))
 
 -- | Randomize on external core types. An environment might be needed in case there is a reference to the heap as an identifier in e.g. a data type
-tyMkRandom :: Ty -> Env -> Maybe (IM Value)
-tyMkRandom ty env = extractType ty >>= \et -> case et of
+tyMkRandom :: Env -> Ty -> Maybe (IM Value)
+tyMkRandom env ty = extractType ty >>= \et -> case et of
   (CType ctype) -> Just $ mkRandomVal ctype env 
   --gtyp -> error $ "The impossible happened @tyMkRandom: It should not be called upon types that are not concrete (We are unpredicative), received " ++ show gtyp
   _ -> Nothing
@@ -73,7 +73,7 @@ tyRndValPtr ty env = do
 
 -- | Version of tyMkRandom that returns an error value in case the given type is not understood
 tyGetRandom :: Ty -> Env -> IM Value
-tyGetRandom ty env = case tyMkRandom ty env of
+tyGetRandom ty env = case tyMkRandom env ty of
   Nothing -> return . Wrong $ "tyGetRandom: Could not generate random value from " ++ show ty
   Just rndval -> rndval 
 

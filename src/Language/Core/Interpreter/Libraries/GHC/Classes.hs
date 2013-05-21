@@ -8,7 +8,9 @@ import Language.Core.Interpreter(evalId)
 
 all :: [(Id, Either Thunk Value)]
 all = [ equals
-        , lt, leq        
+        -- Bools
+      , conjunction -- (&&) :: Bool -> Bool -> Bool
+      , lt, leq        
         , gt, geq
         , mkMonomophier "ghc-prim:GHC.Classes.$p1Ord"
         , mkMonomophier "ghc-prim:GHC.Classes.$fOrdInt"
@@ -27,6 +29,18 @@ equals = (id, Right $ Fun (monomophy_2 "(==)" valEq) "polymorphic(==)") where
    valEq _ w@(Wrong _) = return w
    valEq v w = return . Boolean $ (==) v w   
 
+-- | (&&)
+conjunction :: (Id, Either Thunk Value)
+conjunction = (id, Right $ Fun (applyValFun_2 valConjunction) "binary(&&)") where
+   id = "ghc-prim:GHC.Classes.&&" 
+   valConjunction :: Value -> Value -> IM Value
+   valConjunction (Boolean b1) (Boolean b2) = return . Boolean $ (&&) b1 b2
+   valConjunction v@(Wrong _) _ = return . Wrong $ "First arg " ++ show v
+   valConjunction _ w@(Wrong _) = return . Wrong $ "Second arg " ++ show w
+   
+   applyValFun_2 :: (Value -> Value -> IM Value) -> Id -> Env -> IM Value
+   applyValFun_2 f id env = evalId id env >>= \val -> return $ Fun (\i e -> evalId i e >>= f val) "unary(&&)"
+   
 leq :: (Id, Either Thunk Value)
 leq = (id, Right $ Fun (monomophy_2 "(<=)" leq') "(<=)") where
   id = "ghc-prim:GHC.Classes.<="

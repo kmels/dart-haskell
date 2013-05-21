@@ -26,7 +26,7 @@ testIO = do
   let
     -- map an id,type to id,function signature    
     funSignature :: (Id,Ty) -> (Id,Maybe [Ty])
-    funSignature (id,ty) = (id, functionTyArgs ty)
+    funSignature (id,ty) = (id, funTyArgs ty)
                                
   -- trees
   onTreesTys <- getDefTypes "examples/testing/OnTrees.hs"

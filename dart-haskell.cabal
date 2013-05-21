@@ -35,6 +35,7 @@ library
                  DART.ExtCore.TypeExtractor,
                  DART.ExtCore.TypeExtractor.DataTypes,
                  Language.Core.Util,
+                 Language.Core.Ty,
                  Language.Core.Interpreter.Acknowledge,
                  Language.Core.Interpreter,
                  Language.Core.Interpreter.Structures,

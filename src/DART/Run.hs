@@ -131,7 +131,7 @@ runDART = do
       h <- gets heap
       whenFlag show_heap $ io . printHeap $ h
     
-    -- test specified function
+    -- | test specified function
     test m env fun_name =             
       let prettyPrint :: Maybe (Id,T.TestResult) -> IM String
           prettyPrint Nothing = return $ "No test result "
