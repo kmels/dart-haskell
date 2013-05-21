@@ -14,14 +14,16 @@
 module Language.Core.Interpreter.Libraries.GHC.Prim(all) where
 
 import Language.Core.Interpreter.Libraries.Monomophy(monomophy_2)
+import Language.Core.Interpreter.Libraries.ApplyValFun(applyFun_2)
 import DART.CmdLine
 import Language.Core.Interpreter(evalId)
 import Language.Core.Interpreter.Structures
 import Prelude hiding (all)
 
 all :: [(Id, Either Thunk Value)]
-all = [ intSharpSum,
-        geqSharp
+all = [ intSharpSum
+        , geqSharp, -- >=
+        , gThanSharp -- >#
       ]
       
 -- | >=#, greater equals on ints
@@ -38,6 +40,17 @@ geqSharp = (id, Right $ Fun (geq'_binary) "binary(>=#)")
       v -> return . Wrong $ "unary >=#, expected Int, got " ++ show val
     geq'_unary v _ _  = return . Wrong $ "binary >=#, expected Int, got " ++ show v
 
+-- | >=#, greater equals on ints
+gThanSharp :: (Id, Either Thunk Value)
+gThanSharp = (id, Right $ applyFun_2 ">#" gThanVal)
+  where 
+    id = "ghc-prim:GHC.Prim.>#"
+    
+    gThanVal :: Value -> Value -> IM Value
+    gThanVal (Num x) (Num y) = return . Boolean $ x < y 
+    gThanVal v@(Wrong _) _ = return . Wrong $ "binary(>#) expected an Int, got " ++ show v
+    gThanVal _ w@(Wrong _) = return . Wrong $ "unary(>#) expected an Int, got " ++ show w
+    
 -- | >=#, greater equals on ints
 leqSharp :: (Id, Either Thunk Value)
 leqSharp = (id, Right $ Fun (geq'_binary) "binary(<=#)")

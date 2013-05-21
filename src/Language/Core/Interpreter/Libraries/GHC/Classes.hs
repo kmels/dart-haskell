@@ -3,6 +3,7 @@ module Language.Core.Interpreter.Libraries.GHC.Classes where
 import Language.Core.Interpreter.Structures
 import Language.Core.Core
 import Language.Core.Interpreter.Libraries.Monomophy(monomophy_2, mkMonomophier)
+import Language.Core.Interpreter.Libraries.ApplyValFun(applyFun_2)
 import Language.Core.Interpreter.Apply
 import Language.Core.Interpreter(evalId)
 
@@ -31,15 +32,13 @@ equals = (id, Right $ Fun (monomophy_2 "(==)" valEq) "polymorphic(==)") where
 
 -- | (&&)
 conjunction :: (Id, Either Thunk Value)
-conjunction = (id, Right $ Fun (applyValFun_2 valConjunction) "binary(&&)") where
-   id = "ghc-prim:GHC.Classes.&&" 
-   valConjunction :: Value -> Value -> IM Value
-   valConjunction (Boolean b1) (Boolean b2) = return . Boolean $ (&&) b1 b2
-   valConjunction v@(Wrong _) _ = return . Wrong $ "First arg " ++ show v
-   valConjunction _ w@(Wrong _) = return . Wrong $ "Second arg " ++ show w
-   
-   applyValFun_2 :: (Value -> Value -> IM Value) -> Id -> Env -> IM Value
-   applyValFun_2 f id env = evalId id env >>= \val -> return $ Fun (\i e -> evalId i e >>= f val) "unary(&&)"
+conjunction = (id, Right $ applyFun_2 "&&" valConjunction)
+  where
+    id = "ghc-prim:GHC.Classes.&&" 
+    valConjunction :: Value -> Value -> IM Value
+    valConjunction (Boolean b1) (Boolean b2) = return . Boolean $ (&&) b1 b2
+    valConjunction v@(Wrong _) _ = return . Wrong $ "First arg " ++ show v
+    valConjunction _ w@(Wrong _) = return . Wrong $ "Second arg " ++ show w      
    
 leq :: (Id, Either Thunk Value)
 leq = (id, Right $ Fun (monomophy_2 "(<=)" leq') "(<=)") where

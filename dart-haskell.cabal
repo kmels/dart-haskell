@@ -43,6 +43,7 @@ library
                  Language.Core.Interpreter.Evaluable,
                  Language.Core.Interpreter.Libraries,
                  Language.Core.Interpreter.Libraries.Monomophy,
+                 Language.Core.Interpreter.Libraries.ApplyValFun,
                  Language.Core.Interpreter.Libraries.GHC.Classes
                  Language.Core.Interpreter.Libraries.GHC.CString,
                  Language.Core.Interpreter.Libraries.GHC.Err,
