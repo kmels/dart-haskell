@@ -22,7 +22,7 @@ import Prelude hiding (all)
 
 all :: [(Id, Either Thunk Value)]
 all = [ intSharpSum
-        , geqSharp, -- >=
+        , geqSharp -- >=
         , gThanSharp -- >#
       ]
       
