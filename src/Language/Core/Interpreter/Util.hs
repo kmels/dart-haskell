@@ -22,6 +22,7 @@ import           Data.Either(partitionEithers,rights)
 import Data.List(findIndices)
 import           Prelude hiding (showList)
 --------------------------------------------------------------------------------
+import DART.CmdLine(debugM)
 import Language.Core.Interpreter
 import Language.Core.Interpreter.Apply
 
@@ -63,21 +64,51 @@ showVals vs = case partitionEithers vs of
 showList :: [Either Thunk Value] -> IM String
 showList elems = case partitionEithers elems of
   ([],[]) -> return $ "" -- no thunks, no vals
-  ([],(head:t:[])) -> return $ "[" ++ show head ++ showTail t ++ "]" -- no thunks, only vals
-  elems@(tnks,vals) -> do
-    tnk_vals <- mapM (\t -> eval t []) tnks
-    strs <- mapM showM $ tnk_vals
-    --return . show $ strs
-    return $ show elems
-    --strs <- mapM showM tnk_vals -- thunks and vals
-    --return $ show $ strs 
-    --return $ show tnk_vals
+--  ([],(head:t:[])) -> return $ "[" ++ show head ++ showTail t ++ "]" -- no thunks, only vals
+  elems@((t:ts:[]),vals) -> do  
+    debugM $ " Printing list with " ++ (show . length) (t:ts:[]) ++ " thunks "
+      ++ "and " ++ (show . length) vals ++ " values"
+    
+    debugM $ " head thunk == " ++ show t
+    head_val <- eval t []
+    debugM $ " head thunk eval == " ++ show head_val    
+    head_str <- showM head_val
+    debugM $ " head_str == " ++ head_str    
+                
+    debugM $ " tail thunk == " ++ show ts
+    tail <- eval ts []
+    debugM $ " tail thunk val == " ++ show tail
+    
+    tail_str <- case tail of
+      (TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) -> do
+        debugM $ "found the end"
+        return $ ""
+      t -> do
+        debugM $ "Found no end: " ++ show tail
+        showTail t
+      
+    --tail_str <- eval ts [] >>= showTail
+    debugM $ " tail_str == " ++ head_str
+    
+    return $ "[" ++ head_str ++ tail_str ++ "]"
   where
-    showTail :: Value -> String    
---    showTail (TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ((Right th):(Right tt):[])) = "," ++ show th ++ showTail tt
---    showTail (TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) = ""
-    showTail w@(Wrong _) = "," ++ show w
-    showTail xs = "????\t\t\t" ++ show xs ++ " \t\t\t"
+    showTail :: Value -> IM String
+    showTail (TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) = return ""
+    showTail (TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) (h:t:[])) = do
+      head_str <- eval h [] >>= showM
+      
+      debugM $ " Showing tail, head_str = " ++ head_str
+      head <- lookupPtr h
+      debugM $ " Showing tail, head = " ++ show head
+
+      tail <- lookupPtr t
+      debugM $ " Showing tail, tail = " ++ show tail
+      tail_val <- eval t []
+      debugM $ " Showing tail, tail_val = " ++ show tail_val
+      tail_str <- showTail tail_val
+      debugM $ " Showing tail, tail_str = " ++ tail_str
+      
+      return $ "," ++ head_str ++ tail_str
     
 wrapInParenthesis s = "(" ++ s ++ ")"
 

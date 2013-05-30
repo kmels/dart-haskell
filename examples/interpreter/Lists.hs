@@ -3,7 +3,7 @@ module Lists (
   , naturals
   , first50
   , first3nats
-  , first2, first0
+  , first2, first0, first1
   , first5nats, first5nats_length
   , first10primes
   , five
@@ -98,6 +98,15 @@ evenOf10 = even 10
 --            | length xs == length ys && null (xs \\ ys) = MEQ
 --            | otherwise = MIN
 
-first2 = let xs = [1..5] in xs `seq` (take 5 xs) --take 2 [1,2,3,4,5]
+first2 = mytake 3 [1,2,3,4]
 first0 = take 0 [1,2]
+first1 = mytake 1 [5..10]
 
+mytake n _      | n <= 0 =  []
+mytake _ []              =  []
+mytake n (x:xs)          =  x : mytake (n-1) xs
+
+first2' = show $ f [1,2,3]
+  where
+    f (x:xs) = [x]
+    f _ = []

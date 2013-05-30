@@ -20,6 +20,7 @@ import Language.Core.Interpreter.Apply
 import Language.Core.Interpreter.Util(return')
 import Language.Core.Interpreter.Libraries.Monomophy(monomophy_1, monomophy_2,mkMonomophier)
 import Language.Core.Interpreter.Structures
+import Language.Core.Interpreter.Util(showM)
 import Prelude hiding (all)
 
 all :: [(Id, Either Thunk Value)]
@@ -29,7 +30,9 @@ all = [ show'
       
 -- | The function that converts a showable to a string      
 show' :: (Id, Either Thunk Value)
-show' = (id, Right $ Fun (monomophy_1 "(show)" (return . String . show)) "polymorphic(show)") 
+show' = (id, Right $ Fun (monomophy_1 "(show)" showVal) "polymorphic(show)")
   where
+    showVal :: Value -> IM Value
+    showVal v = showM v >>= return . String
     id = "base:GHC.Show.show"
 
