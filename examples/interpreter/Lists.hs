@@ -98,7 +98,7 @@ evenOf10 = even 10
 --            | length xs == length ys && null (xs \\ ys) = MEQ
 --            | otherwise = MIN
 
-first2 = mytake 3 [1,2,3,4]
+first2 = take 2 [1,2,3,4]
 first0 = take 0 [1,2]
 first1 = mytake 1 [5..10]
 

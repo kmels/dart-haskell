@@ -31,17 +31,11 @@ module GHC.List (
    concatMap,
    zip, zip3, zipWith, zipWith3, unzip, unzip3,
    errorEmptyList,
-
-#ifndef USE_REPORT_PRELUDE
-   -- non-standard, but hidden when creating the Prelude
-   -- export list.
-   takeUInt_append
-#endif
-
  ) where
 
 import Data.Maybe
 import GHC.Base
+import GHC.Num
 
 infixl 9  !!
 infix  4 `elem`, `notElem`
@@ -78,32 +72,16 @@ tail []                 =  errorEmptyList "tail"
 
 -- | Extract the last element of a list, which must be finite and non-empty.
 last                    :: [a] -> a
-#ifdef USE_REPORT_PRELUDE
 last [x]                =  x
 last (_:xs)             =  last xs
 last []                 =  errorEmptyList "last"
-#else
--- eliminate repeated cases
-last []                 =  errorEmptyList "last"
-last (x:xs)             =  last' x xs
-  where last' y []     = y
-        last' _ (y:ys) = last' y ys
-#endif
 
 -- | Return all the elements of a list except the last one.
 -- The list must be non-empty.
 init                    :: [a] -> [a]
-#ifdef USE_REPORT_PRELUDE
 init [x]                =  []
 init (x:xs)             =  x : init xs
 init []                 =  errorEmptyList "init"
-#else
--- eliminate repeated cases
-init []                 =  errorEmptyList "init"
-init (x:xs)             =  init' x xs
-  where init' _ []     = []
-        init' y (z:zs) = y : init' z zs
-#endif
 
 -- | Test whether a list is empty.
 null                    :: [a] -> Bool
@@ -343,7 +321,6 @@ drop                   :: Int -> [a] -> [a]
 -- in which @n@ may be of any integral type.
 splitAt                :: Int -> [a] -> ([a],[a])
 
-#ifdef USE_REPORT_PRELUDE
 take n _      | n <= 0 =  []
 take _ []              =  []
 take n (x:xs)          =  x : take (n-1) xs
@@ -353,82 +330,6 @@ drop _ []              =  []
 drop n (_:xs)          =  drop (n-1) xs
 
 splitAt n xs           =  (take n xs, drop n xs)
-
-#else /* hack away */
-{-# RULES
-"take"     [~1] forall n xs . take n xs = takeFoldr n xs 
-"takeList"  [1] forall n xs . foldr (takeFB (:) []) (takeConst []) xs n = takeUInt n xs
- #-}
-
-{-# INLINE takeFoldr #-}
-takeFoldr :: Int -> [a] -> [a]
-takeFoldr (I# n#) xs
-  = build (\c nil -> if n# <=# 0# then nil else
-                     foldr (takeFB c nil) (takeConst nil) xs n#)
-
-{-# NOINLINE [0] takeConst #-}
--- just a version of const that doesn't get inlined too early, so we
--- can spot it in rules.  Also we need a type sig due to the unboxed Int#.
-takeConst :: a -> Int# -> a
-takeConst x _ = x
-
-{-# NOINLINE [0] takeFB #-}
-takeFB :: (a -> b -> b) -> b -> a -> (Int# -> b) -> Int# -> b
-takeFB c n x xs m | m <=# 1#  = x `c` n
-                  | otherwise = x `c` xs (m -# 1#)
-
-{-# INLINE [0] take #-}
-take (I# n#) xs = takeUInt n# xs
-
--- The general code for take, below, checks n <= maxInt
--- No need to check for maxInt overflow when specialised
--- at type Int or Int# since the Int must be <= maxInt
-
-takeUInt :: Int# -> [b] -> [b]
-takeUInt n xs
-  | n >=# 0#  =  take_unsafe_UInt n xs
-  | otherwise =  []
-
-take_unsafe_UInt :: Int# -> [b] -> [b]
-take_unsafe_UInt 0#  _  = []
-take_unsafe_UInt m   ls =
-  case ls of
-    []     -> []
-    (x:xs) -> x : take_unsafe_UInt (m -# 1#) xs
-
-takeUInt_append :: Int# -> [b] -> [b] -> [b]
-takeUInt_append n xs rs
-  | n >=# 0#  =  take_unsafe_UInt_append n xs rs
-  | otherwise =  []
-
-take_unsafe_UInt_append :: Int# -> [b] -> [b] -> [b]
-take_unsafe_UInt_append 0#  _ rs  = rs
-take_unsafe_UInt_append m  ls rs  =
-  case ls of
-    []     -> rs
-    (x:xs) -> x : take_unsafe_UInt_append (m -# 1#) xs rs
-
-drop (I# n#) ls
-  | n# <# 0#    = ls
-  | otherwise   = drop# n# ls
-    where
-        drop# :: Int# -> [a] -> [a]
-        drop# 0# xs      = xs
-        drop# _  xs@[]   = xs
-        drop# m# (_:xs)  = drop# (m# -# 1#) xs
-
-splitAt (I# n#) ls
-  | n# <# 0#    = ([], ls)
-  | otherwise   = splitAt# n# ls
-    where
-        splitAt# :: Int# -> [a] -> ([a], [a])
-        splitAt# 0# xs     = ([], xs)
-        splitAt# _  xs@[]  = (xs, xs)
-        splitAt# m# (x:xs) = (x:xs', xs'')
-          where
-            (xs', xs'') = splitAt# (m# -# 1#) xs
-
-#endif /* USE_REPORT_PRELUDE */
 
 -- | 'span', applied to a predicate @p@ and a list @xs@, returns a tuple where
 -- first element is longest prefix (possibly empty) of @xs@ of elements that
@@ -457,27 +358,12 @@ span p xs@(x:xs')
 -- 'break' @p@ is equivalent to @'span' ('not' . p)@.
 
 break                   :: (a -> Bool) -> [a] -> ([a],[a])
-#ifdef USE_REPORT_PRELUDE
 break p                 =  span (not . p)
-#else
--- HBC version (stolen)
-break _ xs@[]           =  (xs, xs)
-break p xs@(x:xs')
-           | p x        =  ([],xs)
-           | otherwise  =  let (ys,zs) = break p xs' in (x:ys,zs)
-#endif
 
 -- | 'reverse' @xs@ returns the elements of @xs@ in reverse order.
 -- @xs@ must be finite.
 reverse                 :: [a] -> [a]
-#ifdef USE_REPORT_PRELUDE
 reverse                 =  foldl (flip (:)) []
-#else
-reverse l =  rev l []
-  where
-    rev []     a = a
-    rev (x:xs) a = rev xs (x:a)
-#endif
 
 -- | 'and' returns the conjunction of a Boolean list.  For the result to be
 -- 'True', the list must be finite; 'False', however, results from a 'False'
@@ -488,14 +374,8 @@ and                     :: [Bool] -> Bool
 -- 'False', the list must be finite; 'True', however, results from a 'True'
 -- value at a finite index of a finite or infinite list.
 or                      :: [Bool] -> Bool
-#ifdef USE_REPORT_PRELUDE
 and                     =  foldr (&&) True
 or                      =  foldr (||) False
-#else
-and []          =  True
-and (x:xs)      =  x && and xs
-or []           =  False
-or (x:xs)       =  x || or xs
 
 {-# RULES
 "and/build"     forall (g::forall b.(Bool->b->b)->b->b) . 
@@ -503,7 +383,6 @@ or (x:xs)       =  x || or xs
 "or/build"      forall (g::forall b.(Bool->b->b)->b->b) . 
                 or (build g) = g (||) False
  #-}
-#endif
 
 -- | Applied to a predicate and a list, 'any' determines if any element
 -- of the list satisfies the predicate.  For the result to be
@@ -516,22 +395,8 @@ any                     :: (a -> Bool) -> [a] -> Bool
 -- 'True', the list must be finite; 'False', however, results from a 'False'
 -- value for the predicate applied to an element at a finite index of a finite or infinite list.
 all                     :: (a -> Bool) -> [a] -> Bool
-#ifdef USE_REPORT_PRELUDE
 any p                   =  or . map p
 all p                   =  and . map p
-#else
-any _ []        = False
-any p (x:xs)    = p x || any p xs
-
-all _ []        =  True
-all p (x:xs)    =  p x && all p xs
-{-# RULES
-"any/build"     forall p (g::forall b.(a->b->b)->b->b) . 
-                any p (build g) = g ((||) . p) False
-"all/build"     forall p (g::forall b.(a->b->b)->b->b) . 
-                all p (build g) = g ((&&) . p) True
- #-}
-#endif
 
 -- | 'elem' is the list membership predicate, usually written in infix form,
 -- e.g., @x \`elem\` xs@.  For the result to be
@@ -540,16 +405,8 @@ elem                    :: (Eq a) => a -> [a] -> Bool
 
 -- | 'notElem' is the negation of 'elem'.
 notElem                 :: (Eq a) => a -> [a] -> Bool
-#ifdef USE_REPORT_PRELUDE
 elem x                  =  any (== x)
 notElem x               =  all (/= x)
-#else
-elem _ []       = False
-elem x (y:ys)   = x==y || elem x ys
-
-notElem _ []    =  True
-notElem x (y:ys)=  x /= y && notElem x ys
-#endif
 
 -- | 'lookup' @key assocs@ looks up a key in an association list.
 lookup                  :: (Eq a) => a -> [(a,b)] -> Maybe b
@@ -579,25 +436,10 @@ concat = foldr (++) []
 -- It is an instance of the more general 'Data.List.genericIndex',
 -- which takes an index of any integral type.
 (!!)                    :: [a] -> Int -> a
-#ifdef USE_REPORT_PRELUDE
 xs     !! n | n < 0 =  error "Prelude.!!: negative index"
 []     !! _         =  error "Prelude.!!: index too large"
 (x:_)  !! 0         =  x
 (_:xs) !! n         =  xs !! (n-1)
-#else
--- HBC version (stolen), then unboxified
--- The semantics is not quite the same for error conditions
--- in the more efficient version.
---
-xs !! (I# n0) | n0 <# 0#   =  error "Prelude.(!!): negative index\n"
-               | otherwise =  sub xs n0
-                         where
-                            sub :: [a] -> Int# -> a
-                            sub []     _ = error "Prelude.(!!): index too large\n"
-                            sub (y:ys) n = if n ==# 0#
-                                           then y
-                                           else sub ys (n -# 1#)
-#endif
 \end{code}
 
 
