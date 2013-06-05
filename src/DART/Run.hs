@@ -36,6 +36,10 @@ import           System.Environment
 import           Text.Encoding.Z
 import           DART.CmdLine
 
+--------------------------------------------------------------------------------
+-- system
+import Data.Time.Clock(getCurrentTime)
+
 -- | Creates an initial state given the arguments given
 -- in the command line and parsed by CmdArgs
 initDART :: InterpreterSettings -> IO DARTState
@@ -45,7 +49,9 @@ initDART settings = do
   
   let prependCurrentDir = (++) (current_dir ++ "/")    
   let absolute_includes = map prependCurrentDir $ default_includes ++ (include settings)
-                             
+                         
+  now <- io getCurrentTime
+  
   return $ DState {
     benchmarks = []
     , heap = h
@@ -53,7 +59,8 @@ initDART settings = do
     , number_of_reductions = 0
     , number_of_reductions_part = 0
     , tab_indentation = 1
-    , settings = settings { include = (absolute_includes) }    
+    , settings = settings { include = (absolute_includes) }
+    , start_time = now
     , test_name = Nothing
   }
 

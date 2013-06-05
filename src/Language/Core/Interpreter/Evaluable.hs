@@ -96,8 +96,17 @@ instance Evaluable Thunk where
   eval (Thunk exp env) e = do -- TODO. To comment: Why we don't care about the second env?
     ti <- gets tab_indentation
     let ?tab_indentation = ti
+        
     watchReductionM $ "Evaluating thunk: " ++ showExp exp
-    eval exp (env ++ e) -- (!) passing (e ++ env) instead produces an infinite loop
+    
+    reached_timeout <- isTimeout
+        
+    case reached_timeout of
+      False -> eval exp (env ++ e) -- (!) passing (e ++ env) instead produces an infinite loop
+      True -> do
+        max_secs <- gets settings >>= return . show . timeout_seconds
+        clearTimeout
+        return . Wrong $ "Reached timeout of " ++ max_secs ++ " seconds"
 
 instance Evaluable Value where
 --  eval :: Value -> Env -> IM Value
@@ -459,14 +468,7 @@ benchmarkIM id computation = do
   after <- liftIO getCurrentTime
   
   -- should we add the benchmark?
-  whenFlag benchmark $ modify $ addBenchmark id (after `diffUTCTime` before)
-  
-  whenFlag benchmark $ do
-    io . putStrLn $ " Doing benchmark"
-  
-  setts <- gets settings
-  when (not $ benchmark setts) $ do
-    io . putStrLn $ " Not doing benchmark"
+  whenFlag benchmark $ modify $ addBenchmark id (after `diffUTCTime` before)  
     
   return computed
   where

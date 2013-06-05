@@ -97,6 +97,7 @@ testVdef (Vdef (qvar,ty,vdef_exp)) env =
       feedFun result_value other_heaprefs
       -- the case where we have a value that is no function, and no arguments
     feedFun val [] = return val
+    feedFun e@(Wrong _) _ = return e
     feedFun val args = return . Wrong $ "The impossible happened at feedFun, val= "++ show val ++ " and args = " ++ show args ++ " with |args| " ++ (show . length) args
 
 -- | Given a module and an identifier, test the definition for that identifier

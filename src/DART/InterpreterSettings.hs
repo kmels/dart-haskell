@@ -9,6 +9,7 @@ data InterpreterSettings = InterpreterMode {
   , test_function :: String -- some function to test, defined in `file`
   , debug :: Bool -- debug flags
   , verbose :: Bool -- prints messages when loading, reading and acknowledging modules
+  , timeout_seconds :: Integer
   , show_heap :: Bool
 --, show_time :: Bool
   , show_expressions :: Bool
@@ -27,10 +28,14 @@ data InterpreterSettings = InterpreterMode {
 interpret = InterpreterMode {
   benchmark = def &= groupname "USAGE" &= help "Benchmark"
   , file = def &= typFile &= groupname "USAGE"
+  
   , evaluate_function = def &= groupname "USAGE" &= help "The function to evaluate (if not provided, all function declarations will be evaluated)"
   , test_function = def &= groupname "USAGE" &= help "The function to test (if not provided, all functions will be tested)"
   , debug = def &= groupname "DEBUG" &= help "Prints messages about the interpretation and testing of module definitions"
   , verbose = def &= groupname "DEBUG" &= help "Prints messages when loading, reading and acknowledging modules or definitions"
+  
+  , timeout_seconds = 5
+  
   , show_heap = def &= groupname "DEBUG" &= help "Shows binded values in the heap"
   , show_expressions = def &= groupname "DEBUG" &= help "Shows the external core expression for every value being evaluated"
   , show_subexpressions = def &= groupname "DEBUG" &= help "Shows *every* (external core) expression being evaluated"
@@ -47,3 +52,4 @@ increase_debug_tab_level :: InterpreterSettings -> InterpreterSettings
 increase_debug_tab_level s = s { debug_tab_level = debug_tab_level s + 1 } 
 decrease_debug_tab_level :: InterpreterSettings -> InterpreterSettings
 decrease_debug_tab_level s = s { debug_tab_level = debug_tab_level s - 1 } 
+

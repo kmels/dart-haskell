@@ -20,6 +20,8 @@ module Language.Core.Interpreter.Structures(
   -- heap operations
   , store, newAddress, memorize, memorizeVal, memorizeThunk, mkVal, mkThunk, mkHeapReference
   , allocate
+  -- timeouting
+  , isTimeout, clearTimeout
   -- pretty printing
   , DARTState(..)
   , Heap, Env, HeapAddress, HeapReference
@@ -60,8 +62,11 @@ import Data.Time.Clock
 import qualified Data.HashTable.IO as H
 
 -- | A State passed around the interpreter
-data DARTState = DState {
- heap :: Heap, -- our memory 
+data DARTState = DState {  
+  -- benchmarking
+ benchmarks :: [(Id,NominalDiffTime)]
+ 
+ , heap :: Heap, -- our memory 
  heap_count :: Int, -- address counter, counts those previously deleted too
                     -- useful to generate new variable names
  number_of_reductions :: !Int, -- when an expression is evaluated, this value increments by 1, useful to print debug headings
@@ -69,11 +74,13 @@ data DARTState = DState {
  , tab_indentation :: !Int -- useful when to know how many tabs we shoud prepend
  , settings :: InterpreterSettings
  
+   -- time when a computation started
+   -- useful for timeouts
+ , start_time :: UTCTime
+ 
  -- state of testing
  , test_name :: Maybe (Qual Var) 
  
- -- benchmarking
- , benchmarks :: [(Id,NominalDiffTime)]
 }
 
 type Heap = H.CuckooHashTable HeapAddress (Either Thunk Value)
@@ -259,3 +266,20 @@ idName id = let
     dotIndexes = findIndices isDot
     lastDotIndex = last . dotIndexes
     
+-- | Re computes the start time of a DARTState, should be called when
+-- a new computation is going to begin
+clearTimeout :: IM () 
+clearTimeout = io getCurrentTime >>= \t -> modify (\st -> st { start_time = t })
+
+-- | Checks whether the computations is taking long enough in order
+-- to stop. 
+isTimeout :: IM Bool
+isTimeout = do
+  st <- gets start_time
+  now <- io getCurrentTime
+  max_timeout <- getSetting timeout_seconds
+  let dayTime = now `diffUTCTime` st
+  return $ (now `diffUTCTime` st > fromInteger max_timeout)
+  
+getSetting :: (InterpreterSettings -> a) -> IM a 
+getSetting f = gets settings >>= return . f
