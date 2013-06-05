@@ -32,8 +32,6 @@ library
                  DART.MkRandom,
                  DART.ModuleTester
                  DART.ModuleTester.Testable,
-                 DART.ExtCore.TypeExtractor,
-                 DART.ExtCore.TypeExtractor.DataTypes,
                  Language.Core.Util,
                  Language.Core.Ty,
                  Language.Core.Interpreter.Acknowledge,

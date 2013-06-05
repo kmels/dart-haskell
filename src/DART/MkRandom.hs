@@ -16,32 +16,39 @@ module DART.MkRandom where
 import Language.Core.Interpreter.Structures
 import Language.Core.Interpreter
 import System.Random
-import DART.ExtCore.TypeExtractor
 import Data.List((!!))
 
 -- | Randomize on external core types. An environment might be needed in case there is a reference to the heap as an identifier in e.g. a data type
-tyMkRandom :: Env -> Ty -> Maybe (IM Value)
-tyMkRandom env ty = extractType ty >>= \et -> case et of
-  (CType ctype) -> Just $ mkRandomVal ctype env 
-  --gtyp -> error $ "The impossible happened @tyMkRandom: It should not be called upon types that are not concrete (We are unpredicative), received " ++ show gtyp
-  _ -> Nothing
+-- tyMkRandom :: Env -> Ty -> Maybe (IM Value)
+-- tyMkRandom env ty = do
+--   (_,val) <- runStateT mkRandomVal ty env
+--   case val of
+--     (Wrong _) -> Nothing
+--     _ -> Just val
+
+-- extractType ty >>= \et -> case et of
+--   (CType ctype) -> Just $ mkRandomVal ctype env 
+--   --gtyp -> error $ "The impossible happened @tyMkRandom: It should not be called upon types that are not concrete (We are unpredicative), received " ++ show gtyp
+--   _ -> Nothing
 
 -- | A function that generates a random value given a type.
 -- We could have type classes on RandomizableTypes but it would imply using template haskell
 -- as there are Ty's in DataCons and they're not pattern match friendly (we have indeed an extractor)
-mkRandomVal :: ConcreteType -> Env -> IM Value
-mkRandomVal (DType (DataType "ghc-prim:GHC.Types.Int")) _ = io rndInt >>= return . Num . toInteger
-mkRandomVal (DType (DataType id)) env = do
-  type_constructors <- fetchDataCons id env
-  sumTypeMkRandom type_constructors env
-    where
-      fetchDataCons :: Id -> Env -> IM [DataCon]
-      fetchDataCons id env = do
-        -- look for the data type
-        msumtype <- lookupId id env
-        return $ case msumtype of
-          (Right (SumType datacons)) -> datacons
-          _ -> []
+mkRandomVal :: Ty -> Env -> IM Value
+mkRandomVal (Tcon qual_tcon) env = case showQualified qual_tcon of
+  "ghc-prim:GHC.Types.Int" -> io rndInt >>= return . Num . toInteger
+  id -> do
+    type_constructors <- fetchDataCons id env
+    sumTypeMkRandom type_constructors env
+      where
+        fetchDataCons :: Id -> Env -> IM [DataCon]
+        fetchDataCons id env = do
+          -- look for the data type
+          msumtype <- lookupId id env
+          return $ case msumtype of
+            (Right (SumType datacons)) -> datacons
+            _ -> []    
+mkRandomVal ty _ = return . Wrong $ " mkRandomVal: I don't know how to make a random val for the type " ++ showExtCoreTypeVerbose ty
         
 -- | Given a list of data constructors (that form a sum type), make a random
 -- value of type of the sum type
@@ -67,19 +74,19 @@ tyConMkRandom dc@(MkDataCon id tys) env = do
 -- | Makes a random value from a type and returns a pointer to it
 tyRndValPtr :: Ty -> Env -> IM Pointer
 tyRndValPtr ty env = do
-  val <- tyGetRandom ty env
+  val <- mkRandomVal ty env
   heap_ref@(_,addr) <- memorizeVal val
   return . MkPointer $ addr
-
+  
 -- | Version of tyMkRandom that returns an error value in case the given type is not understood
-tyGetRandom :: Ty -> Env -> IM Value
-tyGetRandom ty env = case tyMkRandom env ty of
-  Nothing -> return . Wrong $ "tyGetRandom: Could not generate random value from " ++ show ty
-  Just rndval -> rndval 
+-- tyGetRandom :: Ty -> Env -> IM Value
+-- tyGetRandom ty env = case tyMkRandom env ty of
+--   Nothing -> return . Wrong $ "tyGetRandom: Could not generate random value from " ++ show ty
+--   Just rndval -> rndval 
 
 -- | Given a type, creates a random value, stores it in the heap and returns a heap reference. An environment might be needed in case the type is a reference to the heap
-mkRandomHR :: ConcreteType -> Env -> IM HeapReference
-mkRandomHR ct env = mkHeapRef $ mkRandomVal ct env
+--mkRandomHR :: ConcreteType -> Env -> IM HeapReference
+--mkRandomHR ct env = mkHeapRef $ mkRandomVal ct env
 
 -- | Given a value, stores it in the heap and returns a heap reference
 mkHeapRef :: IM Value -> IM HeapReference

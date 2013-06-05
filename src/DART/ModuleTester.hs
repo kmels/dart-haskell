@@ -20,7 +20,6 @@ module DART.ModuleTester(
 ) where
 
 import DART.CmdLine(debugMStep,debugM,beVerboseM)
-import DART.ExtCore.TypeExtractor
 import DART.ModuleTester.Testable
 import DART.MkRandom
 import Data.Maybe
@@ -75,7 +74,7 @@ testVdef (Vdef (qvar,ty,vdef_exp)) env =
       return Nothing
     Just fun_signature_types -> do
       -- make random values      
-      heap_refs <- mapM (\ty -> mkHeapRef $ tyGetRandom ty env) fun_signature_types
+      heap_refs <- mapM (\ty -> mkHeapRef $ mkRandomVal ty env) fun_signature_types
       debugM $ "Did " ++ (show . length) heap_refs ++ " random values"
       
       -- build the initial function from expression and get the result

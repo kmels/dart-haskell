@@ -15,7 +15,6 @@
 module DART.ModuleTester.Testable where
 
 import DART.CmdLine(watchTestM,debugMStep,debugM)
-import DART.ExtCore.TypeExtractor
 import DART.MkRandom
 import Data.List(find)
 import Language.Core.Core
@@ -39,19 +38,19 @@ instance Show TestResult where
 class TestableType t where
   testType :: t -> Exp -> Env -> IM Value
 
-instance TestableType LambdaAbstraction where
-  testType (LambdaAbstraction concrete_type general_type) lambda_exp env = do
-    --watchTestM $ " Generating a " ++ concrete_type
-    fun <- eval lambda_exp env
-    heap_ref@(rndval_id,_) <- mkRandomHR concrete_type env
-    apply fun rndval_id (heap_ref:env)
+-- instance TestableType LambdaAbstraction where
+--   testType (LambdaAbstraction concrete_type general_type) lambda_exp env = do
+--     --watchTestM $ " Generating a " ++ concrete_type
+--     fun <- eval lambda_exp env
+--     heap_ref@(rndval_id,_) <- mkRandomHR concrete_type env
+--     apply fun rndval_id (heap_ref:env)
 
-class MaybeTestable a where
-  testMaybe :: a -> Maybe (Qual Var) -> Maybe Exp -> Env -> IM (Maybe TestResult)
+-- class MaybeTestable a where
+--   testMaybe :: a -> Maybe (Qual Var) -> Maybe Exp -> Env -> IM (Maybe TestResult)
 
-instance MaybeTestable GeneralType where  
-  testMaybe (Lambda lambda_abstraction) (Just qual_var) (Just exp) env = testType lambda_abstraction exp env >>= return . Just . mkTestResult qual_var exp
-  testMaybe ty _ _ _ = error $ "undefined "  ++ show ty
+-- instance MaybeTestable GeneralType where  
+--   testMaybe (Lambda lambda_abstraction) (Just qual_var) (Just exp) env = testType lambda_abstraction exp env >>= return . Just . mkTestResult qual_var exp
+--   testMaybe ty _ _ _ = error $ "undefined "  ++ show ty
   
 mkTestResult :: Qual Var -> Exp -> Value -> TestResult
 mkTestResult n e v = TestResult n e v
