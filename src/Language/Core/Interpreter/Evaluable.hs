@@ -439,13 +439,41 @@ evalVdefg :: Vdefg -> Env -> IM [HeapReference]
 evalVdefg (Rec vdefs) env = mapM (flip evalVdefg env . Nonrec) vdefs >>= return . concat
   
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) env = do
-  debugMStep $ "Evaluating value definition: " ++ qualifiedVar qvar
+  debugMStep $ "Evaluating value definition: " ++ qualifiedVar qvar  
   whenFlag show_expressions $ indentExp exp >>= debugM . (++) "Expression: "
   
   increaseIndentation
-  res <- eval exp env  -- result **** 
+  io . putStrLn $ "Callng benchmarkIM"
+  res <- benchmarkIM (showQualified qvar) $ eval exp env  -- result **** 
   decreaseIndentation
 
   heap_ref <- memorize (mkVal res) (qualifiedVar qvar) -- ***
   return [heap_ref]
  
+-- | If the flag --benchmark was provided, the given computation is
+-- then benchmarked
+benchmarkIM :: Id -> IM a -> IM a
+benchmarkIM id computation = do
+  before <- liftIO getCurrentTime
+  computed <- computation
+  after <- liftIO getCurrentTime
+  
+  -- should we add the benchmark?
+  whenFlag benchmark $ modify $ addBenchmark id (after `diffUTCTime` before)
+  
+  whenFlag benchmark $ do
+    io . putStrLn $ " Doing benchmark"
+  
+  setts <- gets settings
+  when (not $ benchmark setts) $ do
+    io . putStrLn $ " Not doing benchmark"
+    
+  return computed
+  where
+    addBenchmark :: Id -> NominalDiffTime -> DARTState -> DARTState
+    addBenchmark id difftime st = st {
+      benchmarks = (id,difftime):(benchmarks st)
+    }
+    
+
+  

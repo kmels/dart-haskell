@@ -75,7 +75,9 @@ evalModule m@(Module mname tdefs vdefgs) env = do
   return $ zip vdefg_names vals
   where
     evalModuleDef :: Id -> IM Value
-    evalModuleDef id = debugMStep ("Evaluating " ++ id) >> evalId id env
+    evalModuleDef id = do
+      debugMStep ("Evaluating " ++ id)
+      benchmarkIM id $ evalId id env
     
 -- | Given a module and a function name, we evaluate the function in that module and return the heap. 
 evalHaskellExpression :: Module -> String -> Env -> IM Value

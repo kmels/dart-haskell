@@ -51,6 +51,10 @@ import           Language.Core.Core
 import           Language.Core.Util --(showType,showExtCoreType,showExp,wrapName)
 import           System.IO.Unsafe(unsafePerformIO)
 --------------------------------------------------------------------------------
+-- System
+import Data.Time.Clock
+--------------------------------------------------------------------------------
+
 -- mutable hash tables; 
 -- package [hashtables](http://hackage.haskell.org/package/hashtables)
 import qualified Data.HashTable.IO as H
@@ -67,6 +71,9 @@ data DARTState = DState {
  
  -- state of testing
  , test_name :: Maybe (Qual Var) 
+ 
+ -- benchmarking
+ , benchmarks :: [(Id,NominalDiffTime)]
 }
 
 type Heap = H.CuckooHashTable HeapAddress (Either Thunk Value)

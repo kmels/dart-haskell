@@ -47,7 +47,8 @@ initDART settings = do
   let absolute_includes = map prependCurrentDir $ default_includes ++ (include settings)
                              
   return $ DState {
-    heap = h
+    benchmarks = []
+    , heap = h
     , heap_count = 0
     , number_of_reductions = 0
     , number_of_reductions_part = 0
@@ -151,7 +152,16 @@ runDART = do
       
       -- funt ion to pretty print
       let prettyPrint :: (Id,Value) -> IM String
-          prettyPrint (id,val) = showM val >>= return . (++) (id ++ " => ")
+          prettyPrint (id,val) = do
+            pp <- showM val
+            setts <- gets settings 
+            
+            case (benchmark setts) of
+              False -> return $ id ++ " => " ++ pp
+              True -> do
+                bs <- gets benchmarks
+                let time = fromJust $ lookup id bs
+                return $ id ++ " => " ++ pp ++ " .. done in " ++ show time
       
       io . putStrLn $ "**************************************************"      
       io . putStrLn $ "Module definitions evaluation: "

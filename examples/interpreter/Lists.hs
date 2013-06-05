@@ -1,19 +1,19 @@
 module Lists (
-  xs, listHead, one
+  -- List data type
+  myList, thousand, twoThousand
+  -- Functions on list
+  , sumFirstFifty
+  , first15Fibs
   , naturals
   , first50
   , first3nats
   , first2, first0, first1
   , first5nats, first5nats_length
   , first10primes
-  , five
-  , str
-  , chr
-  , sumfifty
+  , six
   , takeTest1, takeTest2, takeTest3, takeTest4, takeTest5, takeTest6
   , false1
-  , intListLength, hundred, four
-  , odd, even, evenOf10
+  , intListLength, hundred, hundredOne, four
 ) where
 
 import Prelude hiding (even,odd)
@@ -24,19 +24,23 @@ listHead :: List a -> a
 listHead Nil = error "Empty list"
 listHead (Cons x _) = x
 
+listTail :: List a -> List a 
+listTail Nil = error "Empty list"
+listTail (Cons _ t) = t
+
 -- works
-xs = Cons 1000 (Cons 2000 Nil) 
-one = listHead xs
+myList = Cons 1000 (Cons 2000 Nil) 
+thousand = listHead myList
+twoThousand = listHead . listTail $ myList
 
--- first 5 nats
-
-five :: (Num a) => a
-five = 5
-
---str :: (Eq a) => [a]
-chr = 'a'
-str = "a string"
-
+-- does not work
+first15Fibs = fib 1
+  where
+    fib :: Int -> Int
+    fib 0 = 0
+    fib 1 = 1
+    fib n = fib (n-2) + fib (n-1)
+    
 first5nats = take 5 naturals
 first3nats = take 3 first5nats
 
@@ -53,11 +57,6 @@ isPrime n = let
 
 n `divides` m = n `mod` m == 0
 
-
-intListLength :: [Int] -> Int
-intListLength [] = 0
-intListLength (x:xs) = intListLength xs + 1
-
 four = intListLength $ take 4 [0,1,2,3,10,20]
 hundred = intListLength $ take 100 [1..]
 hundredOne = intListLength [1..101]
@@ -70,18 +69,11 @@ takeTest4 = take (5-5) [1,2,3]
 takeTest5 = take 1 [1]
 takeTest6 = take 2 [1,2,3]
 
-sumfifty = sum [1..50]
+sumFirstFifty = sum [1..50]
   
 false1 :: Bool
 false1 = (takeTest2 :: [Int]) == (takeTest1 :: [Int])
 
-even 0 = True
-even x = odd (x-1)
-
-odd 0 = False
-odd x = even (x-1)
-
-evenOf10 = even 10
 ------------------------- mlist -------------------------
 -- data Mlist a = Mlist [a]
 
@@ -100,7 +92,13 @@ evenOf10 = even 10
 
 first2 = take 2 [1,2,3,4]
 first0 = take 0 [1,2]
-first1 = mytake 1 [5..10]
+first1 = intListLength [1..4] -- $ mytake 5 [5..10]
+
+six = intListLength [1..6]
+
+intListLength :: [Int] -> Int
+intListLength [] = 0
+intListLength (x:xs) = intListLength xs + 1
 
 mytake n _      | n <= 0 =  []
 mytake _ []              =  []

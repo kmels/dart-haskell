@@ -5,6 +5,8 @@ module RecursiveVdefg(
   , oddOf0, oddOf11
   , evenOf1
   , evenOf10
+  -- fibs
+  , fib0, fib1, fib2, fib10
   ) where
 
 import Prelude hiding (even,odd)
@@ -30,3 +32,18 @@ testOdd'' = odd 7
 testEven = even 5
 testEven' = even 6
 testEven'' = even 7
+
+-- fib :: Int -> Int
+-- fib 0 = 0
+-- fib 1 = 1
+-- fib n = 2 -- fib (n-2) + fib (n-1)
+
+-- fib0 = fib 0
+-- fib1 = fib 1
+-- fib2 = fib 2
+-- fib10 = fib 10
+
+fib0 = 0
+fib1 = 0
+fib2 = 0
+fib10 = 0

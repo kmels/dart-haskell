@@ -18,13 +18,15 @@ data InterpreterSettings = InterpreterMode {
   , watch_test :: Bool 
   , debug_tab_level :: Int
   , include :: [FilePath]
+  , benchmark :: Bool
   } deriving (Show, Data, Typeable)
 
 -- | We'll use the package cmdargs to identify flags, parameters, etc.,  from the command line
 -- The interpreter mode reads an external core file and evaluates the declarations of its module.
              
 interpret = InterpreterMode {
-  file = def &= typFile &= groupname "USAGE"
+  benchmark = def &= groupname "USAGE" &= help "Benchmark"
+  , file = def &= typFile &= groupname "USAGE"
   , evaluate_function = def &= groupname "USAGE" &= help "The function to evaluate (if not provided, all function declarations will be evaluated)"
   , test_function = def &= groupname "USAGE" &= help "The function to test (if not provided, all functions will be tested)"
   , debug = def &= groupname "DEBUG" &= help "Prints messages about the interpretation and testing of module definitions"
@@ -37,7 +39,7 @@ interpret = InterpreterMode {
   , watch_reduction = def &= groupname "DEBUG" &= help "Shows debug messages for the evaluation of a value definition (shows reductions of expressions)"
   , watch_test = def &= groupname "DEBUG" &= help "Shows debug messages when testing a value definition"
   , debug_tab_level = 0
-  , include = def &= groupname "USAGE" &= help "List of source directories to include in the module namespace, the base package is included by default"
+  , include = def &= groupname "USAGE" &= help "List of source directories to include in the module namespace, the base package is included by default"  
   } &= summary "Reads a .hcr file and evaluates its declarations. "
 
 
