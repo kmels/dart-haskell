@@ -20,7 +20,7 @@ import Language.Core.Interpreter.Apply
 import Language.Core.Interpreter.Util(return')
 import Language.Core.Interpreter.Libraries.Monomophy(monomophy_1, monomophy_2,mkMonomophier)
 import Language.Core.Interpreter.Structures
-import Language.Core.Interpreter.Util(showM)
+import Language.Core.Interpreter.Util(showValue)
 import Prelude hiding (all)
 
 all :: [(Id, Either Thunk Value)]
@@ -33,6 +33,6 @@ show' :: (Id, Either Thunk Value)
 show' = (id, Right $ Fun (monomophy_1 "(show)" showVal) "polymorphic(show)")
   where
     showVal :: Value -> IM Value
-    showVal v = showM v >>= return . String
+    showVal v = showValue v >>= return . String
     id = "base:GHC.Show.show"
 

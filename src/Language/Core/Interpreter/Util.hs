@@ -34,9 +34,9 @@ return' v = \_ -> \_ -> return v
 
 -- | There are some values that contain addresses for which we must, in order to
 -- pretty print the given value, look up their actual value in the heap
-showM :: Value -> IM String
-showM (TyConApp tc ptrs) = showTyConApp tc ptrs
-showM val = return $ show val
+showValue :: Value -> IM String
+showValue (TyConApp tc ptrs) = showTyConApp tc ptrs
+showValue val = return $ show val
 
 showTyConApp :: DataCon-> [Pointer] -> IM String
 showTyConApp tycon pointers = do
@@ -72,7 +72,7 @@ showList elems = case partitionEithers elems of
     debugM $ " head thunk == " ++ show t
     head_val <- eval t []
     debugM $ " head thunk eval == " ++ show head_val    
-    head_str <- showM head_val
+    head_str <- showValue head_val
     debugM $ " head_str == " ++ head_str    
                 
     debugM $ " tail thunk == " ++ show ts
@@ -95,7 +95,7 @@ showList elems = case partitionEithers elems of
     showTail :: Value -> IM String
     showTail (TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) = return ""
     showTail (TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) (h:t:[])) = do
-      head_str <- eval h [] >>= showM
+      head_str <- eval h [] >>= showValue
       
       debugM $ " Showing tail, head_str = " ++ head_str
       head <- lookupPtr h

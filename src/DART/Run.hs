@@ -28,7 +28,7 @@ import qualified Language.Core.Interpreter as I
 import           Language.Core.Interpreter.Acknowledge(acknowledgeModule)
 import qualified Language.Core.Interpreter.Libraries as Libs
 import           Language.Core.Interpreter.Structures
-import           Language.Core.Interpreter.Util(showM)
+import           Language.Core.Interpreter.Util(showValue)
 import           Language.Core.Util(showType)
 import           Language.Core.Vdefg
 import           System.Directory(getCurrentDirectory)
@@ -160,7 +160,7 @@ runDART = do
       -- funt ion to pretty print
       let prettyPrint :: (Id,Value) -> IM String
           prettyPrint (id,val) = do
-            pp <- showM val
+            pp <- showValue val
             setts <- gets settings 
             
             case (benchmark setts) of
@@ -194,5 +194,5 @@ runDART = do
       io . putStrLn $ "**************************************************"
       io . putStrLn $ "Evaluation of " ++ fun_name      
       io . putStrLn $ "**************************************************"
-      showM result >>= io . putStrLn
+      showValue result >>= io . putStrLn
 
