@@ -195,4 +195,3 @@ runDART = do
       io . putStrLn $ "Evaluation of " ++ fun_name      
       io . putStrLn $ "**************************************************"
       showValue result >>= io . putStrLn
-

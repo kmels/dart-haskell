@@ -19,7 +19,7 @@ module Language.Core.Interpreter.Util where
 --------------------------------------------------------------------------------
 -- base type funs
 import           Data.Either(partitionEithers,rights)
-import Data.List(findIndices)
+import           Data.List(findIndices,intersperse)
 import           Prelude hiding (showList)
 --------------------------------------------------------------------------------
 import DART.CmdLine(debugM)
@@ -38,77 +38,59 @@ showValue :: Value -> IM String
 showValue (TyConApp tc ptrs) = showTyConApp tc ptrs
 showValue val = return $ show val
 
+-- | Function called by showValue that handles the showing of a type constructor application.
+-- Special cases include the List and the Tuple constructors.
+-- As we know from the semantics, the showing forces the evaluation of the arguments of the data constructor
 showTyConApp :: DataCon-> [Pointer] -> IM String
+showTyConApp (MkDataCon "ghc-prim:GHC.Types.[]" []) [] = return "[]" -- empty list
+showTyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ptrs = showList ptrs -- lists
+showTyConApp (MkDataCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = do -- tuples
+  x_str <- eval x [] >>= showValue
+  y_str <- eval y [] >>= showValue
+  return $ show (x_str,y_str) 
 showTyConApp tycon pointers = do
-  values <- mapM lookupPtr pointers
-  showTyConVals tycon values
-  where
-    showTyConVals :: DataCon-> [Either Thunk Value] -> IM String
-    showTyConVals (MkDataCon "ghc-prim:GHC.Types.[]" []) [] = return "[]" -- empty list
-    showTyConVals (MkDataCon "ghc-prim:GHC.Types.:" _) cns = showList cns -- lists
-    showTyConVals (MkDataCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = return $ show (x,y) -- tuples
-    -- otherwise
-    showTyConVals (MkDataCon tycon_name []) vals = return $ idName tycon_name ++ " " ++ showVals vals
-    showTyConVals (MkDataCon tycon_name _) vals = return $ idName tycon_name ++ " " ++ showVals vals
-
-showVals :: [Either Thunk Value] -> String
-showVals vs = case partitionEithers vs of
-  ([],vals) -> concatMap (wrapCons) vals
-  (tnks,vals) -> concatMap (\tnk -> show tnk ++ " ") tnks ++ " ; " ++ concatMap (wrapCons) vals
-  where
-    wrapCons :: Value -> String
-    wrapCons t@(TyConApp (MkDataCon _ []) _) = show $ t -- if tycon expects no types, don't wrap
-    wrapCons t@(TyConApp _ _) = wrapInParenthesis . show $ t
-    wrapCons v = show v ++ " "
-
-showList :: [Either Thunk Value] -> IM String
-showList elems = case partitionEithers elems of
-  ([],[]) -> return $ "" -- no thunks, no vals
---  ([],(head:t:[])) -> return $ "[" ++ show head ++ showTail t ++ "]" -- no thunks, only vals
-  elems@((t:ts:[]),vals) -> do  
-    debugM $ " Printing list with " ++ (show . length) (t:ts:[]) ++ " thunks "
-      ++ "and " ++ (show . length) vals ++ " values"
+  vals <- mapM evalPtr pointers -- [Value]  
+  whnf_strings <- mapM showValue' vals -- [String]
+  
+  return $ let
+    tycon_name = (idName . dataConId) tycon
+    arg_strings = separateStrings whnf_strings
+    in tycon_name ++ " " ++ arg_strings
     
-    debugM $ " head thunk == " ++ show t
-    head_val <- eval t []
-    debugM $ " head thunk eval == " ++ show head_val    
-    head_str <- showValue head_val
-    debugM $ " head_str == " ++ head_str    
-                
-    debugM $ " tail thunk == " ++ show ts
-    tail <- eval ts []
-    debugM $ " tail thunk val == " ++ show tail
-    
-    tail_str <- case tail of
-      (TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) -> do
-        debugM $ "found the end"
-        return $ ""
-      t -> do
-        debugM $ "Found no end: " ++ show tail
-        showTail t
-      
-    --tail_str <- eval ts [] >>= showTail
-    debugM $ " tail_str == " ++ head_str
-    
-    return $ "[" ++ head_str ++ tail_str ++ "]"
   where
-    showTail :: Value -> IM String
-    showTail (TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) = return ""
-    showTail (TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) (h:t:[])) = do
-      head_str <- eval h [] >>= showValue
-      
-      debugM $ " Showing tail, head_str = " ++ head_str
-      head <- lookupPtr h
-      debugM $ " Showing tail, head = " ++ show head
+    -- Should we wrap a value in parenthesis? Wrap the tycon apps! (iff they have applied vals)
+    showValue' :: Value -> IM String
+    showValue' t@(TyConApp tycon []) = return . idName . dataConId $ tycon
+    showValue' t@(TyConApp _ _) = showValue t >>= return . wrapInParenthesis
+    showValue' v = showValue v
 
-      tail <- lookupPtr t
-      debugM $ " Showing tail, tail = " ++ show tail
-      tail_val <- eval t []
-      debugM $ " Showing tail, tail_val = " ++ show tail_val
-      tail_str <- showTail tail_val
-      debugM $ " Showing tail, tail_str = " ++ tail_str
-      
-      return $ "," ++ head_str ++ tail_str
+evalPtr :: Pointer -> IM Value
+evalPtr = flip eval []
+
+separateStrings :: [String] -> String
+separateStrings [] = ""
+separateStrings (x:xs) = x ++ prependSpace xs
+  where
+    prependSpace :: [String] -> String
+    prependSpace [] = []
+    prependSpace [[]] = []    
+    prependSpace (y:ys) = " " ++ y ++ prependSpace ys
+
+-- | Function in charge of showing the application of the type constructor "ghc-prim:GHC.Types.:"
+showList :: [Pointer] -> IM String
+showList ptrs = do
+  elem_strs <- mapM showPtr ptrs  
+  return $ "[" ++ separateStrings elem_strs ++ "]"
+  where
+    showPtr :: Pointer -> IM String
+    showPtr ptr = evalPtr ptr >>= showValue'
+    
+    -- If we find an empty list, we ought not show it as [] but rather as the empty string
+    -- If we find another list, don't show the []
+    showValue' :: Value -> IM String
+    showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) = return ""
+    showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ptrs) = mapM showPtr ptrs >>= return . separateStrings
+    showValue' v = showValue v
     
 wrapInParenthesis s = "(" ++ s ++ ")"
 
