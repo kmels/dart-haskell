@@ -10,7 +10,19 @@ import qualified Data.HashTable.IO as H
 import           Language.Core.Core -- Exp
 import           Language.Core.Interpreter.Structures
 import           Language.Core.Util(showExp)
-import Control.Monad.State.Class(modify)
+import           Control.Monad.State.Class(modify)
+
+--------------------------------------------------------------------------------
+-- Prelude
+import           Data.Either.Utils(forceEither)
+
+--------------------------------------------------------------------------------
+-- System
+import           System.Directory
+
+--------------------------------------------------------------------------------
+-- config file 
+import           Data.ConfigFile hiding (get)
 
 -- | Prints a debug message with the number of the current reduction prepended
 debugMStep :: String -> IM ()
@@ -169,3 +181,65 @@ increase_indentation s = s { tab_indentation  = tab_indentation s + 1 }
 decrease_indentation :: DARTState -> DARTState
 decrease_indentation s = s { tab_indentation  = tab_indentation s - 1 }
 
+-- | Merges settings between the command line and the configuration file.
+-- the values from command line are more prioritary
+mergeConfigSettings :: InterpreterSettings -> ConfigParser -> InterpreterSettings
+mergeConfigSettings st cp = st -- TODO
+
+-- | Reads the configuration file, if it doesn't exist, it is created
+-- on Unix-like systems: ~/.dart-haskell
+-- on Windows: C:/Documents And Settings/user/Application Data/dart-haskell
+configSettings :: IO ConfigParser
+configSettings = do
+  path_to_config <- getAppUserDataDirectory "dart-haskell"
+  config_file_exists <- doesFileExist path_to_config
+  when (not config_file_exists) mkConfigFile
+  cp <- readfile emptyCP path_to_config
+  return . forceEither $ cp
+  
+-- | Creates a config file with default settings
+-- on Unix-like systems: ~/.dart-haskell
+-- on Windows: C:/Documents And Settings/user/Application Data/dart-haskell
+mkConfigFile :: IO ()
+mkConfigFile = do
+  path_to_config <- getAppUserDataDirectory "dart-haskell"
+  writeFile path_to_config contents
+  where
+    contents = "################################################################################\n"
+               ++ "# NOTE:\n"
+               ++ "# data Bool = true|on|1|false|off|false\n"
+               ++ "\n"
+               ++ "[primitives]\n"               
+               ++ "min_int = order of 10^2\n"
+               ++ "max_int = order of 10^2\n"
+               ++ "double_min = order of 10^2\n"
+               ++ "double_max = order of 10^2\n"
+               ++ "\n"
+               ++ "[data structures]\n"
+               ++ "size = order of 10^2\n"
+               ++ "\n"
+               ++ "[interpreter]\n"
+               ++ "#path to the file that contains the module you want to interpret or test :: FilePath\n"
+               ++ "#file =\n"
+               ++ "\n"
+               ++ "#name of the function to evaluate, defined within the module in $file :: String\n"
+               ++ "#evaluate_function =\n"
+               ++ "\n"
+               ++ "#name of the function to test, defined within the module in $file :: String\n"
+               ++ "#test_function =\n"
+               ++ "\n"
+               ++ "# Print debug messages :: Bool\n"
+               ++ "debug = off\n"
+               ++ "# Be verbose: prints environment, loaded modules, etc.\n"
+               ++ "verbose = off\n"
+               ++ "\n"
+               ++ "# Maximum amount of seconds permitted to a computation in order to finish (includes tests and evaluations)\n"
+               ++ "timeout_seconds = 5\n"
+               ++ "\n"
+               ++ "################################################################################\n"               
+               ++ "# Debugging the interpreter\n"
+               ++ "show_heap = off\n"
+               ++ "show_expressions = off\n"
+               ++ "show_subexpressions = off\n"
+               ++ "watch_reduction = off\n"
+               ++ "watch_test = off\n"

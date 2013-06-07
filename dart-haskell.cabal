@@ -72,6 +72,8 @@ library
                       , primitive >= 0.5.0
                       , time >= 1.4
                       , regex-posix 
+                      , ConfigFile >= 1.1
+                      , MissingH >= 1.1
                     -- core utils
                       , zenc >= 0.1
                       , parsec >= 3.1.2

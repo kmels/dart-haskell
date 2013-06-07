@@ -15,10 +15,15 @@
 
 module Main where
 
-import           DART.InterpreterSettings
-import           DART.Run
-import           System.Console.CmdArgs
-import           Control.Monad.State.Lazy
+import Control.Monad.State.Lazy
+import DART.CmdLine
+import DART.InterpreterSettings
+import DART.Run
+import System.Console.CmdArgs
 
 main :: IO () 
-main = cmdArgs interpret >>= initDART >>= evalStateT runDART 
+main = do
+  cmdArgs <- cmdArgs interpret -- arguments from the command line
+  configArgs <- configSettings -- settings from ~/.dart-haskell config file
+  let settings = cmdArgs `mergeConfigSettings` configArgs
+  initDART settings >>= evalStateT runDART 
