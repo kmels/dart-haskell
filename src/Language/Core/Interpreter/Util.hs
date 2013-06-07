@@ -44,9 +44,9 @@ showValue val = return $ show val
 showTyConApp :: DataCon-> [Pointer] -> IM String
 showTyConApp (MkDataCon "ghc-prim:GHC.Types.[]" []) [] = return "[]" -- empty list
 showTyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ptrs = showList ptrs -- lists
-showTyConApp (MkDataCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = do -- tuples
-  x_str <- eval x [] >>= showValue
-  y_str <- eval y [] >>= showValue
+showTyConApp (MkDataCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = do
+  x_str <- evalPtr x >>= showValue
+  y_str <- evalPtr y >>= showValue
   return $ show (x_str,y_str) 
 showTyConApp tycon pointers = do
   vals <- mapM evalPtr pointers -- [Value]  
@@ -67,6 +67,7 @@ showTyConApp tycon pointers = do
 evalPtr :: Pointer -> IM Value
 evalPtr = flip eval []
 
+-- | Separates a list of strings by a space
 separateStrings :: [String] -> String
 separateStrings [] = ""
 separateStrings (x:xs) = x ++ prependSpace xs

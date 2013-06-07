@@ -72,7 +72,7 @@ data DARTState = DState {
  number_of_reductions :: !Int, -- when an expression is evaluated, this value increments by 1, useful to print debug headings
  number_of_reductions_part :: !Int -- when in debugging mode, this value is increased everytime an step is done in the evaluation of the expression represented by the number `number_of_reductions`, prints debug subheadings
  , tab_indentation :: !Int -- useful when to know how many tabs we shoud prepend
- , settings :: InterpreterSettings
+ , settings :: DARTSettings
  
    -- time when a computation started
    -- useful for timeouts
@@ -281,5 +281,5 @@ isTimeout = do
   let dayTime = now `diffUTCTime` st
   return $ (now `diffUTCTime` st > fromInteger max_timeout)
   
-getSetting :: (InterpreterSettings -> a) -> IM a 
+getSetting :: (DARTSettings -> a) -> IM a 
 getSetting f = gets settings >>= return . f

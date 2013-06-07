@@ -3,7 +3,7 @@ module DART.InterpreterSettings where
 
 import System.Console.CmdArgs
 
-data InterpreterSettings = InterpreterMode { 
+data DARTSettings = InterpreterMode { 
   file :: FilePath -- The file we will read information from, it can be either .hs, .lhs or .hcr
   , evaluate_function :: String -- the interpreter evaluates some function, defined in `file`
   , test_function :: String -- some function to test, defined in `file`
@@ -20,6 +20,10 @@ data InterpreterSettings = InterpreterMode {
   , debug_tab_level :: Int
   , include :: [FilePath]
   , benchmark :: Bool
+  
+  -- primitive types
+  , max_int_bound :: Int
+  , min_int_bound :: Int
   } deriving (Show, Data, Typeable)
 
 -- | We'll use the package cmdargs to identify flags, parameters, etc.,  from the command line
@@ -45,11 +49,15 @@ interpret = InterpreterMode {
   , watch_test = def &= groupname "DEBUG" &= help "Shows debug messages when testing a value definition"
   , debug_tab_level = 0
   , include = def &= groupname "USAGE" &= help "List of source directories to include in the module namespace, the base package is included by default"  
+  
+  -- primitives
+  , min_int_bound = def &= help "Minimum random integer to be generated"
+  , max_int_bound = def &= help "Maximum random integer to be generated"
   } &= summary "Reads a .hcr file and evaluates its declarations. "
 
 
-increase_debug_tab_level :: InterpreterSettings -> InterpreterSettings
+increase_debug_tab_level :: DARTSettings -> DARTSettings
 increase_debug_tab_level s = s { debug_tab_level = debug_tab_level s + 1 } 
-decrease_debug_tab_level :: InterpreterSettings -> InterpreterSettings
+decrease_debug_tab_level :: DARTSettings -> DARTSettings
 decrease_debug_tab_level s = s { debug_tab_level = debug_tab_level s - 1 } 
 

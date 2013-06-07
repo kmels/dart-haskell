@@ -42,7 +42,7 @@ import Data.Time.Clock(getCurrentTime)
 
 -- | Creates an initial state given the arguments given
 -- in the command line and parsed by CmdArgs
-initDART :: InterpreterSettings -> IO DARTState
+initDART :: DARTSettings -> IO DARTState
 initDART settings = do
   h <- io H.new -- create a fresh new heap
   current_dir <- getCurrentDirectory 

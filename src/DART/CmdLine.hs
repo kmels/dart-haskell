@@ -8,21 +8,29 @@ import           Control.Monad.State(gets)
 import           DART.InterpreterSettings
 import qualified Data.HashTable.IO as H
 import           Language.Core.Core -- Exp
-import           Language.Core.Interpreter.Structures
 import           Language.Core.Util(showExp)
 import           Control.Monad.State.Class(modify)
 
 --------------------------------------------------------------------------------
--- Prelude
+-- Common data types
 import           Data.Either.Utils(forceEither)
-
+import           Data.Foldable
+import           Data.Monoid
+import           Prelude hiding (foldr)
 --------------------------------------------------------------------------------
 -- System
 import           System.Directory
 
 --------------------------------------------------------------------------------
+-- Control
+import           Control.Applicative((<|>))
+--------------------------------------------------------------------------------
+-- DART
+import           Language.Core.Interpreter.Structures
+
+--------------------------------------------------------------------------------
 -- config file 
-import           Data.ConfigFile hiding (get)
+import qualified Data.ConfigFile as Conf
 
 -- | Prints a debug message with the number of the current reduction prepended
 debugMStep :: String -> IM ()
@@ -163,7 +171,7 @@ watchReductionM msg = whenFlag watch_reduction $ prependStars >> debugM msg
 watchTestM :: String -> IM ()
 watchTestM msg = whenFlag watch_test $ prependStars >> debugM msg
 
-whenFlag :: (InterpreterSettings -> Bool) -> IM () -> IM ()
+whenFlag :: (DARTSettings -> Bool) -> IM () -> IM ()
 whenFlag f a = do
   sttgs <- gets settings
   when (f sttgs) $ a
@@ -181,20 +189,53 @@ increase_indentation s = s { tab_indentation  = tab_indentation s + 1 }
 decrease_indentation :: DARTState -> DARTState
 decrease_indentation s = s { tab_indentation  = tab_indentation s - 1 }
 
+
+instance Foldable (Either e) where
+  foldMap f (Left  _) = mempty
+  foldMap f (Right r) = f r
+
+  foldr _ z (Left  _) = z
+  foldr f z (Right r) = f r z       
+  
 -- | Merges settings between the command line and the configuration file.
 -- the values from command line are more prioritary
-mergeConfigSettings :: InterpreterSettings -> ConfigParser -> InterpreterSettings
-mergeConfigSettings st cp = st -- TODO
-
+mergeConfigSettings :: DARTSettings -> Conf.ConfigParser -> IO DARTSettings
+mergeConfigSettings st cp = do 
+  --conf_file <- 
+  putStrLn "Your setting is:"
+    --conf_file = forceEither $ Conf.get cp "interpreter" "file"
+    
+  putStrLn . show $ mergeInt "primitive types" "min_int_bound" (min_int_bound st)
+  return $ st {
+     file = mergeStr "interpreter" "file" (file st)
+     -- primitives
+     , min_int_bound = mergeInt "primitive types" "min_int_bound" (min_int_bound st)
+     , max_int_bound = mergeInt "primitive types" "max_int_bound" (max_int_bound st)
+  }
+  where
+    -- merge a string setting
+    mergeStr :: Conf.SectionSpec -> Conf.OptionSpec -> String -> String
+    mergeStr sec opt [] = case Conf.get cp sec opt of
+       Left _ -> error $ "Missing settings field '" ++ opt ++ "' in section '" ++ sec ++ "'"
+       Right val -> val
+    mergeStr _ _ cmd_val = cmd_val
+    
+    -- merge an int setting
+    mergeInt :: Conf.SectionSpec -> Conf.OptionSpec -> Int -> Int
+    mergeInt sec opt 0 = case Conf.get cp sec opt of
+       Left _ -> error $ "Missing settings field '" ++ opt ++ "' in section '" ++ sec ++ "'"
+       Right val -> val
+    mergeInt _ _ cmd_val = cmd_val
+    
 -- | Reads the configuration file, if it doesn't exist, it is created
 -- on Unix-like systems: ~/.dart-haskell
 -- on Windows: C:/Documents And Settings/user/Application Data/dart-haskell
-configSettings :: IO ConfigParser
+configSettings :: IO Conf.ConfigParser
 configSettings = do
   path_to_config <- getAppUserDataDirectory "dart-haskell"
   config_file_exists <- doesFileExist path_to_config
   when (not config_file_exists) mkConfigFile
-  cp <- readfile emptyCP path_to_config
+  cp <- Conf.readfile Conf.emptyCP path_to_config
   return . forceEither $ cp
   
 -- | Creates a config file with default settings
@@ -209,9 +250,9 @@ mkConfigFile = do
                ++ "# NOTE:\n"
                ++ "# data Bool = true|on|1|false|off|false\n"
                ++ "\n"
-               ++ "[primitives]\n"               
-               ++ "min_int = order of 10^2\n"
-               ++ "max_int = order of 10^2\n"
+               ++ "[primitive types]\n"               
+               ++ "min_int_bound = -100\n"
+               ++ "max_int_bound = 100\n"
                ++ "double_min = order of 10^2\n"
                ++ "double_max = order of 10^2\n"
                ++ "\n"
