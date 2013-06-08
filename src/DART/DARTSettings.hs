@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module DART.InterpreterSettings where
+module DART.DARTSettings where
 
 import System.Console.CmdArgs
 

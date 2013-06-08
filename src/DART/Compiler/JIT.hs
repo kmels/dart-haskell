@@ -16,7 +16,7 @@ module DART.Compiler.JIT where
 
 import DART.CmdLine
 import DART.FileIO
-import DART.InterpreterSettings
+import DART.DARTSettings
 import Language.Core.Core
 import Language.Core.Interpreter.Structures
 import Language.Core.Vdefg(vdefgNames, findVdefg)

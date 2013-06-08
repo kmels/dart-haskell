@@ -20,7 +20,6 @@
 
 module Language.Core.Vdefg where
 
-import DART.InterpreterSettings
 import Data.List(find)
 import Language.Core.Core
 import Language.Core.Util

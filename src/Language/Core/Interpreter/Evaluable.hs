@@ -18,7 +18,6 @@ module Language.Core.Interpreter.Evaluable where
 
 import           DART.CmdLine
 import           DART.Compiler.JIT(jitCompile)
-import           DART.InterpreterSettings
 import qualified Data.HashTable.IO as H
 import           Data.List(find,inits)
 import           Data.Time.Clock

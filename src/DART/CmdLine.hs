@@ -5,7 +5,6 @@ module DART.CmdLine where
 import           Control.Monad(when)
 import           Control.Monad.IO.Class
 import           Control.Monad.State(gets)
-import           DART.InterpreterSettings
 import qualified Data.HashTable.IO as H
 import           Language.Core.Core -- Exp
 import           Language.Core.Util(showExp)
@@ -26,6 +25,7 @@ import           System.Directory
 import           Control.Applicative((<|>))
 --------------------------------------------------------------------------------
 -- DART
+import           DART.DARTSettings
 import           Language.Core.Interpreter.Structures
 
 --------------------------------------------------------------------------------
@@ -200,12 +200,7 @@ instance Foldable (Either e) where
 -- | Merges settings between the command line and the configuration file.
 -- the values from command line are more prioritary
 mergeConfigSettings :: DARTSettings -> Conf.ConfigParser -> IO DARTSettings
-mergeConfigSettings st cp = do 
-  --conf_file <- 
-  putStrLn "Your setting is:"
-    --conf_file = forceEither $ Conf.get cp "interpreter" "file"
-    
-  putStrLn . show $ mergeInt "primitive types" "min_int_bound" (min_int_bound st)
+mergeConfigSettings st cp = do
   return $ st {
      file = mergeStr "interpreter" "file" (file st)
      -- primitives

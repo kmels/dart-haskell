@@ -17,7 +17,7 @@
 
 module Language.Core.Util where
 
-import DART.InterpreterSettings
+import DART.DARTSettings
 import Language.Core.Core
 import Language.Core.Printer
 import Text.Encoding.Z

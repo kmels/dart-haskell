@@ -17,7 +17,7 @@ module Main where
 
 import Control.Monad.State.Lazy
 import DART.CmdLine
-import DART.InterpreterSettings
+import DART.DARTSettings
 import DART.Run
 import System.Console.CmdArgs
 

@@ -36,7 +36,7 @@ import Data.List((!!))
 -- as there are Ty's in DataCons and they're not pattern match friendly (we have indeed an extractor)
 mkRandomVal :: Ty -> Env -> IM Value
 mkRandomVal (Tcon qual_tcon) env = case showQualified qual_tcon of
-  "ghc-prim:GHC.Types.Int" -> io rndInt >>= return . Num . toInteger
+  "ghc-prim:GHC.Types.Int" -> rndInt >>= return . Num . toInteger
   id -> do
     type_constructors <- fetchDataCons id env
     sumTypeMkRandom type_constructors env
@@ -94,8 +94,11 @@ mkHeapRef = (=<<) memorizeVal
 
 -- | From the documentation of Haskell's Int:
 -- "A fixed-precision integer type with at least the range [-2^29 .. 2^29-1]. The exact range for a given implementation can be determined by using Prelude.minBound and Prelude.maxBound from the Prelude.Bounded class. "
-rndInt :: IO Int
-rndInt = getStdRandom (randomR (minBound, maxBound))
+rndInt :: IM Int
+rndInt = do
+  min_bound <- getSetting min_int_bound
+  max_bound <- getSetting max_int_bound
+  io $ getStdRandom (randomR (min_bound, max_bound))
 
 -- | And use the instances provided by the random package
 rndBool :: IO Bool

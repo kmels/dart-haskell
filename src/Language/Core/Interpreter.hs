@@ -42,7 +42,6 @@ import           Language.Core.Vdefg (vdefgQualVars)
 import           Control.Monad.State.Lazy
 import           DART.CmdLine
 import           DART.FileIO
-import           DART.InterpreterSettings
 import           Data.Time.Clock(getCurrentTime,diffUTCTime)
 import           Text.Encoding.Z(zDecodeString)
 -- data & control

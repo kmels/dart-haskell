@@ -15,9 +15,11 @@
 
 module DART.Run where
 
+--------------------------------------------------------------------------------
+-- DART
+import           DART.DARTSettings
 import           DART.FileIO
 import           DART.FunctionFeeder
-import           DART.InterpreterSettings
 import           DART.MkRandomValue
 import qualified DART.ModuleTester as T
 import qualified Data.HashTable.IO as H

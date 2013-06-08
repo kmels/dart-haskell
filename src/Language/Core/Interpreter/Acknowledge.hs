@@ -17,7 +17,7 @@
 module Language.Core.Interpreter.Acknowledge(acknowledgeModule,acknowledgeTypes,acknowledgeVdefgs,acknowledgeVdefg) where
 
 import DART.CmdLine(beVerboseM)
-import DART.InterpreterSettings
+import DART.DARTSettings
 import Language.Core.Core
 import Language.Core.Interpreter.Structures
 import Language.Core.Util

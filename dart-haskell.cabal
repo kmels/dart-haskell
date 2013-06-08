@@ -26,7 +26,7 @@ library
                  DART.Compiler.JIT                    
                  DART.FunctionFeeder,
                  DART.FileIO,
-                 DART.InterpreterSettings,
+                 DART.DARTSettings,
                  DART.CmdLine,
                  DART.MkRandomValue,
                  DART.MkRandom,

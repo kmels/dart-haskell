@@ -23,6 +23,9 @@ module Language.Core.Interpreter.Structures(
   -- timeouting
   , isTimeout, clearTimeout
   -- pretty printing
+  -- settings
+  , getSetting
+  , DARTSettings(..)
   , DARTState(..)
   , Heap, Env, HeapAddress, HeapReference
   , IM
@@ -43,18 +46,18 @@ import           Control.Monad.State
 -- base type funs
 import           Data.Either(partitionEithers,rights)
 import           Data.List(intersperse)
-import Data.Char (isUpper)
-import Data.List(findIndices)
+import           Data.Char (isUpper)
+import           Data.List(findIndices)
 --------------------------------------------------------------------------------
 -- DART
-import           DART.InterpreterSettings
+import           DART.DARTSettings
 -- Language.Core
 import           Language.Core.Core
 import           Language.Core.Util --(showType,showExtCoreType,showExp,wrapName)
 import           System.IO.Unsafe(unsafePerformIO)
 --------------------------------------------------------------------------------
 -- System
-import Data.Time.Clock
+import           Data.Time.Clock
 --------------------------------------------------------------------------------
 
 -- mutable hash tables; 

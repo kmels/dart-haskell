@@ -3,22 +3,32 @@
 
 module DART.FileIO where 
 
+--------------------------------------------------------------------------------
+-- Control
 import           Control.Monad.IO.Class(liftIO)
+------------------------------------------------------------------------------------------
+-- DART
 import           DART.CmdLine(beVerboseM)
-import           DART.InterpreterSettings
+import           DART.DARTSettings
 import qualified Data.ByteString.Char8 as Char8
 import           Data.ByteString.Lazy.UTF8 (toString)
+--------------------------------------------------------------------------------
+-- Extcore
 import           Language.Core.Core
 import           Language.Core.Core (Module)
 import           Language.Core.Interpreter.Acknowledge(acknowledgeTypes,acknowledgeVdefgs,acknowledgeModule)
 import           Language.Core.Interpreter.Structures
 import           Language.Core.ParseGlue
 import           Language.Core.Parser
+
+--------------------------------------------------------------------------------
+-- System
 import           System.Directory (getCurrentDirectory, doesDirectoryExist, doesFileExist, getDirectoryContents)
 import           System.Environment
 import           System.FilePath (dropExtension,takeExtension)
 import           System.IO
 import           System.Process(readProcess)
+
 readHcrFile :: (?be_verbose :: Bool) => FilePath -> IO String
 readHcrFile filepath = case takeExtension filepath of
   ".hcr" -> do
