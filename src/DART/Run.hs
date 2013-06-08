@@ -128,30 +128,30 @@ runDART = do
     test :: Module -> Env -> String -> IM ()
     -- | No function specified
     test m env [] = do
-      results <- T.testModule m env
+      tested_funs <- T.testModule m env
       
-      let prettyPrint :: (Id,T.TestResult) -> IM String
-          prettyPrint (id,test_result) = T.showTest test_result >>= return . (++) (id ++ ": \n")
+--      let prettyPrint :: TestedFun -> IM String
+--          prettyPrint (id,test_result) = T.showTestedFun test_result >>= return . (++) (id ++ ": \n")
 
       io . putStrLn $ "**************************************************"      
       io . putStrLn $ "Module test results "
       io . putStrLn $ "**************************************************"      
-      mapM prettyPrint results >>= io . mapM_ putStrLn
+      mapM T.showTestedFun tested_funs >>= io . mapM_ putStrLn
       
       h <- gets heap
       whenFlag show_heap $ io . printHeap $ h
     
     -- | test specified function
     test m env fun_name =             
-      let prettyPrint :: Maybe (Id,T.TestResult) -> IM String
-          prettyPrint Nothing = return $ "No test result "
-          prettyPrint (Just (id,test_result)) = T.showTest test_result >>= return . (++) (id ++ ": \n")
-      in do
-        res <- T.testHaskellExpression m fun_name env >>= prettyPrint
+      -- let prettyPrint :: Maybe (Id,T.TestResult) -> IM String
+      --     prettyPrint Nothing = return $ "No test result "
+      --     prettyPrint (Just (id,test_result)) = T.showTest test_result >>= return . (++) (id ++ ": \n")
+      do
+        fun_test_str <- T.testHaskellExpression m fun_name env >>= T.showFunTest
         io . putStrLn $ "**************************************************"
         io . putStrLn $ "Test results of " ++ fun_name
         io . putStrLn $ "**************************************************"
-        io . putStrLn $ res
+        io . putStrLn $ fun_test_str
         (gets heap >>= \h -> whenFlag show_heap $ io . printHeap $ h)
       
     evaluate :: Module -> Env -> String -> IM () 

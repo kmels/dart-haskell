@@ -62,6 +62,29 @@ instance Evaluable HaskellExpression where
           Just vdefg -> eval vdefg env
           Nothing -> return . Wrong $  "Could not evaluate " ++ expression_string ++ " in " ++ show mname
       
+instance Evaluable Id where
+  eval id env = evalId id env
+  
+-- | Looks for the address in the heap, evals a thunk if necessary to return a value
+evalId :: Id -> Env -> IM Value
+--evalId i e = lookupId i e >>= either (evalThunk e) return
+evalId i e = do
+  watchReductionM $ "Evaluating variable " ++ i
+  ptr <- getPointer i e 
+  case ptr of
+    e@(Wrong s) -> return e -- i was not found in env
+    Pointer (MkPointer heap_address) -> do -- we know something about i in env
+      eTnkVal <- lookupMem heap_address
+      whnf <- case eTnkVal of  -- evaluate to weak head normal form
+        Left thunk -> do
+          val <- eval thunk e
+          h <- gets heap
+          io $ H.insert h heap_address (Right val)
+          return val
+        Right val -> return val  -- it is already in weak head normal form
+      watchReductionM (show i ++ " ~> " ++ show whnf)
+      return whnf
+      
 instance Evaluable Vdefg where
   eval vdefg env = do
     refs <- evalVdefg vdefg env
@@ -368,26 +391,6 @@ evalExpI exp env desc = do
   watchReductionM $ "}" -- debugMStepEnd
   
   return res
-  
--- | Looks for the address in the heap, evals a thunk if necessary to return a value
-evalId :: Id -> Env -> IM Value
---evalId i e = lookupId i e >>= either (evalThunk e) return
-evalId i e = do
-  watchReductionM $ "Evaluating variable " ++ i
-  ptr <- getPointer i e 
-  case ptr of
-    e@(Wrong s) -> return e -- i was not found in env
-    Pointer (MkPointer heap_address) -> do -- we know something about i in env
-      eTnkVal <- lookupMem heap_address
-      whnf <- case eTnkVal of  -- evaluate to weak head normal form
-        Left thunk -> do
-          val <- eval thunk e
-          h <- gets heap
-          io $ H.insert h heap_address (Right val)
-          return val
-        Right val -> return val  -- it is already in weak head normal form
-      watchReductionM (show i ++ " ~> " ++ show whnf)
-      return whnf
   
 -- | Function application
 apply :: Value -> Id -> Env -> IM Value

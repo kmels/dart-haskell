@@ -9,6 +9,10 @@ module RecursiveVdefg(
   , fib0, fib1, fib2, fib10
   ) where
 
+-- | There is no function to test here, yet.
+-- The purpose of these definitions is to test the interpretation
+-- of recursive definitions
+
 import Prelude hiding (even,odd)
 
 even :: Int -> Bool

@@ -34,8 +34,8 @@ import Data.List((!!))
 -- | A function that generates a random value given a type.
 -- We could have type classes on RandomizableTypes but it would imply using template haskell
 -- as there are Ty's in DataCons and they're not pattern match friendly (we have indeed an extractor)
-mkRandomVal :: Ty -> Env -> IM Value
-mkRandomVal (Tcon qual_tcon) env = case showQualified qual_tcon of
+mkRandomVal :: Env -> Ty -> IM Value
+mkRandomVal env (Tcon qual_tcon)  = case showQualified qual_tcon of
   "ghc-prim:GHC.Types.Int" -> rndInt >>= return . Num . toInteger
   id -> do
     type_constructors <- fetchDataCons id env
@@ -48,7 +48,7 @@ mkRandomVal (Tcon qual_tcon) env = case showQualified qual_tcon of
           return $ case msumtype of
             (Right (SumType datacons)) -> datacons
             _ -> []    
-mkRandomVal ty _ = return . Wrong $ " mkRandomVal: I don't know how to make a random val for the type " ++ showExtCoreTypeVerbose ty
+mkRandomVal env ty = return . Wrong $ " mkRandomVal: I don't know how to make a random val for the type " ++ showExtCoreTypeVerbose ty
         
 -- | Given a list of data constructors (that form a sum type), make a random
 -- value of type of the sum type
@@ -74,7 +74,7 @@ tyConMkRandom dc@(MkDataCon id tys) env = do
 -- | Makes a random value from a type and returns a pointer to it
 tyRndValPtr :: Ty -> Env -> IM Pointer
 tyRndValPtr ty env = do
-  val <- mkRandomVal ty env
+  val <- mkRandomVal env ty
   heap_ref@(_,addr) <- memorizeVal val
   return . MkPointer $ addr
   
@@ -89,16 +89,18 @@ tyRndValPtr ty env = do
 --mkRandomHR ct env = mkHeapRef $ mkRandomVal ct env
 
 -- | Given a value, stores it in the heap and returns a heap reference
-mkHeapRef :: IM Value -> IM HeapReference
-mkHeapRef = (=<<) memorizeVal
+mkHeapRef :: Value -> IM HeapReference
+mkHeapRef = memorizeVal
 
 -- | From the documentation of Haskell's Int:
 -- "A fixed-precision integer type with at least the range [-2^29 .. 2^29-1]. The exact range for a given implementation can be determined by using Prelude.minBound and Prelude.maxBound from the Prelude.Bounded class. "
 rndInt :: IM Int
 rndInt = do
   min_bound <- getSetting min_int_bound
-  max_bound <- getSetting max_int_bound
-  io $ getStdRandom (randomR (min_bound, max_bound))
+  max_bound <- getSetting max_int_bound  
+  int <- io $ getStdRandom (randomR (min_bound, max_bound))
+  --io $ putStrLn $ "Generating random int between " ++ show min_bound ++ " and " ++ show max_bound ++ " - " ++ show int
+  return int
 
 -- | And use the instances provided by the random package
 rndBool :: IO Bool

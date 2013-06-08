@@ -18,10 +18,15 @@ import Language.Core.Util(showExtCoreType,showExtCoreTypeVerbose,showQualified)
 import Text.Encoding.Z(zDecodeString)
 import Data.Maybe(isJust,fromJust)
 
+--------------------------------------------------------------------------------
+-- DART
+import Language.Core.Interpreter.Structures
+import Language.Core.Interpreter.Util(idName)
+
 -- | Z-Decodes a Tvar or otherwise shows the type
-typeName :: Ty -> String
-typeName (Tvar ty) = zDecodeString ty
-typeName ty = showExtCoreType ty
+qualTypeName :: Ty -> String
+qualTypeName (Tvar ty) = zDecodeString ty
+qualTypeName ty = showExtCoreType ty
 
 -- | Returns true if the given type is primitive
 isPrimitive :: Ty -> Bool
@@ -71,3 +76,20 @@ isFunctionTy _ = False
 funArgTy :: Ty -> Maybe Ty
 funArgTy (Tapp (Tcon ((Just (M (P ("ghczmprim"),["GHC"],"Prim"))),"ZLzmzgZR")) ty) = Just ty
 funArgTy _ = Nothing
+
+-- | Given a list of types, this function pretty prints the list as a type signature
+typeSignature :: [Ty] -> IM String
+typeSignature (t:tys) = liftM2 (++) (typeName t) (mapM typeName tys >>= return . prependArrows)
+
+--lifttypeName t ++ prependArrows (map typeName ty)
+-- (String -> String -> String) -> IM String -> IM String -> IM String
+--liftM2 :: Monad m => (a1 -> a2 -> r) -> m a1 -> m a2 -> m r
+
+-- | Given a type, this function extracts its name as a string. 
+typeName :: Ty -> IM String
+typeName = return . idName . qualTypeName 
+
+prependArrows :: [String] -> String
+prependArrows [] = []
+prependArrows [[]] = []    
+prependArrows (y:ys) = " -> " ++ y ++ prependArrows ys
