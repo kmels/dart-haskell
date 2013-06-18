@@ -16,7 +16,7 @@ module DART.TestUtils(
   module DART.FileIO
   , module System.IO.Unsafe
   , module Language.Core.Interpreter
-  , module DART.InterpreterSettings
+  , module DART.DARTSettings
   , module DART.Run
   , module Test.HUnit
   , checkExpected, checkExpectedProperties, (@@)
@@ -24,7 +24,7 @@ module DART.TestUtils(
 
 import DART.FileIO
 import Language.Core.Interpreter
-import DART.InterpreterSettings
+import DART.DARTSettings
 import System.IO.Unsafe
 import DART.Run
 import Test.HUnit hiding (test,State)

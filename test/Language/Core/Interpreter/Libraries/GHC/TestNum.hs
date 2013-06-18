@@ -48,10 +48,11 @@ evalFile filepath = initDART interpret >>= evalStateT evalFile'
   where
   evalFile' :: IM [(Id,Value)]
   evalFile' = do
-    let ?be_verbose = False
+    loadLibraries
+    
+    let ?be_verbose = False        
     modul <- io . readModule $ filepath
-    module_env <- acknowledgeModule modul
-    libs_env <- mkLibsEnv
-    evalModule modul (module_env ++ libs_env)
+    module_env <- acknowledgeModule modul    
+    evalModule modul module_env
     
 test = unsafePerformIO testIO

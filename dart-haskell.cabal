@@ -107,5 +107,5 @@ Test-Suite test-dart-haskell
     build-depends: base, 
 --                   dart-haskell == 0.1
                    -- Ideally, this wouldn't be needed, but listing `dart-haskell` as a dependency is not enough..
-                   filepath, process, directory, extcore, hashtables, zenc, cmdargs, mtl, primitive, transformers, utf8-string, bytestring, time, regex-posix, parsec, random
+                   filepath, process, directory, extcore, hashtables, zenc, cmdargs, mtl, primitive, transformers, utf8-string, bytestring, time, regex-posix, ConfigFile >= 1.1, MissingH, parsec, random
                    , HUnit >= 1.2.5

@@ -57,6 +57,7 @@ initDART settings = do
   return $ DState {
     benchmarks = []
     , branches_record = []
+    , libraries_env = []
     , heap = h
     , heap_count = 0
     , number_of_reductions = 0
@@ -82,11 +83,14 @@ default_includes = [
   , "/lib/base/Data/List.hcr"
   ]
          
--- | Assumming no library has been loaded, this function looks for the settings (often coming from the command line, except when testing), loads the includes,
--- the base library and the builtin functions for the interpreter to work.
--- It retuns an environment, a list of heap references that is.
-mkLibsEnv :: IM Env
-mkLibsEnv = do  
+-- | Assumming no library has been loaded, this function looks for the settings (often coming from the command line and loads:
+--   * the includes, 
+--   * the base library
+--   * the builtin functions (coming from the Interpreter/Libraries module family) 
+-- for the interpreter to work.
+loadLibraries :: IM ()
+loadLibraries = do
+  debugMStep ("Loading includes ")  
   settings <- gets settings
     
   -- get the list of includes and acknowledge definitions in heap
@@ -95,7 +99,10 @@ mkLibsEnv = do
   
   -- builtin funs, e.g. GHC.Num.+
   ghc_builtin_funs <- I.loadLibrary Libs.ghc_base    
-  return $ ghc_builtin_funs ++ concat lib_envs
+  
+  modify $ \st -> st {
+    libraries_env = ghc_builtin_funs ++ concat lib_envs
+  }
 
 -- | After an initial state is created, evaluates according to the settings
 runDART :: IM ()
@@ -110,20 +117,19 @@ runDART = do
   m@(Module mdlname tdefs vdefgs) <- io . readModule $ file settgs
   module_env <- acknowledgeModule m
   
-  debugMStep ("Loading includes ")
-  libs_env <- mkLibsEnv
+  loadLibraries
   
-  let env = module_env ++ libs_env
+  let
       eval_funname = evaluate_function settgs
       test_funname = test_function settgs
   
   -- What should we eval? a function or the whole module?
   unless (not $ null test_funname) $
-    evaluate m env eval_funname
+    evaluate m module_env eval_funname
   
   -- What should we test? a function or the whole module?  
   unless (not $ null eval_funname) $ 
-    test m env test_funname
+    test m module_env test_funname
   
   where
     test :: Module -> Env -> String -> IM ()

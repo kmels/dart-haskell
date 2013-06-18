@@ -68,7 +68,7 @@ import qualified Data.HashTable.IO as H
 data DARTState = DState {  
   -- benchmarking
  benchmarks :: [(Id,NominalDiffTime)]
- , libraries_env 
+ , libraries_env :: Env
  , heap :: Heap -- our memory 
  , branches_record :: [(Exp,Value)] -- also keep Env, but without libs; only stuff within the scope.
  , heap_count :: Int, -- address counter, counts those previously deleted too

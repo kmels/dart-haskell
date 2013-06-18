@@ -4,14 +4,15 @@ import           DART.CmdLine
 import qualified Data.HashTable.IO as H
 import           Language.Core.Interpreter.Structures
 
--- | Returns a Pointer HeapAddress if `id` is in `env`, otherwise returns Wrong
+-- | Returns a Pointer HeapAddress if `id` is in `env` or within libraries_env in DARTState, otherwise returns Wrong
 mkPointer :: Id -> Env -> IM (Maybe Pointer)
-mkPointer id [] = return Nothing
-mkPointer id (e:env) = if (fst e == id) 
+mkPointer id env = gets libraries_env >>= \libs -> mkPtr id (env ++ libs)
+  where
+    mkPtr id [] = return Nothing
+    mkPtr id (e:env) = if (fst e == id) 
                        then let address = snd e in return . Just . MkPointer $ address
-                       else mkPointer id env
-                       
-
+                       else mkPtr id env
+    
 getPointer :: Id -> Env -> IM Value
 getPointer id env = mkPointer id env >>= \p -> case p of 
   Just p -> return $ Pointer p
