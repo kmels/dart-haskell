@@ -37,8 +37,8 @@ conjunction = (id, Right $ applyFun_2 "&&" valConjunction)
     id = "ghc-prim:GHC.Classes.&&" 
     valConjunction :: Value -> Value -> IM Value
     valConjunction (Boolean b1) (Boolean b2) = return . Boolean $ (&&) b1 b2
-    valConjunction v@(Wrong _) _ = return . Wrong $ "First arg " ++ show v
-    valConjunction _ w@(Wrong _) = return . Wrong $ "Second arg " ++ show w      
+    valConjunction v@(Wrong _) _ = return v
+    valConjunction _ w@(Wrong _) = return w
    
 leq :: (Id, Either Thunk Value)
 leq = (id, Right $ Fun (monomophy_2 "(<=)" leq') "(<=)") where

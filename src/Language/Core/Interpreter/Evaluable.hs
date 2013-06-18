@@ -242,16 +242,19 @@ instance Evaluable Exp where
     increaseIndentation
     heap_reference@(id,address) <- memorize (mkThunk exp env) vbind_var
     exp_value <- eval address (heap_reference:env)
-
+    
     watchReductionM $ "\tDoing case analysis for " ++ show vbind_var
     
     maybeAlt <- findMatch exp_value alts
     let exp = maybeAlt >>= Just . altExp -- Maybe Exp
   
     case maybeAlt of
-      Just alt -> do -- a matched alternative was found, in case it's a constructor, bind its arguments
+      Just alt -> do -- a matched alternative was found                        
         let exp = altExp alt
-      
+        -- record the match
+        recordBranch exp exp_value
+        
+        -- bind free variables in the matched alternative pattern
         watchReductionM "Making altEnv"
         alt_env <- mkAltEnv exp_value alt
         watchReductionM $ "This is the alt env: " ++ show alt_env
@@ -300,6 +303,16 @@ mkAltEnv val alt = do
   watchReductionM $ "Returning empty env (didn't bind anything)"
   return []
 
+-- | When case analysis is done, and a pattern matches the value
+-- we are analyzing, there's a branch in the program execution path
+-- that we're going to record with this method.
+recordBranch :: Exp -> Value -> IM ()
+recordBranch = \exp -> modify . addBranch exp
+  where
+    addBranch :: Exp -> Value -> DARTState -> DARTState
+    addBranch exp val st = st {
+      branches_record = (exp,val):(branches_record st)
+    }
 
 -- | Tries to find an alternative that matches a value. It returns the first match, if any.
 -- According to [GHC](http://hackage.haskell.org/trac/ghc/wiki/Commentary/Compiler/CoreSynType)

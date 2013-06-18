@@ -68,9 +68,10 @@ import qualified Data.HashTable.IO as H
 data DARTState = DState {  
   -- benchmarking
  benchmarks :: [(Id,NominalDiffTime)]
- 
- , heap :: Heap, -- our memory 
- heap_count :: Int, -- address counter, counts those previously deleted too
+ , libraries_env 
+ , heap :: Heap -- our memory 
+ , branches_record :: [(Exp,Value)] -- also keep Env, but without libs; only stuff within the scope.
+ , heap_count :: Int, -- address counter, counts those previously deleted too
                     -- useful to generate new variable names
  number_of_reductions :: !Int, -- when an expression is evaluated, this value increments by 1, useful to print debug headings
  number_of_reductions_part :: !Int -- when in debugging mode, this value is increased everytime an step is done in the evaluation of the expression represented by the number `number_of_reductions`, prints debug subheadings
@@ -93,6 +94,19 @@ type HeapAddress = Int
 type Env = [(Id,HeapAddress)]
 type HeapReference = (Id,HeapAddress)
 
+-- -- 
+-- fun x y = let z = 2 * y 
+--           in if (x < y) then x * 2
+--           else if (x < z) then y
+--           else if (2 * x > 3 * y) then 0
+--           else error $ " finished fun"
+
+-- --
+-- fun2 = let
+--   a = error $ "ERROR"
+--   b = 2
+--   in a `seq` b
+   
 -- | Define a monad IM (for Interpreter Monad) where we keep a value of type DARTState containing state variables such as the heap and settings such as the number of reduction for debugging purposes. 
 
 type IM = StateT DARTState IO 
