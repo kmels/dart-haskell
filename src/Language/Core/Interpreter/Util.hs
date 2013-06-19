@@ -23,9 +23,11 @@ import           Data.List(findIndices,intersperse)
 import           Prelude hiding (showList)
 --------------------------------------------------------------------------------
 import DART.CmdLine(debugM)
+import DART.Util.StringUtils(separateWithSpaces)
 import Language.Core.Interpreter
 import Language.Core.Interpreter.Apply
 
+  
 --import Language.Core.Interpreter.Structures
 -- | A function that ignores its parameters and returns a value
 -- the parenthesis in the signature have no effects and are only here to understand better 
@@ -54,7 +56,7 @@ showTyConApp tycon pointers = do
   
   return $ let
     tycon_name = (idName . dataConId) tycon
-    arg_strings = separateStrings whnf_strings
+    arg_strings = separateWithSpaces whnf_strings
     in tycon_name ++ " " ++ arg_strings
     
   where
@@ -67,21 +69,21 @@ showTyConApp tycon pointers = do
 evalPtr :: Pointer -> IM Value
 evalPtr = flip eval []
 
--- | Separates a list of strings by a space
-separateStrings :: [String] -> String
-separateStrings [] = ""
-separateStrings (x:xs) = x ++ prependSpace xs
-  where
-    prependSpace :: [String] -> String
-    prependSpace [] = []
-    prependSpace [[]] = []    
-    prependSpace (y:ys) = " " ++ y ++ prependSpace ys
+-- | Intercalates a list of strings by a separator
+-- separateWith :: [String] -> String -> String
+-- separateWith [] = ""
+-- separateWith (x:xs) = x ++ prependSeparator xs
+--   where
+--     prependSeparator :: [String] -> String
+--     prependSeparator [] = []
+--     prependSeparator [[]] = []    
+--     prependSeparator (y:ys) = " " ++ y ++ prependSeparator ys
 
 -- | Function in charge of showing the application of the type constructor "ghc-prim:GHC.Types.:"
 showList :: [Pointer] -> IM String
 showList ptrs = do
   elem_strs <- mapM showPtr ptrs  
-  return $ "[" ++ separateStrings elem_strs ++ "]"
+  return $ "[" ++ separateWithSpaces elem_strs ++ "]"
   where
     showPtr :: Pointer -> IM String
     showPtr ptr = evalPtr ptr >>= showValue'
@@ -90,7 +92,7 @@ showList ptrs = do
     -- If we find another list, don't show the []
     showValue' :: Value -> IM String
     showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) = return ""
-    showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ptrs) = mapM showPtr ptrs >>= return . separateStrings
+    showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ptrs) = mapM showPtr ptrs >>= return . separateWithSpaces
     showValue' v = showValue v
     
 wrapInParenthesis s = "(" ++ s ++ ")"

@@ -23,6 +23,7 @@ import DART.CmdLine(debugMStep,debugM,beVerboseM,watchTestM)
 import DART.MkRandom
 import DART.ModuleTester.Testable
 import Data.Maybe
+import DART.Util.StringUtils(separateWithNewLines)
 import Language.Core.Interpreter(apply,eval)
 import Language.Core.Interpreter.Acknowledge(acknowledgeModule)
 import Language.Core.Interpreter.Structures
@@ -30,7 +31,6 @@ import Language.Core.Interpreter.Util(showValue)
 import Language.Core.Module(moduleFindVdefByName)
 import Language.Core.Ty(funTyArgs,typeSignature)
 import Language.Core.Vdefg(findVdefByName,vdefId)
-
 --------------------------------------------------------------------------------
 -- Prelude
 import Data.List(partition)
@@ -186,12 +186,12 @@ showTestedFun :: TestedFun -> IM String
 showTestedFun (TestedFun vdef test_results) =
   case test_fails of
     [] -> return $ id ++ " passed " ++ (show . length $ test_successes) ++ " tests"
-    _ ->
+    (test_fail:_) ->
       let 
         failed_str = id ++ " failed in " ++ (show . length $ test_fails) ++ " tests" 
       in do
         failed_test_strs <- mapM showTestResult test_fails
-        return $ failed_str ++ show failed_test_strs
+        return $ failed_str ++ separateWithNewLines failed_test_strs
   where
     id = vdefId vdef
     (test_successes, test_fails) = partition isSuccessfulTest test_results
@@ -199,8 +199,9 @@ showTestedFun (TestedFun vdef test_results) =
 showTestResult :: TestResult -> IM String
 showTestResult (TestSuccess _ _) = return "Test success"
 showTestResult (FailedTest arg_vals message) = do
-  arg_strs <- mapM showValue arg_vals
-  return $ "Failed with arguments: " ++ show arg_strs
+  --arg_strs <- mapM showValue arg_vals
+  arg_str <- showValue (head arg_vals)
+  return $ "Failed with arguments: " ++ arg_str
 
 showFunTest :: FunTest -> IM String
 showFunTest NoFunTest = return $ "Function is not testable"

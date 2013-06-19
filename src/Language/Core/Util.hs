@@ -124,8 +124,8 @@ showAlt (Adefault exp) = wrapName "_ -> " $ showExp exp
 showAlt (Alit lit exp) = showLit lit ++ " -> " ++ showExp exp
 
 showAlt (Acon qcon tbinds vbinds exp) = snd qcon  ++
-                                        concatMap (space . (wrapName "tbind") . fst) tbinds ++ " " ++ 
-                                        concatMap (space . (wrapName "vbind") . fst) vbinds ++
+                                        concatMap (prependSpace . (wrapName "tbind") . fst) tbinds ++ " " ++ 
+                                        concatMap (prependSpace . (wrapName "vbind") . fst) vbinds ++
                                         " -> " ++ showExp exp
 
 -- wrapName "Acon" $ showMname mname ++ ", " ++ dcon ++ ", " ++ concatMap (\tb -> showTbind tb ++ ",") tbinds ++ concatMap (\vb ->showVbind vb ++ ",") vbinds ++ showExp exp
@@ -196,7 +196,7 @@ instance Show Exp where
 
 -}
 
-space = (++) " "
+prependSpace = (++) " "
 newline = (++) "\n"
 appendNewLine = flip (++) "\n"
 tab :: (?tab_indentation :: Int) => String -> String

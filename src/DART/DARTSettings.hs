@@ -17,6 +17,7 @@ data DARTSettings = InterpreterMode {
   , show_tmp_variables :: Bool 
   , watch_reduction :: Bool
   , watch_test :: Bool 
+  , watch_smt :: Bool
   , debug_tab_level :: Int
   , include :: [FilePath]
   , benchmark :: Bool
@@ -47,6 +48,7 @@ interpret = InterpreterMode {
   , show_tmp_variables = def &= groupname "DEBUG" &= help "Shows debug messages for temporal variables (if depends flag is on)"
   , watch_reduction = def &= groupname "DEBUG" &= help "Shows debug messages for the evaluation of a value definition (shows reductions of expressions)"
   , watch_test = def &= groupname "DEBUG" &= help "Shows debug messages when testing a value definition"
+  , watch_smt = def &= groupname "DEBUG" &= help "Shows debug messages of the usage of the SMT solver"
   , debug_tab_level = 0
   , include = def &= groupname "USAGE" &= help "List of source directories to include in the module namespace, the base package is included by default"  
   

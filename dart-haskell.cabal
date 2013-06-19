@@ -32,6 +32,7 @@ library
                  DART.MkRandom,
                  DART.ModuleTester
                  DART.ModuleTester.Testable,
+                 DART.Util.StringUtils,
                  Language.Core.Util,
                  Language.Core.Ty,
                  Language.Core.Interpreter.Acknowledge,

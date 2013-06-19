@@ -88,18 +88,9 @@ data DARTState = DState {
 }
 
 type Heap = H.CuckooHashTable HeapAddress (Either Thunk Value)
---type HeapTypes = H.CuckooHashTable HeapAddress Type
---type Heap = H.CuckooHashTable HeapAddress (GeneralType)
 type HeapAddress = Int
 type Env = [(Id,HeapAddress)]
 type HeapReference = (Id,HeapAddress)
-
--- -- 
--- fun x y = let z = 2 * y 
---           in if (x < y) then x * 2
---           else if (x < z) then y
---           else if (2 * x > 3 * y) then 0
---           else error $ " finished fun"
 
 -- --
 -- fun2 = let
@@ -108,7 +99,6 @@ type HeapReference = (Id,HeapAddress)
 --   in a `seq` b
    
 -- | Define a monad IM (for Interpreter Monad) where we keep a value of type DARTState containing state variables such as the heap and settings such as the number of reduction for debugging purposes. 
-
 type IM = StateT DARTState IO 
 
 data Value = Wrong String
@@ -136,14 +126,10 @@ instance Show Thunk where
   --show (VdefgThunk exp) = let ?tab_indentation = 0 
   --                        in "VdefgThunk(exp=" ++ showExp exp ++ ")"
 
---data ModuleFunction = ModuleFunction Vdef Module
 
 -- | Some expression from the command line that is evaluable within the scope of the
 -- provided file(s)
 data HaskellExpression = HaskellExpression String Module
--- cons = TyConApp (MkDataCon "Cons" [a]) [1,Nil]
-
--- RENAME THIS (DataCon)
 
 -- | A data type constructor that has normally a qualified name and a list of
 -- types that it expects. 

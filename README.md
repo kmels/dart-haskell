@@ -18,6 +18,11 @@ It reports
 
 Install
 ------
+
+1. Download [Z3](http://z3.codeplex.com/releases) and let its binary be in the binaries scope, e.g. on Linux, add it to your $PATH
+
+2. Install DART-Haskell
+
     > git clone https://github.com/kmels/dart-haskell
     > cd dart-haskell
     > cabal install
