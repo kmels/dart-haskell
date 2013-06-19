@@ -165,10 +165,10 @@ testHaskellExpression m@(Module mname tdefs vdefgs) id env =
 showTestedFun :: TestedFun -> IM String
 showTestedFun (TestedFun vdef test_results) =
   case test_fails of
-    [] -> return $ id ++ " passed " ++ (show . length $ test_successes) ++ " tests"
+    [] -> return $ id ++ " passed all (" ++ (show . length $ test_successes) ++ ") tests"
     (test_fail:_) ->
       let 
-        failed_str = id ++ " failed in " ++ (show . length $ test_fails) ++ " tests" 
+        failed_str = id ++ " failed in " ++ (show . length $ test_fails) ++ " tests\n" 
       in do
         failed_test_strs <- mapM showTestResult test_fails
         return $ failed_str ++ separateWithNewLines failed_test_strs
@@ -180,7 +180,7 @@ showTestResult :: TestResult -> IM String
 showTestResult (TestSuccess _ _) = return "Test success"
 showTestResult (FailedTest arg_vals message) = do
   arg_strs <- mapM showValue arg_vals
-  return $ "Failed with arguments: " ++ separateWithNewLines arg_strs
+  return $ message ++ ", with arguments: \n" ++ separateWithNewLines arg_strs
 
 showFunTest :: FunTest -> IM String
 showFunTest NoFunTest = return $ "Function is not testable"
