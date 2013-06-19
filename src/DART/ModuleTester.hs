@@ -121,7 +121,8 @@ testFun def@(Vdef (qvar,ty,vdef_exp)) env =
       -- eval the expression (we already know it has the function type)
       fun@(Fun _ _) <- eval vdef_exp env
       
-      test_results <- replicateM 5 $ do
+      ntests <- getSetting number_of_tests
+      test_results <- replicateM ntests $ do
         arg_vals <- mapM (mkRandomVal env) fun_type_args
         debugM $ "Did " ++ (show . length) arg_vals ++ " random values"
         testFunOnce fun arg_vals

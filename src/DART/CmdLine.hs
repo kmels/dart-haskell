@@ -207,9 +207,12 @@ mergeConfigSettings :: DARTSettings -> Conf.ConfigParser -> IO DARTSettings
 mergeConfigSettings st cp = do
   return $ st {
      file = mergeStr "interpreter" "file" (file st)
+     -- testing
+     , number_of_tests = mergeInt "testing" "number_of_tests" (number_of_tests st)
+     
      -- primitives
      , min_int_bound = mergeInt "primitive types" "min_int_bound" (min_int_bound st)
-     , max_int_bound = mergeInt "primitive types" "max_int_bound" (max_int_bound st)
+     , max_int_bound = mergeInt "primitive types" "max_int_bound" (max_int_bound st)     
   }
   where
     -- merge a string setting
@@ -267,6 +270,10 @@ mkConfigFile = do
                ++ "\n"
                ++ "#name of the function to test, defined within the module in $file :: String\n"
                ++ "#test_function =\n"
+               ++ "\n"
+               ++ "[testing]\n"
+               ++ "#number of tests per test function\n"
+               ++ "number_of_tests = 1\n"
                ++ "\n"
                ++ "# Print debug messages :: Bool\n"
                ++ "debug = off\n"

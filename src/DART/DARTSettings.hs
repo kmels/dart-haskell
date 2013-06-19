@@ -21,7 +21,8 @@ data DARTSettings = InterpreterMode {
   , debug_tab_level :: Int
   , include :: [FilePath]
   , benchmark :: Bool
-  
+
+  , number_of_tests :: Int  
   -- primitive types
   , max_int_bound :: Int
   , min_int_bound :: Int
@@ -51,7 +52,8 @@ interpret = InterpreterMode {
   , watch_smt = def &= groupname "DEBUG" &= help "Shows debug messages of the usage of the SMT solver"
   , debug_tab_level = 0
   , include = def &= groupname "USAGE" &= help "List of source directories to include in the module namespace, the base package is included by default"  
-  
+  -- tests config
+  , number_of_tests = def &= groupname "TESTING" &= help "Number of tests to do per test case i.e. per function definition"  
   -- primitives
   , min_int_bound = def &= help "Minimum random integer to be generated"
   , max_int_bound = def &= help "Maximum random integer to be generated"
