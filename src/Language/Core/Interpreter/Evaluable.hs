@@ -18,6 +18,7 @@ module Language.Core.Interpreter.Evaluable where
 
 import           DART.CmdLine
 import           DART.Compiler.JIT(jitCompile)
+import DART.Util.StringUtils(separateWithNewLines)
 import qualified Data.HashTable.IO as H
 import           Data.List(find,inits)
 import           Data.Time.Clock
@@ -27,6 +28,7 @@ import           Language.Core.Interpreter.Apply
 import           Language.Core.Interpreter.Structures
 import           Language.Core.Vdefg (findVdefByName,vdefgNames,vdefName)
 import           Language.Core.Module
+
 class Evaluable a where
   eval :: a -> Env -> IM Value
   
@@ -307,7 +309,15 @@ mkAltEnv val alt = do
 -- we are analyzing, there's a branch in the program execution path
 -- that we're going to record with this method.
 recordBranch :: Exp -> Value -> IM ()
-recordBranch = \exp -> modify . addBranch exp
+recordBranch exp val = do
+  ti <- gets tab_indentation
+  let ?tab_indentation = ti
+  
+  watchSMT $ "Recording branch \n\n " ++ separateWithNewLines [
+    "Exp: " ++ showExp exp,
+    "Value: " ++ show val]
+    
+  modify $ addBranch exp val
   where
     addBranch :: Exp -> Value -> DARTState -> DARTState
     addBranch exp val st = st {

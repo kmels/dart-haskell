@@ -69,16 +69,6 @@ showTyConApp tycon pointers = do
 evalPtr :: Pointer -> IM Value
 evalPtr = flip eval []
 
--- | Intercalates a list of strings by a separator
--- separateWith :: [String] -> String -> String
--- separateWith [] = ""
--- separateWith (x:xs) = x ++ prependSeparator xs
---   where
---     prependSeparator :: [String] -> String
---     prependSeparator [] = []
---     prependSeparator [[]] = []    
---     prependSeparator (y:ys) = " " ++ y ++ prependSeparator ys
-
 -- | Function in charge of showing the application of the type constructor "ghc-prim:GHC.Types.:"
 showList :: [Pointer] -> IM String
 showList ptrs = do
@@ -100,10 +90,12 @@ wrapInParenthesis s = "(" ++ s ++ ")"
 -- | Take a qualified name and return only its last name. E.g. idName "main.Module.A" = "A"
 idName :: Id -> String
 idName id = let 
-  name = drop (lastDotIndex id + 1) id 
+  name = drop (lastDotIndex id + 1) id -- name with a possible parenthesis at the end  
   in case name of 
     ":" -> "(:)"
-    _ -> name
+    _ -> if (last name == ')')
+         then init name
+         else name
   where
     isDot = ((==) '.')
     dotIndexes = findIndices isDot

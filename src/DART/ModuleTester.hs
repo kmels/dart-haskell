@@ -55,11 +55,6 @@ testModule m@(Module mname tdefs vdefgs) libs = do
   where
     collectFunTests :: [VdefgTest] -> [TestedFun]
     collectFunTests vdefg_tests = join [fun_tests | VdefgTest _ fun_tests <- filter isTestedVdefg vdefg_tests]
-              
-    -- collectResults :: [TestResult] -> [(Id,TestResult)]
-    -- collectResults [] = []
-    -- collectResults (t@(TestResult name _ val):ts) = (qualifiedVar name,t):(collectResults ts)
-    -- collectResults (t@(TestResultList ts):ts') = collectResults ts ++ collectResults ts'
 
 -- | Tests a single definition with the given environment, produces a TestResult in case the definition has the proper type, a function type
 -- Only one test is performed
@@ -166,22 +161,6 @@ testHaskellExpression m@(Module mname tdefs vdefgs) id env =
       debugMStep ("Could not test " ++ id)
       return NoFunTest --TODO (JIT..)
 
---   result <- testMaybe (HaskellExpression expression_string m) Nothing Nothing env 
---   maybe (return Nothing) (return . Just . (,) expression_string) result
-  
--- (HaskellExpression expression_string m@(Module mname _ vdefgs)) _ _ env = 
---     case (m `findVdef` expression_string) of
---       Just vdefg -> debugMStep ("Testing function " ++ expression_string)
---                     >> testMaybe (ModuleFunction vdefg m) Nothing Nothing env
---       Nothing -> return Nothing --TODO
-
-
--- showTest :: TestResult -> IM String
--- showTest tr@(TestResult qvar exp val) = do
---   val_str <- showValue val
---   return $ showQualified qvar ++ " => " ++ val_str
--- showTest tr = return $ show $ "LIST"
-
 showTestedFun :: TestedFun -> IM String
 showTestedFun (TestedFun vdef test_results) =
   case test_fails of
@@ -199,9 +178,8 @@ showTestedFun (TestedFun vdef test_results) =
 showTestResult :: TestResult -> IM String
 showTestResult (TestSuccess _ _) = return "Test success"
 showTestResult (FailedTest arg_vals message) = do
-  --arg_strs <- mapM showValue arg_vals
-  arg_str <- showValue (head arg_vals)
-  return $ "Failed with arguments: " ++ arg_str
+  arg_strs <- mapM showValue arg_vals
+  return $ "Failed with arguments: " ++ separateWithNewLines arg_strs
 
 showFunTest :: FunTest -> IM String
 showFunTest NoFunTest = return $ "Function is not testable"

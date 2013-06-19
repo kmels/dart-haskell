@@ -171,6 +171,10 @@ watchReductionM msg = whenFlag watch_reduction $ prependStars >> debugM msg
 watchTestM :: String -> IM ()
 watchTestM msg = whenFlag watch_test $ debugMNT msg
 
+-- | Prints a debug message when the flag --watch-smt was provided
+watchSMT :: String -> IM ()
+watchSMT msg = whenFlag watch_smt $ debugMNT msg
+
 whenFlag :: (DARTSettings -> Bool) -> IM () -> IM ()
 whenFlag f a = do
   sttgs <- gets settings
