@@ -240,25 +240,25 @@ instance Evaluable Exp where
   eval (Dcon qcon) env = getPointer (qualifiedVar qcon) env >>= flip eval env
 
   -- Case of
-  eval (Case exp vbind@(vbind_var,ty) gen_ty alts) env = do
+  eval (Case case_exp vbind@(vbind_var,ty) gen_ty alts) env = do
     increaseIndentation
-    heap_reference@(id,address) <- memorize (mkThunk exp env) vbind_var
-    exp_value <- eval address (heap_reference:env)
+    heap_reference@(id,address) <- memorize (mkThunk case_exp env) vbind_var
+    case_exp_value <- eval address (heap_reference:env)
     
     watchReductionM $ "\tDoing case analysis for " ++ show vbind_var
     
-    maybeAlt <- findMatch exp_value alts
+    maybeAlt <- findMatch case_exp_value alts
     let exp = maybeAlt >>= Just . altExp -- Maybe Exp
   
     case maybeAlt of
       Just alt -> do -- a matched alternative was found                        
         let exp = altExp alt
         -- record the match
-        recordBranch exp exp_value
+        recordBranch case_exp case_exp_value
         
         -- bind free variables in the matched alternative pattern
         watchReductionM "Making altEnv"
-        alt_env <- mkAltEnv exp_value alt
+        alt_env <- mkAltEnv case_exp_value alt
         watchReductionM $ "This is the alt env: " ++ show alt_env
         -- TODO IN ENVIRONMENT when(isAcon alt) $ var_val `bindAltVars` alt
         ti <- gets tab_indentation
@@ -268,7 +268,7 @@ instance Evaluable Exp where
         -- when(isAcon alt) $ deleteAltBindedVars alt
         return res
       _ -> -- check if the error happens because we are comparing an error, and propagate that one instead of a new one
-        case exp_value of
+        case case_exp_value of
           e@(Wrong _) -> return e
           _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
 
