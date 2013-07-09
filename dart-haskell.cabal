@@ -37,6 +37,7 @@ library
                  Language.Core.Ty,
                  Language.Core.Interpreter.Acknowledge,
                  Language.Core.Interpreter,
+                 Language.Core.Interpreter.CaseAnalysis,
                  Language.Core.Interpreter.Structures,
                  Language.Core.Interpreter.Apply,
                  Language.Core.Interpreter.Evaluable,

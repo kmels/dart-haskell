@@ -18,17 +18,17 @@ module Language.Core.Interpreter.Evaluable where
 
 import           DART.CmdLine
 import           DART.Compiler.JIT(jitCompile)
-import DART.Util.StringUtils(separateWithNewLines)
+import           DART.Util.StringUtils(separateWithNewLines)
 import qualified Data.HashTable.IO as H
 import           Data.List(find,inits)
 import           Data.Time.Clock
 import           Data.Time.Clock(getCurrentTime,diffUTCTime)
 import           Language.Core.Interpreter.Acknowledge
 import           Language.Core.Interpreter.Apply
+import           Language.Core.Interpreter.CaseAnalysis
 import           Language.Core.Interpreter.Structures
-import           Language.Core.Vdefg (findVdefByName,vdefgNames,vdefName)
 import           Language.Core.Module
-
+import           Language.Core.Vdefg (findVdefByName,vdefgNames,vdefName)
 class Evaluable a where
   eval :: a -> Env -> IM Value
   
@@ -240,37 +240,35 @@ instance Evaluable Exp where
   eval (Dcon qcon) env = getPointer (qualifiedVar qcon) env >>= flip eval env
 
   -- Case of
-  eval (Case case_exp vbind@(vbind_var,ty) gen_ty alts) env = do
-    increaseIndentation
-    heap_reference@(id,address) <- memorize (mkThunk case_exp env) vbind_var
-    case_exp_value <- eval address (heap_reference:env)
+  eval (Case case_exp vbind@(vbind_var,ty) gen_ty alts) env = analyzeCase case_exp vbind env alts >>= evalAnalysis
+    where
+      evalAnalysis :: CaseAnalysis -> IM Value
+      evalAnalysis (CaseAnalysisResult exp matched_alt exp_ref) = return $ Wrong $ "Test"
     
-    watchReductionM $ "\tDoing case analysis for " ++ show vbind_var
-    
-    maybeAlt <- findMatch case_exp_value alts
-    let exp = maybeAlt >>= Just . altExp -- Maybe Exp
+    -- maybeAlt <- findMatch case_exp_value alts
+    -- let exp = maybeAlt >>= Just . altExp -- Maybe Exp
   
-    case maybeAlt of
-      Just alt -> do -- a matched alternative was found                        
-        let exp = altExp alt
-        -- record the match
-        recordBranch case_exp case_exp_value
+    -- case maybeAlt of
+    --   Just alt -> do -- a matched alternative was found                        
+    --     let exp = altExp alt
+    --     -- record the match
+    --     recordBranch case_exp case_exp_value
         
-        -- bind free variables in the matched alternative pattern
-        watchReductionM "Making altEnv"
-        alt_env <- mkAltEnv case_exp_value alt
-        watchReductionM $ "This is the alt env: " ++ show alt_env
-        -- TODO IN ENVIRONMENT when(isAcon alt) $ var_val `bindAltVars` alt
-        ti <- gets tab_indentation
-        let ?tab_indentation = ti
-        watchReductionM $ "Evaluating case exp = " ++ showExp exp
-        res <- eval exp (alt_env ++ heap_reference:env)
-        -- when(isAcon alt) $ deleteAltBindedVars alt
-        return res
-      _ -> -- check if the error happens because we are comparing an error, and propagate that one instead of a new one
-        case case_exp_value of
-          e@(Wrong _) -> return e
-          _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
+    --     -- bind free variables in the matched alternative pattern
+    --     watchReductionM "Making altEnv"
+    --     alt_env <- mkAltEnv case_exp_value alt
+    --     watchReductionM $ "This is the alt env: " ++ show alt_env
+    --     -- TODO IN ENVIRONMENT when(isAcon alt) $ var_val `bindAltVars` alt
+    --     ti <- gets tab_indentation
+    --     let ?tab_indentation = ti
+    --     watchReductionM $ "Evaluating case exp = " ++ showExp exp
+    --     res <- eval exp (alt_env ++ heap_reference:env)
+    --     -- when(isAcon alt) $ deleteAltBindedVars alt
+    --     return res
+    --   _ -> -- check if the error happens because we are comparing an error, and propagate that one instead of a new one
+    --     case case_exp_value of
+    --       e@(Wrong _) -> return e
+    --       _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
 
   eval (Lit lit) _ = eval lit []
 
@@ -281,6 +279,24 @@ instance Evaluable Exp where
   -- | Otherwise
   eval otherExp _ = indentExp otherExp >>= \expStr -> return . Wrong $ " TODO: {" ++ expStr ++ "}\nPlease submit a bug report"
 
+-- | Given a case analysis expression, build an analysis data type that contains
+-- about the execution of pattern matching
+analyzeCase :: Exp -> Vbind -> Env -> [Alt] -> IM CaseAnalysis
+analyzeCase case_exp (var_to_bind,_) env alts = do
+  watchSMT $ "\tDoing case analysis for " ++ show var_to_bind
+  
+  -- bind the exp to the var_to_bind in the heap, it might be used within the scope of the alternative's expression body
+  heap_reference@(id,address) <- memorize (mkThunk case_exp env) var_to_bind
+  exp_value <- eval address (heap_reference:env)
+  
+  matched_alt <- findMatch exp_value alts
+  
+  return $ CaseAnalysisResult {
+    analysis_expression = case_exp,
+    matched_alternative = matched_alt,
+    expression_ref = heap_reference
+    }
+    
 -- | Given an alternative and a value that matches the alternative,
 -- binds the free variables in memory and returns a list of references (an environment)
 mkAltEnv :: Value -> Alt -> IM Env
