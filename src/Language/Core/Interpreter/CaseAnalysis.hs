@@ -22,5 +22,6 @@ import Language.Core.Interpreter.Structures
 data CaseAnalysis = CaseAnalysisResult {
   analysis_expression :: Exp, -- the expression alts are matched against with
   matched_alternative :: Maybe Alt, -- the alternative that matches the analysis expression's value 
-  expression_ref :: HeapReference -- heap ref to the analysis expression
+  expression_ref :: HeapReference, -- heap ref to the evaluated analysis expression
+  expression_value :: Value -- the evaluated analysis expression
   }

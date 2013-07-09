@@ -243,7 +243,21 @@ instance Evaluable Exp where
   eval (Case case_exp vbind@(vbind_var,ty) gen_ty alts) env = analyzeCase case_exp vbind env alts >>= evalAnalysis
     where
       evalAnalysis :: CaseAnalysis -> IM Value
-      evalAnalysis (CaseAnalysisResult exp matched_alt exp_ref) = return $ Wrong $ "Test"
+      evalAnalysis (CaseAnalysisResult exp matched_alt exp_ref exp_value) = do
+        case matched_alt of
+          -- if a matched alternative was not found, check if an error has happened, and propagate that.
+          -- if there is no error and there is no matched alternative, there is an unexhaustive pattern matching error
+          Nothing -> return $ case exp_value of 
+              err@(Wrong msg) -> err
+              _ -> Wrong $ "Unexhaustive pattern matching of " ++ vbind_var              
+          -- if a pattern matched against the expression value, we should evaluate the expression body to which that pattern corresponds
+          Just matched_pattern -> do
+            recordBranch case_exp exp_value
+            
+            -- bind those free variables contained in the matched alternative pattern
+            watchReductionM $ "Binding free variables contained in the matched pattern"
+            free_vars_env <- mkAltEnv exp_value matched_pattern
+            eval (patternExpression matched_pattern) (free_vars_env ++ env)
     
     -- maybeAlt <- findMatch case_exp_value alts
     -- let exp = maybeAlt >>= Just . altExp -- Maybe Exp
@@ -294,7 +308,8 @@ analyzeCase case_exp (var_to_bind,_) env alts = do
   return $ CaseAnalysisResult {
     analysis_expression = case_exp,
     matched_alternative = matched_alt,
-    expression_ref = heap_reference
+    expression_ref = heap_reference,
+    expression_value = exp_value
     }
     
 -- | Given an alternative and a value that matches the alternative,
@@ -406,10 +421,10 @@ val `matches` alt = do
 --  io . putStrLn $ 
   return False
   
-altExp :: Alt -> Exp
-altExp (Acon _ _ _ exp) = exp
-altExp (Alit _ exp) = exp
-altExp (Adefault exp) = exp
+patternExpression :: Alt -> Exp
+patternExpression (Acon _ _ _ exp) = exp
+patternExpression (Alit _ exp) = exp
+patternExpression (Adefault exp) = exp
 
 evalFails :: String -> IM (Either Thunk Value)
 evalFails = return . Right . Wrong
