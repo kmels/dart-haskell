@@ -15,7 +15,7 @@ data DARTSettings = InterpreterMode {
   , show_expressions :: Bool
   , show_subexpressions :: Bool
   , show_tmp_variables :: Bool 
-  , show_included_definitions :: Bool -- show every definition being loaded from the libraries?
+  , show_included_definitions :: Bool -- show every definition being loaded from the libraries
   , watch_reduction :: Bool
   , watch_test :: Bool 
   , watch_smt :: Bool
