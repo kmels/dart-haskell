@@ -157,11 +157,11 @@ instance Evaluable Exp where
     -- if the argument is a variable that is already in the env, don't make a new reference  
     case argument_exp of
       (Var qvar) -> do
-        qvar_val <- qualifiedVar qvar `lookupId` env
+        qvar_val <- zDecodeQualified qvar `lookupId` env
         case qvar_val of
           Right (Wrong _) -> mkRefAndApply f argument_exp -- not found, 
           whnf -> do
-            watchReductionM $ "NOT Skipping the making of reference, " ++ (qualifiedVar qvar) ++ " is already in env"
+            watchReductionM $ "NOT Skipping the making of reference, " ++ (zDecodeQualified qvar) ++ " is already in env"
             mkRefAndApply f argument_exp -- not found, 
             --apply f (qualifiedVar qvar) env --don't create thunk for variables in scope
       _ -> mkRefAndApply f argument_exp
@@ -181,7 +181,7 @@ instance Evaluable Exp where
     let ?tab_indentation = ti
     case exp of
       (Var qvar) -> evalExpI exp env "Typed Var application "
-      (Dcon qvar) -> evalExpI exp env $ "Typed Dcon application  " ++ qualifiedVar qvar
+      (Dcon qvar) -> evalExpI exp env $ "Typed Dcon application  " ++ zDecodeQualified qvar
       _ -> evalExpI exp env "Typed application "
 
   eval (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = 
@@ -204,7 +204,7 @@ instance Evaluable Exp where
     -- and we are applying it, we should assume some value before reducing its value
     
     case exp of
-      App _ (Var x) -> if (qualifiedVar x == showType ty)
+      App _ (Var x) -> if (zDecodeQualified x == showType ty)
                        then return (Fun mkFun $ "\\" ++ var_name ++ " -> exp")
                        else return (Fun mkFun $ "\\" ++ var_name ++ " -> exp")
       exp' -> do
@@ -232,12 +232,12 @@ instance Evaluable Exp where
       
   -- Qualified variables that should be in the environment
   eval e@(Var qvar) env = do
-    maybePtr <- mkPointer (qualifiedVar qvar) env
+    maybePtr <- mkPointer (zDecodeQualified qvar) env
     case maybePtr of
       Just ptr ->   eval ptr env
-      Nothing -> return $ Wrong $ "Could not find var in env " ++ qualifiedVar qvar  
+      Nothing -> return $ Wrong $ "Could not find var in env " ++ zDecodeQualified qvar  
   
-  eval (Dcon qcon) env = getPointer (qualifiedVar qcon) env >>= flip eval env
+  eval (Dcon qcon) env = getPointer (zDecodeQualified qcon) env >>= flip eval env
 
   -- Case of
   eval (Case case_exp vbind@(vbind_var,ty) gen_ty alts) env = analyzeCase case_exp vbind env alts >>= evalAnalysis
@@ -383,15 +383,15 @@ findMatch val (a:alts) = do
 matches :: Value -> Alt -> IM Bool
 
 -- data
-matches (TyConApp (MkDataCon n _) _) (Acon qual_dcon _ _ _) = return $ qualifiedVar qual_dcon == n
+matches (TyConApp (MkDataCon n _) _) (Acon qual_dcon _ _ _) = return $ zDecodeQualified qual_dcon == n
 --matches val (Alit lit exp) = return False --TODO
 
 matches val (Adefault _) = return True -- this is the default case, i.e. "_ -> exp " 
 
 -- primitives
 matches (Num n) (Acon qdcon _ _ _) = do
-  watchReductionM $ "Trying to match a Num value (" ++ show n ++ ") with the type constructed by " ++ qualifiedVar qdcon    
-  let matches' = qualifiedVar qdcon == "ghc-prim:GHC.Types.I#"   
+  watchReductionM $ "Trying to match a Num value (" ++ show n ++ ") with the type constructed by " ++ zDecodeQualified qdcon    
+  let matches' = zDecodeQualified qdcon == "ghc-prim:GHC.Types.I#"   
   watchReductionM $ "\t.. " ++ if matches' then " matches" else " does not match"
   return matches'  
 
@@ -403,8 +403,8 @@ matches (String s) (Alit (Literal (Lstring s2) _) _) | s == s2 = return True
 matches (Num n) (Alit (Literal (Lint i) _) exp) | n == i = return True
 matches (Num n) (Alit (Literal (Lint i) _) exp) | otherwise = return False
 
-matches (Boolean False) (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.False"
-matches (Boolean True) (Acon qdcon _ _ _) = return $ qualifiedVar qdcon == "ghc-prim:GHC.Types.True"
+matches (Boolean False) (Acon qdcon _ _ _) = return $ zDecodeQualified qdcon == "ghc-prim:GHC.Types.False"
+matches (Boolean True) (Acon qdcon _ _ _) = return $ zDecodeQualified qdcon == "ghc-prim:GHC.Types.True"
 
 -- We keep a String value as a separate data type, but in Haskell it is a list of chars
 matches (String _) (Acon (Just (M (P ("ghczmprim"),["GHC"],"Types")),"ZMZN") _ _ _) = return True  
@@ -504,15 +504,15 @@ evalVdefg :: Vdefg -> Env -> IM [HeapReference]
 evalVdefg (Rec vdefs) env = mapM (flip evalVdefg env . Nonrec) vdefs >>= return . concat
   
 evalVdefg (Nonrec (Vdef (qvar, ty, exp))) env = do
-  debugMStep $ "Evaluating value definition: " ++ qualifiedVar qvar  
+  debugMStep $ "Evaluating value definition: " ++ zDecodeQualified qvar  
   whenFlag show_expressions $ indentExp exp >>= debugM . (++) "Expression: "
   
   increaseIndentation
   io . putStrLn $ "Callng benchmarkIM"
-  res <- benchmarkIM (showQualified qvar) $ eval exp env  -- result **** 
+  res <- benchmarkIM (zDecodeQualified qvar) $ eval exp env  -- result **** 
   decreaseIndentation
 
-  heap_ref <- memorize (mkVal res) (qualifiedVar qvar) -- ***
+  heap_ref <- memorize (mkVal res) (zDecodeQualified qvar) -- ***
   return [heap_ref]
  
 -- | If the flag --benchmark was provided, the given computation is

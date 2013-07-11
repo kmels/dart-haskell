@@ -87,7 +87,7 @@ testFun def@(Vdef (qvar,ty,vdef_exp)) env =
   -- is the type a function type? i.e. at least of arity 1
   case funTyArgs ty of
     Nothing -> do
-      debugM $ "Will not test " ++ showQualified qvar ++ ", not a function type"
+      debugM $ "Will not test " ++ zDecodeQualified qvar ++ ", not a function type"
       return NoFunTest
     Just fun_signature_types -> do
       let

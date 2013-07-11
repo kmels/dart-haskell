@@ -24,6 +24,7 @@ import Data.List(find)
 import Language.Core.Core
 import Language.Core.Util
 import Text.Encoding.Z
+
 -- | Let's create some data types for type safety purposes. First, lambda abstraction (function application)
 data FunctionApplication = FunApp String String Exp
 
@@ -33,7 +34,7 @@ vdefExp (Vdef (_, _, exp)) = exp
 
 -- | Given a value definition, returns the full qualified name 
 vdefQualId :: Vdef -> String
-vdefQualId (Vdef (qual_var, _ , _)) = qualifiedVar qual_var
+vdefQualId (Vdef (qual_var, _ , _)) = zDecodeQualified qual_var
 
 -- | Similar to vdefQualId but it ignores the module name
 vdefName :: Vdef -> String
@@ -63,7 +64,7 @@ vdefTapp _ = Nothing
 -- vdefgId (Rec ((Vdef (qvar, _, _)):xs)) = qualifiedVar qvar ++ " and " ++ vdefgName (Rec xs)
 
 vdefId :: Vdef -> String
-vdefId (Vdef (qvar, _, _)) = qualifiedVar qvar
+vdefId (Vdef (qid, _, _)) = zDecodeQualified qid
 
 -- | Given a value definition, return its name (or names if recursive) 
 vdefgNames :: Vdefg -> [String]

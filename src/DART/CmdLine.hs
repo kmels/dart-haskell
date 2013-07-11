@@ -6,10 +6,13 @@ import           Control.Monad(when)
 import           Control.Monad.IO.Class
 import           Control.Monad.State(gets)
 import qualified Data.HashTable.IO as H
-import           Language.Core.Core -- Exp
-import           Language.Core.Util(showExp)
 import           Control.Monad.State.Class(modify)
 
+--------------------------------------------------------------------------------
+-- External Core
+import Language.Core.Vdefg(vdefId)
+import           Language.Core.Core -- Exp
+import           Language.Core.Util(showExp)
 --------------------------------------------------------------------------------
 -- Common data types
 import           Data.Either.Utils(forceEither)
@@ -174,6 +177,12 @@ watchTestM msg = whenFlag watch_test $ debugMNT msg
 -- | Prints a debug message when the flag --watch-smt was provided
 watchSMT :: String -> IM ()
 watchSMT msg = whenFlag watch_smt $ debugMNT msg
+
+-- | Prints a debug message when the flag --show-include-definition informing that the given definition was included or loaded in the heap
+showIncludeDefinitionM :: Vdef -> IM ()
+showIncludeDefinitionM vdef = do
+  liftIO . putStrLn $ " .. includedf definition " ++ vdefId vdef ++ ";"
+  whenFlag show_included_definitions $ debugMNT $ "Included definition: " ++ vdefId vdef
 
 whenFlag :: (DARTSettings -> Bool) -> IM () -> IM ()
 whenFlag f a = do

@@ -88,6 +88,7 @@ loadFilePath filepath = do
              stgs <- gets settings
              let ?be_verbose = verbose stgs
              
+             -- if it is a .hcr file, read and parse the module.
              module' <- liftIO $ readModule filepath
              settings' <- gets settings
              let ?settings = settings'

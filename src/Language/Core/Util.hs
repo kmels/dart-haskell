@@ -27,14 +27,14 @@ import Text.Encoding.Z
 
 showExtCoreType :: Ty -> String
 showExtCoreType (Tvar t) = t
-showExtCoreType (Tcon qcon) = wrapName "Tcon" $ qualifiedVar qcon
+showExtCoreType (Tcon qcon) = wrapName "Tcon" $ zDecodeQualified qcon
 showExtCoreType (Tapp t1 t2) = showExtCoreType t1 ++ showExtCoreType t2
 showExtCoreType (Tforall tbind ty) = "forall." ++ showTbind tbind ++ showExtCoreType ty
 showExtCoreType _ = "UNKNOWN"
 
 showExtCoreTypeVerbose :: Ty -> String
 showExtCoreTypeVerbose (Tvar t) = wrapName "Tvar" t
-showExtCoreTypeVerbose (Tcon qcon) = wrapName "Tcon" $ qualifiedVar qcon
+showExtCoreTypeVerbose (Tcon qcon) = wrapName "Tcon" $ zDecodeQualified qcon
 showExtCoreTypeVerbose (Tapp t1 t2) = wrapName "Tapp" $ "\n\t" ++ showExtCoreTypeVerbose t1 ++ ",\n\t" ++ showExtCoreTypeVerbose t2
 showExtCoreTypeVerbose (Tforall tbind ty) = "forall." ++ showTbind tbind ++ showExtCoreTypeVerbose ty
 showExtCoreTypeVerbose _ = "UNKNOWN"
@@ -49,7 +49,7 @@ showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),"ZMZN")) = "[]"
 -- a primitive type from GHC
 showType (Tcon (Just (M ((P "ghczmprim"), ["GHC"], "Types")),primitiveType)) = primitiveType 
 showType (Tcon (Just (M ((P "integerzmgmp"), ["GHC","Integer"], "Type")),"Integer")) = "Integer"
-showType (Tcon qcon@(mname,t2)) = qualifiedVar qcon
+showType (Tcon qcon@(mname,t2)) = zDecodeQualified qcon
 -- a type constructor applied to a type parameter e.g. a list
 showType (Tapp tc@(Tcon _) innerType') = 
   let 
@@ -115,7 +115,7 @@ showVdefg (Rec vdefs) = wrapName " Rec" $ concatMap showVdef vdefs
 showVdefg (Nonrec vdef) = wrapName " Nonrec" $ showVdef vdef
 
 showVdef :: (?tab_indentation :: Int) => Vdef -> String
-showVdef (Vdef (qvar@(mname,var),ty,exp)) = qualifiedVar qvar ++ 
+showVdef (Vdef (qvar@(mname,var),ty,exp)) = zDecodeQualified qvar ++ 
                                             "::" ++ showType ty ++ 
                                             " = " ++ showExp exp
 
@@ -152,11 +152,9 @@ showLit (Literal coreLit ty) = showCoreLit coreLit
    showCoreLit (Lchar c) = show c
    showCoreLit (Lstring s) = show s
 
-qualifiedVar :: Qual Var -> String
-qualifiedVar (Nothing,var) = var
-qualifiedVar (Just mname,var) = zDecodeString $ show mname ++ "." ++ var
-
-showQualified = qualifiedVar
+zDecodeQualified :: Qual Var -> String
+zDecodeQualified (Nothing,var) = var
+zDecodeQualified (Just mname,var) = zDecodeString $ show mname ++ "." ++ var
 
 qualIsTmp :: Qual Var -> Bool
 qualIsTmp (Nothing,_) = True

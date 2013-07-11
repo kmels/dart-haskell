@@ -36,7 +36,7 @@ import           Control.Applicative((<|>))
 import qualified Data.HashTable.IO as H
 import           Data.Maybe
 import           Language.Core.Core
-import           Language.Core.Util(qualIsTmp,qualifiedVar,showVdefg,showType,showExtCoreType,showExp,bindVarName,showBind)
+import           Language.Core.Util(qualIsTmp,zDecodeQualified,showVdefg,showType,showExtCoreType,showExp,bindVarName,showBind)
 import           Language.Core.Vdefg (vdefgQualVars)
 
 import           Control.Monad.State.Lazy
@@ -68,7 +68,7 @@ evalModule m@(Module mname tdefs vdefgs) env = do
     --env = libs_env --module_env ++ libs_env    
     qual_vars = map vdefgQualVars vdefgs -- [[Qual Var]]
     exposed_vdefgs = concat $ filter (not . all qualIsTmp) qual_vars     --[Qual Var]
-    vdefg_names = map qualifiedVar exposed_vdefgs -- exposed vdefs, [Qual Var]
+    vdefg_names = map zDecodeQualified exposed_vdefgs -- exposed vdefs, [Qual Var]
     
   vals <- mapM evalModuleDef vdefg_names -- [Value]  
   return $ zip vdefg_names vals

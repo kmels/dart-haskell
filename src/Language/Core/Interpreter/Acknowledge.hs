@@ -16,19 +16,20 @@
 -----------------------------------------------------------------------------
 module Language.Core.Interpreter.Acknowledge(acknowledgeModule,acknowledgeTypes,acknowledgeVdefgs,acknowledgeVdefg) where
 
-import DART.CmdLine(beVerboseM)
+import DART.CmdLine(beVerboseM,showIncludeDefinitionM)
 import DART.DARTSettings
 import Language.Core.Core
 import Language.Core.Interpreter.Structures
 import Language.Core.Util
 import Language.Core.Vdefg(vdefId,vdefgNames,vdefQualId)
 
--- | Given a module, recognize type constructors and value definitions
+-- | Given a parsed module, recognize type constructors and value definitions
 -- and save them in the heap
 acknowledgeModule :: Module -> IM Env
 acknowledgeModule modl@(Module mname tdefs vdefgs) = do
   tycons_env <- acknowledgeTypes tdefs -- type constructors
-  vdefs_env <- acknowledgeVdefgs vdefgs -- value definitions
+  vdefs_env <- acknowledgeVdefgs vdefgs -- value definitions    
+    
   --io . putStrLn $ "Types of: " ++ show mname
   --mapM (io . putStrLn) $ map fst tycons_env
   return $ tycons_env ++ vdefs_env
@@ -44,7 +45,7 @@ acknowledgeTypes tdefs = mapM acknowledgeType tdefs >>= return . concat
 acknowledgeType :: Tdef -> IM Env
 acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) = 
   do
-    let type_name = qualifiedVar qdname    
+    let type_name = zDecodeQualified qdname    
         type_constructors = map mkDataCon cdefs
     
     --io . putStrLn $ "Type constructors: " ++ show type_constructors
@@ -69,7 +70,7 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) =
     mkDataTypeRef cons tname = memorize (mkVal . SumType $ cons) tname
     
     mkDataCon :: Cdef -> DataCon
-    mkDataCon tcon@(Constr qcname tbinds' types) = MkDataCon (qualifiedVar qcname) types
+    mkDataCon tcon@(Constr qcname tbinds' types) = MkDataCon (zDecodeQualified qcname) types
       
     insertTyCon :: DataCon -> IM HeapReference
     insertTyCon tyCon@(MkDataCon tyConName tys) = memorize (mkVal $ TyConApp tyCon []) (tyConName)
@@ -86,7 +87,8 @@ acknowledgeVdefgs vdefgs = acknowledgeVdefgs' vdefgs []
 acknowledgeVdefg  :: Vdefg -> Env -> IM Env
 acknowledgeVdefg (Nonrec vdef) env = 
   let mkList x = [x]
-  in newAddress >>= storeVdef vdef env >>= return . mkList
+  in 
+   showIncludeDefinitionM vdef >> newAddress >>= storeVdef vdef env >>= return . mkList
    
   --beVerboseM $ "Acknowledging non-recursive definition: " ++ vdefQualId vdef
   --sequence [(flip acknowledgeVdef env) vdef]
@@ -105,8 +107,8 @@ acknowledgeVdefg v@(Rec vdefs) env = do
 
 -- | Stores a value definition in the given address. 
 storeVdef :: Vdef -> Env -> HeapAddress -> IM HeapReference
-storeVdef (Vdef (qvar, ty, exp)) env address= do
-  beVerboseM $ "Acknowledging value definition " ++ qualifiedVar qvar
+storeVdef (Vdef (qid, ty, exp)) env address= do
+  beVerboseM $ "Acknowledging value definition " ++ zDecodeQualified qid
   beVerboseM $ "\twith env = " ++ show (map fst env)
   beVerboseM $ "\tin address = " ++ show address
-  store address (Left $ Thunk exp env) (qualifiedVar qvar)
+  store address (Left $ Thunk exp env) (zDecodeQualified qid)

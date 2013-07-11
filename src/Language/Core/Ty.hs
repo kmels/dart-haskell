@@ -14,7 +14,7 @@
 module Language.Core.Ty where
 
 import Language.Core.Core
-import Language.Core.Util(showExtCoreType,showExtCoreTypeVerbose,showQualified)
+import Language.Core.Util(showExtCoreType,showExtCoreTypeVerbose,zDecodeQualified)
 import Text.Encoding.Z(zDecodeString)
 import Data.Maybe(isJust,fromJust)
 
@@ -30,7 +30,7 @@ qualTypeName ty = showExtCoreType ty
 
 -- | Returns true if the given type is primitive
 isPrimitive :: Ty -> Bool
-isPrimitive (Tcon qual_tcon) = case showQualified qual_tcon of
+isPrimitive (Tcon qual_tcon) = case zDecodeQualified qual_tcon of
   "ghc-prim:GHC.Types.Int" -> True
   "integer-gmp:GHC.Integer.Type.Integer" -> True
   _ -> False

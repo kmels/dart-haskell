@@ -35,7 +35,7 @@ import Data.List((!!))
 -- We could have type classes on RandomizableTypes but it would imply using template haskell
 -- as there are Ty's in DataCons and they're not pattern match friendly (we have indeed an extractor)
 mkRandomVal :: Env -> Ty -> IM Value
-mkRandomVal env (Tcon qual_tcon)  = case showQualified qual_tcon of
+mkRandomVal env (Tcon qual_tcon)  = case zDecodeQualified qual_tcon of
   "ghc-prim:GHC.Types.Int" -> rndInt >>= return . Num . toInteger
   id -> do
     type_constructors <- fetchDataCons id env
