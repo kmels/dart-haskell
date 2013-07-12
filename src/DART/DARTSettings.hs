@@ -15,7 +15,11 @@ data DARTSettings = InterpreterMode {
   , show_expressions :: Bool
   , show_subexpressions :: Bool
   , show_tmp_variables :: Bool 
+<<<<<<< Updated upstream
   , show_included_definitions :: Bool -- show every definition being loaded from the libraries
+=======
+  , show_include_definitions :: Bool -- show every definition being loaded from the libraries?
+>>>>>>> Stashed changes
   , watch_reduction :: Bool
   , watch_test :: Bool 
   , watch_smt :: Bool
@@ -46,7 +50,11 @@ interpret = InterpreterMode {
   , show_heap = def &= groupname "DEBUG" &= help "Shows binded values in the heap"
   , show_expressions = def &= groupname "DEBUG" &= help "Shows the external core expression for every value being evaluated"
   , show_subexpressions = def &= groupname "DEBUG" &= help "Shows *every* (external core) expression being evaluated"
+<<<<<<< Updated upstream
   , show_included_definitions = def &= groupname "DEBUG" &= help "Shows every definition loaded from the libraries (Prelude included)"
+=======
+  , show_include_definitions = def &= groupname "DEBUG" &= help "Shows every definition loaded from the libraries (Prelude included)"
+>>>>>>> Stashed changes
 --   , show_time = def &= groupname "DEBUG" &= help "Shows the time in which an evaluation was done (if depends flag is on)"
   , show_tmp_variables = def &= groupname "DEBUG" &= help "Shows debug messages for temporal variables (if depends flag is on)"
   , watch_reduction = def &= groupname "DEBUG" &= help "Shows debug messages for the evaluation of a value definition (shows reductions of expressions)"
