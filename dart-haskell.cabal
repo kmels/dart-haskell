@@ -22,30 +22,27 @@ tested-with:
 library 
  Hs-source-dirs:   src
  exposed-modules:
-                 DART.Run 
-                 DART.Compiler.JIT                    
-                 DART.FunctionFeeder,
-                 DART.FileIO,
-                 DART.DARTSettings,
+                 DART.CaseAnalysis.PredicateBranch
                  DART.CmdLine,
-                 DART.MkRandomValue,
+                 DART.Compiler.JIT               
+                 DART.DARTSettings,
+                 DART.FileIO,
+                 DART.FunctionFeeder,
                  DART.MkRandom,
+                 DART.MkRandomValue,
                  DART.ModuleTester
                  DART.ModuleTester.Testable,
+                 DART.Run 
                  DART.Util.StringUtils,
-                 Language.Core.Util,
-                 Language.Core.Ty,
-                 Language.Core.Interpreter.Acknowledge,
                  Language.Core.Interpreter,
-                 Language.Core.Interpreter.CaseAnalysis,
-                 Language.Core.Interpreter.Structures,
+                 Language.Core.Interpreter.Acknowledge,
                  Language.Core.Interpreter.Apply,
+                 Language.Core.Interpreter.CaseAnalysis,
                  Language.Core.Interpreter.Evaluable,
                  Language.Core.Interpreter.Libraries,
-                 Language.Core.Interpreter.Libraries.Monomophy,
                  Language.Core.Interpreter.Libraries.ApplyValFun,
-                 Language.Core.Interpreter.Libraries.GHC.Classes
                  Language.Core.Interpreter.Libraries.GHC.CString,
+                 Language.Core.Interpreter.Libraries.GHC.Classes
                  Language.Core.Interpreter.Libraries.GHC.Err,
                  Language.Core.Interpreter.Libraries.GHC.Num,
                  Language.Core.Interpreter.Libraries.GHC.Prim,
@@ -53,8 +50,12 @@ library
                  Language.Core.Interpreter.Libraries.GHC.Show,
                  Language.Core.Interpreter.Libraries.GHC.Tuple,
                  Language.Core.Interpreter.Libraries.GHC.Types,
+                 Language.Core.Interpreter.Libraries.Monomophy,
+                 Language.Core.Interpreter.Structures,
                  Language.Core.Interpreter.Util
                  Language.Core.Module
+                 Language.Core.Ty,
+                 Language.Core.Util,
                  Language.Core.Vdefg
  build-depends:
                       ghc >= 7.6.1 ,     

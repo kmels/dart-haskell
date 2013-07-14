@@ -16,13 +16,19 @@
 
 module Language.Core.Interpreter.Evaluable where
 
+--------------------------------------------------------------------------------
+-- DART
+import           DART.CaseAnalysis.PredicateBranch
+--------------------------------------------------------------------------------
+-- System
+import           Data.Time.Clock
+import           Data.Time.Clock(getCurrentTime,diffUTCTime)
+
 import           DART.CmdLine
 import           DART.Compiler.JIT(jitCompile)
 import           DART.Util.StringUtils(separateWithNewLines)
 import qualified Data.HashTable.IO as H
 import           Data.List(find,inits)
-import           Data.Time.Clock
-import           Data.Time.Clock(getCurrentTime,diffUTCTime)
 import           Language.Core.Interpreter.Acknowledge
 import           Language.Core.Interpreter.Apply
 import           Language.Core.Interpreter.CaseAnalysis
@@ -245,44 +251,18 @@ instance Evaluable Exp where
       evalAnalysis :: CaseAnalysis -> IM Value
       evalAnalysis (CaseAnalysisResult exp matched_alt exp_ref exp_value) = do
         case matched_alt of
-          -- if a matched alternative was not found, check if an error has happened, and propagate that.
-          -- if there is no error and there is no matched alternative, there is an unexhaustive pattern matching error
+          -- If a matched alternative was not found, check if an error has happened, and propagate that. If there is no error and there is no matched alternative, there is an unexhaustive pattern matching error
           Nothing -> return $ case exp_value of 
               err@(Wrong msg) -> err
               _ -> Wrong $ "Unexhaustive pattern matching of " ++ vbind_var              
           -- if a pattern matched against the expression value, we should evaluate the expression body to which that pattern corresponds
           Just matched_pattern -> do
-            recordBranch case_exp exp_value
+            recordBranch case_exp exp_value env
             
             -- bind those free variables contained in the matched alternative pattern
             watchReductionM $ "Binding free variables contained in the matched pattern"
             free_vars_env <- mkAltEnv exp_value matched_pattern
-            eval (patternExpression matched_pattern) (free_vars_env ++ env)
-    
-    -- maybeAlt <- findMatch case_exp_value alts
-    -- let exp = maybeAlt >>= Just . altExp -- Maybe Exp
-  
-    -- case maybeAlt of
-    --   Just alt -> do -- a matched alternative was found                        
-    --     let exp = altExp alt
-    --     -- record the match
-    --     recordBranch case_exp case_exp_value
-        
-    --     -- bind free variables in the matched alternative pattern
-    --     watchReductionM "Making altEnv"
-    --     alt_env <- mkAltEnv case_exp_value alt
-    --     watchReductionM $ "This is the alt env: " ++ show alt_env
-    --     -- TODO IN ENVIRONMENT when(isAcon alt) $ var_val `bindAltVars` alt
-    --     ti <- gets tab_indentation
-    --     let ?tab_indentation = ti
-    --     watchReductionM $ "Evaluating case exp = " ++ showExp exp
-    --     res <- eval exp (alt_env ++ heap_reference:env)
-    --     -- when(isAcon alt) $ deleteAltBindedVars alt
-    --     return res
-    --   _ -> -- check if the error happens because we are comparing an error, and propagate that one instead of a new one
-    --     case case_exp_value of
-    --       e@(Wrong _) -> return e
-    --       _ -> return . Wrong $ "Unexhaustive pattern matching of " ++ vbind_var
+            eval (patternExpression matched_pattern) (free_vars_env ++ env)    
 
   eval (Lit lit) _ = eval lit []
 
@@ -336,24 +316,6 @@ mkAltEnv val alt = do
   watchReductionM $ "Returning empty env (didn't bind anything)"
   return []
 
--- | When case analysis is done, and a pattern matches the value
--- we are analyzing, there's a branch in the program execution path
--- that we're going to record with this method.
-recordBranch :: Exp -> Value -> IM ()
-recordBranch exp val = do
-  ti <- gets tab_indentation
-  let ?tab_indentation = ti
-  
-  watchSMT $ "Recording branch \n\n " ++ separateWithNewLines [
-    "Exp: " ++ showExp exp,
-    "Value: " ++ show val]
-    
-  modify $ addBranch exp val
-  where
-    addBranch :: Exp -> Value -> DARTState -> DARTState
-    addBranch exp val st = st {
-      branches_record = (exp,val):(branches_record st)
-    }
 
 -- | Tries to find an alternative that matches a value. It returns the first match, if any.
 -- According to [GHC](http://hackage.haskell.org/trac/ghc/wiki/Commentary/Compiler/CoreSynType)

@@ -26,7 +26,6 @@ import DART.CmdLine(debugM)
 import DART.Util.StringUtils(separateWithSpaces)
 import Language.Core.Interpreter
 import Language.Core.Interpreter.Apply
-
   
 --import Language.Core.Interpreter.Structures
 -- | A function that ignores its parameters and returns a value

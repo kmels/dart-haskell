@@ -56,7 +56,7 @@ initDART settings = do
   
   return $ DState {
     benchmarks = []
-    , branches_record = []
+    , pbranches_record = []
     , libraries_env = []
     , heap = h
     , heap_count = 0

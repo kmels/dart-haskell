@@ -118,9 +118,13 @@ testFun def@(Vdef (qvar,ty,vdef_exp)) env =
               
       typ_sig <- typeSignature fun_signature_types
       debugM $ "Detected function with type signature: " ++ typ_sig
-      -- eval the expression (we already know it has the function type)
-      fun@(Fun _ _) <- eval vdef_exp env
       
+      -- eval the expression (it should have the function type)
+      fun <- eval vdef_exp env >>= \probably_fun -> 
+        return $ case probably_fun of
+          Wrong s -> error s
+          f@(Fun _ _) -> f
+          
       ntests <- getSetting number_of_tests
       test_results <- replicateM ntests $ do
         arg_vals <- mapM (mkRandomVal env) fun_type_args

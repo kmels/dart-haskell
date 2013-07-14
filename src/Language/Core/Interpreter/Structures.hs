@@ -29,7 +29,7 @@ module Language.Core.Interpreter.Structures(
   , DARTState(..)
   , Heap, Env, HeapAddress, HeapReference
   , IM
-  , Thunk (..), DataCon(..) , Value(..), Pointer(..)
+  , Thunk (..), DataCon(..) , Value(..), Pointer(..), PredicateBranch(..)
   , Language.Core.Core.Id
 --  , ModuleFunction(..)
   , HaskellExpression(..)
@@ -63,14 +63,14 @@ import           Data.Time.Clock
 -- mutable hash tables; 
 -- package [hashtables](http://hackage.haskell.org/package/hashtables)
 import qualified Data.HashTable.IO as H
-
+  
 -- | A State passed around the interpreter
 data DARTState = DState {  
   -- benchmarking
  benchmarks :: [(Id,NominalDiffTime)]
  , libraries_env :: Env
  , heap :: Heap -- our memory 
- , branches_record :: [(Exp,Value)] -- also keep Env, but without libs; only stuff within the scope.
+ , pbranches_record :: [PredicateBranch] -- also keep Env, but without libs; only stuff within the scope.
  , heap_count :: Int, -- address counter, counts those previously deleted too
                     -- useful to generate new variable names
  number_of_reductions :: !Int, -- when an expression is evaluated, this value increments by 1, useful to print debug headings
@@ -91,6 +91,16 @@ type Heap = H.CuckooHashTable HeapAddress (Either Thunk Value)
 type HeapAddress = Int
 type Env = [(Id,HeapAddress)]
 type HeapReference = (Id,HeapAddress)
+
+-- | We'll record execution paths; every path node comes from a branching after a pattern match analysis is performed. See method recordBranch in Language.Core.Interpterer.Evaluable
+data PredicateBranch = PBranch {
+  pbranch_exp :: Exp,
+  pbranch_value :: Value
+  } | EnvironmentalPBranch {
+     pbranch_id :: Id,
+     pbranch_env :: Env,
+     pbranch_value :: Value
+  }
 
 -- --
 -- fun2 = let
