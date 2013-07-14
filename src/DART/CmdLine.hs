@@ -180,9 +180,7 @@ watchSMT msg = whenFlag watch_smt $ debugMNT msg
 
 -- | Prints a debug message when the flag --show-include-definition informing that the given definition was included or loaded in the heap
 showIncludeDefinitionM :: Vdef -> IM ()
-showIncludeDefinitionM vdef = do
-  liftIO . putStrLn $ " .. includedf definition " ++ vdefId vdef ++ ";"
-  whenFlag show_included_definitions $ debugMNT $ "Included definition: " ++ vdefId vdef
+showIncludeDefinitionM vdef = whenFlag show_included_definitions $ debugMNT $ "... included definition " ++ vdefId vdef ++ ";"
 
 whenFlag :: (DARTSettings -> Bool) -> IM () -> IM ()
 whenFlag f a = do
