@@ -98,9 +98,9 @@ getDefTypes filepath = do
   return $ concatMap extractTypes vdefs
   where
     extractTypes :: Vdefg -> [(Id,Ty)] 
-    extractTypes (Nonrec vdef@(Vdef(qvar, ty, _))) = [(qualifiedVar qvar, ty)]
+    extractTypes (Nonrec vdef@(Vdef(qvar, ty, _))) = [(zDecodeQualified qvar, ty)]
     extractTypes (Rec []) = []
-    extractTypes (Rec (vdef@(Vdef(qvar, ty, _)):vs)) = [(qualifiedVar qvar, ty)] ++ extractTypes (Rec vs)
+    extractTypes (Rec (vdef@(Vdef(qvar, ty, _)):vs)) = [(zDecodeQualified qvar, ty)] ++ extractTypes (Rec vs)
     
 intTy :: Ty
 intTy = mkTcon "ghczmprim" ["GHC"] "Types" "Int"
