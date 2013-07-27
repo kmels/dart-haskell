@@ -18,22 +18,32 @@ import Language.Core.Interpreter
 import System.Random
 import Data.List((!!))
 
+-- newtype GenM a = GenM 
+--     { unGenM :: ReaderT (Int,Int) (StateT Int (MaybeT (Rand StdGen))) a }
+--   deriving (Functor, Applicative, Monad, MonadPlus, MonadRandom,
+--             MonadState Int, MonadReader (Int,Int))
+           
+-- -- | Run a generator to generate a data type of (approximately) size targetSize
+-- runGenM :: Int -> Double -> GenM a -> IM (Maybe a)
+-- runGenM targetSize eps m = do
+--   let wiggle  = floor $ fromIntegral targetSize * eps
+--       minSize = targetSize - wiggle
+--       maxSize = targetSize + wiggle
+--   g <- newStdGen
+--   return . (evalRand ?? g) . runMaybeT . (evalStateT ?? 0)
+--          . (runReaderT ?? (minSize, maxSize)) . unGenM
+--          $ m
+   
+-- -- | Checks whether the size has exceeded and fails in case the size of the structure is too big, it increases the size of the structure otherwise
+-- atom :: GenM ()
+-- atom = do
+--   (_, maxSize) <- ask
+--   curSize <- get
+--   when (curSize >= maxSize) mzero
+--   put (curSize + 1)
+        
+          
 -- | Randomize on external core types. An environment might be needed in case there is a reference to the heap as an identifier in e.g. a data type
--- tyMkRandom :: Env -> Ty -> Maybe (IM Value)
--- tyMkRandom env ty = do
---   (_,val) <- runStateT mkRandomVal ty env
---   case val of
---     (Wrong _) -> Nothing
---     _ -> Just val
-
--- extractType ty >>= \et -> case et of
---   (CType ctype) -> Just $ mkRandomVal ctype env 
---   --gtyp -> error $ "The impossible happened @tyMkRandom: It should not be called upon types that are not concrete (We are unpredicative), received " ++ show gtyp
---   _ -> Nothing
-
--- | A function that generates a random value given a type.
--- We could have type classes on RandomizableTypes but it would imply using template haskell
--- as there are Ty's in DataCons and they're not pattern match friendly (we have indeed an extractor)
 mkRandomVal :: Env -> Ty -> IM Value
 mkRandomVal env (Tcon qual_tcon)  = case zDecodeQualified qual_tcon of
   -- Make a random integer
@@ -55,6 +65,7 @@ fetchDataCons :: Id -> Env -> IM [DataCon]
 fetchDataCons id env = do
   -- look for the data type
   msumtype <- lookupId id env
+  io $ putStrLn $ "fetchDataCons  " ++ show msumtype
   return $ case msumtype of
     (Right (SumType datacons)) -> datacons
     _ -> []

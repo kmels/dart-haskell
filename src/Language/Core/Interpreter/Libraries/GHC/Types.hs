@@ -7,38 +7,19 @@ import Language.Core.Interpreter(evalId)
 
 -- | Evaluates definitions found in ghc-prim:GHC.Types  
 
--- cons :: (Id,Either Thunk Value) -- (:) :: a -> [a] -> [a]
--- cons = (cons_name, Right $ TypeConstructor tycon ty_name) where
---   cons_name = "ghc-prim:GHC.Types.:"
---   ty_name = "ghc-prim:GHC.Types.[]"  
---   tycon_args = [Tvar "a", Tvar "[a]"]
---   tycon = MkDataCon cons_name tycon_args
-
 cons :: (Id,Either Thunk Value) -- (:) :: a -> [a] -> [a]
-cons = (id,Right val) where
-  id = "ghc-prim:GHC.Types.:"
-  -- type parameters 
-  typeArgs :: [Ty]
-  typeArgs = [Tvar "a", Tvar "[a]"]
-  typeConstructor :: DataCon
-  typeConstructor = MkDataCon id typeArgs
-  val = TyConApp typeConstructor []
+cons = (cons_name, Right $ TypeConstructor tycon ty_name) where
+  cons_name = "ghc-prim:GHC.Types.:"
+  ty_name = "ghc-prim:GHC.Types.[]"  
+  tycon_args = [Tvar "a", Tvar "[a]"]
+  tycon = MkDataCon cons_name tycon_args
   
--- listConstructor :: (Id,Either Thunk Value) -- ([]) :: [a], kind * -> *
--- listConstructor = (cons_name, Right $ TypeConstructor tycon ty_name) where
---   cons_name = "ghc-prim:GHC.Types.[]"
---   ty_name = "ghc-prim:GHC.Types.[]"
---   tycon_args = [Tvar "a"]
---   tycon = MkDataCon cons_name tycon_args
-
 listConstructor :: (Id,Either Thunk Value) -- ([]) :: [a], kind * -> *
-listConstructor = (id,Right $ TyConApp typeConstructor []) where
-  id = "ghc-prim:GHC.Types.[]"
-  -- type parameters 
-  typeArgs :: [Ty]
-  typeArgs = [Tvar "a"]
-  typeConstructor :: DataCon
-  typeConstructor = MkDataCon id typeArgs
+listConstructor = (cons_name, Right $ TypeConstructor tycon ty_name) where
+  cons_name = "ghc-prim:GHC.Types.[]"
+  ty_name = "ghc-prim:GHC.Types.[]"
+  tycon_args = [Tvar "a"]
+  tycon = MkDataCon cons_name tycon_args
   
 -- | An Int constructor, receives a literal and constructs an integer
 intConstructor :: (Id, Either Thunk Value)

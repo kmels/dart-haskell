@@ -29,7 +29,7 @@ equals = (id, Right $ Fun (monomophy_2 "(==)" valEq) "polymorphic(==)") where
    id = "ghc-prim:GHC.Classes.==" 
    valEq :: Value -> Value -> IM Value
    valEq v@(Wrong _) _ = return v
-   valEq _ w@(Wrong _) = return w
+   valEq _ w@(Wrong _) = return w      
    valEq (TyConApp dc1 ps) (TyConApp dc2 ps2) | dc1 == dc2 && length ps == length ps2 = do
      -- get the value of every pointer
      ps_vals <- mapM (flip eval []) ps
@@ -38,7 +38,7 @@ equals = (id, Right $ Fun (monomophy_2 "(==)" valEq) "polymorphic(==)") where
      -- compare every corresponding pointer value, they must be all equal
      mapM (uncurry valEq) (ps_vals `zip` ps2_vals) >>= return . Boolean . Data.List.all ((==) $ Boolean $ True) 
                                               | otherwise = return . Boolean $ False
-   valEq v w = return . Boolean $ (==) v w   
+   valEq v w = return . Boolean $ (==) v w
 
 -- | (&&)
 conjunction :: (Id, Either Thunk Value)
