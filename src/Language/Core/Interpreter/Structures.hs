@@ -30,7 +30,6 @@ module Language.Core.Interpreter.Structures(
   , Heap, Env, HeapAddress, HeapReference
   , IM
   , Thunk (..), DataCon(..) , Value(..), Pointer(..), PredicateBranch(..)
-  , Language.Core.Core.Id
 --  , ModuleFunction(..)
   , HaskellExpression(..)
   , module Control.Monad.State
@@ -147,7 +146,7 @@ data HaskellExpression = HaskellExpression String Module
 data DataCon = MkDataCon {
   dataConId :: Id,
   dataConTys :: [Ty]
-  }
+  } deriving Eq
 
 type Description = String
 
@@ -264,7 +263,6 @@ instance Show Value where
 
 instance Show DataCon where
   show (MkDataCon "ghc-prim:GHC.Types.[]" _) = "[]"
-  show (MkDataCon id []) = idName id
   show (MkDataCon id []) = idName id
   show (MkDataCon id types) = idName id ++ " :: " ++ types' where
     types' :: String

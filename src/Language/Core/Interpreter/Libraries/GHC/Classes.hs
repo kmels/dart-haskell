@@ -1,11 +1,13 @@
 module Language.Core.Interpreter.Libraries.GHC.Classes where
 
 import Language.Core.Interpreter.Structures
+import Language.Core.Interpreter.Evaluable
 import Language.Core.Core
 import Language.Core.Interpreter.Libraries.Monomophy(monomophy_2, mkMonomophier)
 import Language.Core.Interpreter.Libraries.ApplyValFun(applyFun_2)
 import Language.Core.Interpreter.Apply
 import Language.Core.Interpreter(evalId)
+import qualified Data.List as Data.List
 
 all :: [(Id, Either Thunk Value)]
 all = [ equals
@@ -28,6 +30,14 @@ equals = (id, Right $ Fun (monomophy_2 "(==)" valEq) "polymorphic(==)") where
    valEq :: Value -> Value -> IM Value
    valEq v@(Wrong _) _ = return v
    valEq _ w@(Wrong _) = return w
+   valEq (TyConApp dc1 ps) (TyConApp dc2 ps2) | dc1 == dc2 && length ps == length ps2 = do
+     -- get the value of every pointer
+     ps_vals <- mapM (flip eval []) ps
+     ps2_vals <- mapM (flip eval []) ps2
+
+     -- compare every corresponding pointer value, they must be all equal
+     mapM (uncurry valEq) (ps_vals `zip` ps2_vals) >>= return . Boolean . Data.List.all ((==) $ Boolean $ True) 
+                                              | otherwise = return . Boolean $ False
    valEq v w = return . Boolean $ (==) v w   
 
 -- | (&&)

@@ -13,6 +13,7 @@ module Lists (
   , six
   , takeTest1, takeTest2, takeTest3, takeTest4, takeTest5, takeTest6
   , false1
+  , xs1, xs2, xseq
   , intListLength, hundred, hundredOne, four
 ) where
 
@@ -42,7 +43,7 @@ first15Fibs = fib 1
     fib n = fib (n-2) + fib (n-1)
     
 first5nats = take 5 naturals
-first3nats = take 3 first5nats
+first3nats = take 1 first5nats
 
 first5nats_length = length first5nats
 
@@ -91,10 +92,14 @@ false1 = (takeTest2 :: [Int]) == (takeTest1 :: [Int])
 --            | otherwise = MIN
 
 first2 = take 2 [1,2,3,4]
-first0 = [1,2]
-first1 = intListLength [1..4] -- $ mytake 5 [5..10]
+first0 = intListLength [1,2,3]
+first1 = intListLength [1..1] -- $ mytake 5 [5..10]
 
-six = intListLength [1..6]
+xs1 = [1..5]
+xs2 = [1,2,3,4,5]
+xseq = xs1 == xs2
+
+six = intListLength [1..2]
 
 intListLength :: [Int] -> Int
 intListLength [] = 0
@@ -108,3 +113,4 @@ first2' = show $ f [1,2,3]
   where
     f (x:xs) = [x]
     f _ = []
+    

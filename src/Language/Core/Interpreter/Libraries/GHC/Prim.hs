@@ -24,6 +24,7 @@ all :: [(Id, Either Thunk Value)]
 all = [ intSharpSum
         , geqSharp -- >=
         , gThanSharp -- >#
+        , value_equality -- ==#
       ]
       
 -- | >=#, greater equals on ints
@@ -77,3 +78,13 @@ intSharpSum = (id, Right $ Fun sum'_1 "unary +#") where
     (Num y) -> return . Num $ x + y
     y -> return $ Wrong $ "unary I#: expected an integer, got " ++ show y    
   sum'_2 val _ _ = return $ Wrong $ "binary I#, expected an integer, got " ++ show val
+  
+-- | Value equality 
+value_equality :: (Id, Either Thunk Value)
+value_equality = (id, Right $ Fun eq' "unary ==#") where
+  id = "ghc-prim:GHC.Prim.==#"
+  eq' :: Id -> Env -> IM Value
+  eq' id env = evalId id env >>= \x -> return (Fun (eq'_2 x) "binary ==#")
+  
+  eq'_2 :: Value -> Id -> Env -> IM Value
+  eq'_2 x y_id env = evalId y_id env >>= return . Boolean . (==) x
