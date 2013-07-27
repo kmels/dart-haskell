@@ -94,7 +94,7 @@ acknowledgeVdefg (Nonrec vdef) env =
   --sequence [(flip acknowledgeVdef env) vdef]
 acknowledgeVdefg v@(Rec vdefs) env = do
   beVerboseM $ "Acknowledging recursive definitions: " ++ (show . vdefgNames $ v)
-  beVerboseM $ "with env: " ++ show (map fst env)
+  --beVerboseM $ "with env: " ++ show (map fst env)
   
   addresses <- allocate $ length vdefs
   let ids = map vdefId vdefs
@@ -109,6 +109,6 @@ acknowledgeVdefg v@(Rec vdefs) env = do
 storeVdef :: Vdef -> Env -> HeapAddress -> IM HeapReference
 storeVdef (Vdef (qid, ty, exp)) env address= do
   beVerboseM $ "Acknowledging value definition " ++ zDecodeQualified qid
-  beVerboseM $ "\twith env = " ++ show (map fst env)
-  beVerboseM $ "\tin address = " ++ show address
+  --beVerboseM $ "\twith env = " ++ show (map fst env)
+  --beVerboseM $ "\tin address = " ++ show address
   store address (Left $ Thunk exp env) (zDecodeQualified qid)

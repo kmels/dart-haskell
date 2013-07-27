@@ -69,7 +69,7 @@ takeTest4 = take (5-5) [1,2,3]
 takeTest5 = take 1 [1]
 takeTest6 = take 2 [1,2,3]
 
-sumFirstFifty = sum [1..50]
+sumFirstFifty = sum [1..2]
   
 false1 :: Bool
 false1 = (takeTest2 :: [Int]) == (takeTest1 :: [Int])
@@ -91,7 +91,7 @@ false1 = (takeTest2 :: [Int]) == (takeTest1 :: [Int])
 --            | otherwise = MIN
 
 first2 = take 2 [1,2,3,4]
-first0 = take 0 [1,2]
+first0 = [1,2]
 first1 = intListLength [1..4] -- $ mytake 5 [5..10]
 
 six = intListLength [1..6]

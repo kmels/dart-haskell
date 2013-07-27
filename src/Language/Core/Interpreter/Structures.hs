@@ -120,11 +120,12 @@ data Value = Wrong String
            | Fun (Id -> Env -> IM Value) Description
            -- |  List [Value]
            | Pair Pointer Pointer --HERE, heap addresses
-           | TyConApp DataCon [Pointer] -- heap addresses, a type constructor application to some values
+           | TyConApp DataCon [Pointer] -- a data constructor applicated to some values
            | Pointer Pointer
            | FreeTypeVariable String -- useful when converting a to SomeClass a (we ignore parameters, and it's useful to save them)
            | MkListOfValues [(String,Value)] -- When a value definition is recursive, depends on other values
            | SumType [DataCon] -- A data type with reference to its constructors, created only from type constructors when reading modules (see Interpreter/Acknowledge).
+           | TypeConstructor DataCon Id -- A single data constructor that withholds, apart of its data constructor value, the qualified name of the type it builds. For example (:) is a type constructor for the list type, "[a]". 
 
 newtype Pointer = MkPointer { ptr_address :: HeapAddress } deriving Show
 
@@ -258,8 +259,12 @@ instance Show Value where
     where
       myIntersperse sep = foldr ((++) . (++) sep) []
       constructor_names = map (\(MkDataCon id _) -> id) cons
+  show (TypeConstructor tycon ty_name) | show tycon == "[]" = "[]"
+    | otherwise = "TypeConstructor " ++ show tycon ++ " of " ++ ty_name
 
 instance Show DataCon where
+  show (MkDataCon "ghc-prim:GHC.Types.[]" _) = "[]"
+  show (MkDataCon id []) = idName id
   show (MkDataCon id []) = idName id
   show (MkDataCon id types) = idName id ++ " :: " ++ types' where
     types' :: String

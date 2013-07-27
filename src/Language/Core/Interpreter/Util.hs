@@ -43,7 +43,7 @@ showValue val = return $ show val
 -- Special cases include the List and the Tuple constructors.
 -- As we know from the semantics, the showing forces the evaluation of the arguments of the data constructor
 showTyConApp :: DataCon-> [Pointer] -> IM String
-showTyConApp (MkDataCon "ghc-prim:GHC.Types.[]" []) [] = return "[]" -- empty list
+showTyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) [] = return "[]" -- empty list
 showTyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ptrs = showList ptrs -- lists
 showTyConApp (MkDataCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = do
   x_str <- evalPtr x >>= showValue
@@ -81,7 +81,9 @@ showList ptrs = do
     -- If we find another list, don't show the []
     showValue' :: Value -> IM String
     showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) = return ""
+    showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) ty) = return $ "[] to " ++ show ty
     showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ptrs) = mapM showPtr ptrs >>= return . separateWithSpaces
+    showValue' t@(TypeConstructor (MkDataCon "ghc-prim:GHC.Types.[]" [_]) "ghc-prim:GHC.Types.[]")= return ""
     showValue' v = showValue v
     
 wrapInParenthesis s = "(" ++ s ++ ")"

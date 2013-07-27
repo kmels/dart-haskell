@@ -36,20 +36,29 @@ import Data.List((!!))
 -- as there are Ty's in DataCons and they're not pattern match friendly (we have indeed an extractor)
 mkRandomVal :: Env -> Ty -> IM Value
 mkRandomVal env (Tcon qual_tcon)  = case zDecodeQualified qual_tcon of
+  -- Make a random integer
   "ghc-prim:GHC.Types.Int" -> rndInt >>= return . Num . toInteger
+  -- Make a random "id" type
   id -> do
     type_constructors <- fetchDataCons id env
     sumTypeMkRandom type_constructors env
-      where
-        fetchDataCons :: Id -> Env -> IM [DataCon]
-        fetchDataCons id env = do
-          -- look for the data type
-          msumtype <- lookupId id env
-          return $ case msumtype of
-            (Right (SumType datacons)) -> datacons
-            _ -> []    
-mkRandomVal env ty = return . Wrong $ " mkRandomVal: I don't know how to make a random val for the type " ++ showExtCoreTypeVerbose ty
         
+mkRandomVal env (Tapp (Tcon qual_tcon1) (Tcon qual_tcon2)) = do
+  type_constructors <- fetchDataCons (zDecodeQualified qual_tcon1) env
+  io $ putStrLn $ "Type constructors of " ++ (zDecodeQualified qual_tcon1) ++ " are: " ++ show type_constructors
+  return $ Wrong "TODO"
+  
+mkRandomVal env ty = return . Wrong $ " mkRandomVal: I don't know how to make a random val for the type " ++ showExtCoreTypeVerbose ty
+  
+-- | Looks up a definition of a sum type by a qualified identifier and returns a list of its constructors.
+fetchDataCons :: Id -> Env -> IM [DataCon]
+fetchDataCons id env = do
+  -- look for the data type
+  msumtype <- lookupId id env
+  return $ case msumtype of
+    (Right (SumType datacons)) -> datacons
+    _ -> []
+
 -- | Given a list of data constructors (that form a sum type), make a random
 -- value of type of the sum type
 sumTypeMkRandom :: [DataCon] -> Env -> IM Value

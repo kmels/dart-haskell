@@ -91,5 +91,10 @@ isAcon _ = False
 
 -- | Loads nothing ATM, but it'll be useful
 loadLibrary :: [(Id, Either Thunk Value)] -> IM Env
-loadLibrary funs = mapM (uncurry $ flip memorize) funs
-
+loadLibrary funs = mapM (uncurry load) funs
+  where
+    load :: Id -> Either Thunk Value -> IM HeapReference
+    load id thnk_or_val = do
+      beVerboseM $ "Acknowledging defined value for " ++ id 
+      memorize thnk_or_val id
+    

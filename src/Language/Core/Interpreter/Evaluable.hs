@@ -346,6 +346,7 @@ matches :: Value -> Alt -> IM Bool
 
 -- data
 matches (TyConApp (MkDataCon n _) _) (Acon qual_dcon _ _ _) = return $ zDecodeQualified qual_dcon == n
+matches (TypeConstructor (MkDataCon n _) _) (Acon qual_dcon _ _ _) = return $ zDecodeQualified qual_dcon == n
 --matches val (Alit lit exp) = return False --TODO
 
 matches val (Adefault _) = return True -- this is the default case, i.e. "_ -> exp " 
@@ -423,6 +424,12 @@ apply (TyConApp tycon addresses) id env =  do
     case addr of
       Pointer p -> return $ TyConApp tycon (addresses ++ [p])
       e@(Wrong s) -> return e
+      
+apply (TypeConstructor tycon _) id env = do
+  addr <- getPointer id env
+  case addr of
+    Pointer p -> return $ TyConApp tycon ([p])
+    e@(Wrong s) -> return e
       
 apply w@(Wrong _) _ _ = return w
 apply f x _ = return . Wrong $ "Applying " ++ show f ++ " with argument " ++ show x
