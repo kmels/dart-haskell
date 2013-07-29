@@ -125,7 +125,7 @@ data Value = Wrong String
            | MkListOfValues [(String,Value)] -- When a value definition is recursive, depends on other values
            | SumType [DataCon] -- A data type with reference to its constructors, created only from type constructors when reading modules (see Interpreter/Acknowledge).
            | TypeConstructor DataCon Id -- A single data constructor that withholds, apart of its data constructor value, the qualified name of the type it builds. For example (:) is a type constructor for the list type, "[a]". 
-
+           
 newtype Pointer = MkPointer { ptr_address :: HeapAddress } deriving Show
 
 data Thunk = Thunk Exp Env -- a thunk created during the evaluation of a value definition
