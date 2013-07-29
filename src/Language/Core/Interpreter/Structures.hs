@@ -119,7 +119,7 @@ data Value = Wrong String
            | Fun (Id -> Env -> IM Value) Description
            -- |  List [Value]
            | Pair Pointer Pointer --HERE, heap addresses
-           | TyConApp DataCon [Pointer] -- a data constructor applicated to some values
+           | TyConApp DataCon [Pointer] -- a data constructor applicated to some values, possible expecting some more types
            | Pointer Pointer
            | FreeTypeVariable String -- useful when converting a to SomeClass a (we ignore parameters, and it's useful to save them)
            | MkListOfValues [(String,Value)] -- When a value definition is recursive, depends on other values
@@ -144,8 +144,8 @@ data HaskellExpression = HaskellExpression String Module
 -- | A data type constructor that has normally a qualified name and a list of
 -- types that it expects. 
 data DataCon = MkDataCon {
-  dataConId :: Id,
-  dataConTys :: [Ty]
+  tyConId :: Id,
+  tyConExpectedTys :: [Ty]
   } deriving Eq
 
 type Description = String
@@ -262,7 +262,8 @@ instance Show Value where
     | otherwise = "TypeConstructor " ++ show tycon ++ " of " ++ ty_name
 
 instance Show DataCon where
-  show (MkDataCon "ghc-prim:GHC.Types.[]" _) = "[]"
+  show (MkDataCon "ghc-prim:GHC.Types.[]" []) = "[]"
+  show (MkDataCon "ghc-prim:GHC.Types.[]" ty) = "[] expecting " ++ show ty
   show (MkDataCon id []) = idName id
   show (MkDataCon id types) = idName id ++ " :: " ++ types' where
     types' :: String

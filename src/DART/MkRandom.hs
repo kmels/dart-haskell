@@ -68,7 +68,7 @@ fetchDataCons id env = do
   io $ putStrLn $ "fetchDataCons  " ++ show msumtype
   return $ case msumtype of
     (Right (SumType datacons)) -> datacons
-    (Right (TypeConstructor datacons)) -> [datacons]
+    (Right (TypeConstructor datacons _)) -> [datacons]
     _ -> []
 
 -- | Given a list of data constructors (that form a sum type), make a random

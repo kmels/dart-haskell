@@ -54,14 +54,14 @@ showTyConApp tycon pointers = do
   whnf_strings <- mapM showValue' vals -- [String]
   
   return $ let
-    tycon_name = (idName . dataConId) tycon
+    tycon_name = (idName . tyConId) tycon
     arg_strings = separateWithSpaces whnf_strings
     in tycon_name ++ " " ++ arg_strings
     
   where
     -- Should we wrap a value in parenthesis? Wrap the tycon apps! (iff they have applied vals)
     showValue' :: Value -> IM String
-    showValue' t@(TyConApp tycon []) = return . idName . dataConId $ tycon
+    showValue' t@(TyConApp tycon []) = return . idName . tyConId $ tycon
     showValue' t@(TyConApp _ _) = showValue t >>= return . wrapInParenthesis
     showValue' v = showValue v
 
@@ -83,7 +83,7 @@ showList ptrs = do
     showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) = return ""
     showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) ty) = return $ "[] to " ++ show ty
     showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ptrs) = mapM showPtr ptrs >>= return . separateWithSpaces
-    showValue' t@(TypeConstructor (MkDataCon "ghc-prim:GHC.Types.[]" [_]) "ghc-prim:GHC.Types.[]")= return ""
+    showValue' t@(TypeConstructor (MkDataCon "ghc-prim:GHC.Types.[]" []) "ghc-prim:GHC.Types.[]")= return ""
     showValue' v = showValue v
     
 wrapInParenthesis s = "(" ++ s ++ ")"

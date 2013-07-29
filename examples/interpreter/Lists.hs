@@ -92,7 +92,7 @@ false1 = (takeTest2 :: [Int]) == (takeTest1 :: [Int])
 --            | otherwise = MIN
 
 first2 = take 2 [1,2,3,4]
-first0 = intListLength [1,2,3]
+first0 = [10,15]
 first1 = intListLength [1..1] -- $ mytake 5 [5..10]
 
 xs1 = [1..5]

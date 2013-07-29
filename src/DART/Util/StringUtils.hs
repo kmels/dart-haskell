@@ -26,6 +26,8 @@ intercalateWith :: [String] -> String -> String
 intercalateWith = flip intercalate
 
 separateWithSpaces :: [String] -> String
-separateWithSpaces = intercalate space
+separateWithSpaces = intercalate space . filter (not . (==) empty_str) 
+  where
+    empty_str = ""
 
 separateWithNewLines = intercalate newLine

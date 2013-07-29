@@ -181,13 +181,18 @@ instance Evaluable Exp where
       res <- apply f id (heap_reference:env) -- Note1: the address is paassed 
       return res
 
-  -- | A function application which has the type annotation which we will essentially ignore.
+  -- | A typed function (or data) application
   eval e@(Appt exp ty) env = do 
     ti <- gets tab_indentation  
     let ?tab_indentation = ti
     case exp of
       (Var qvar) -> evalExpI exp env "Typed Var application "
-      (Dcon qvar) -> evalExpI exp env $ "Typed Dcon application  " ++ zDecodeQualified qvar
+      (Dcon qvar) -> do
+        v <- evalExpI exp env $ "Typed Dcon application  " ++ zDecodeQualified qvar ++ ", to type " ++ show ty
+        case v of
+          tyconv@(TypeConstructor tycon@(MkDataCon id (t:ts)) tyname) -> return $ TypeConstructor (tycon { tyConExpectedTys = ts}) tyname
+          tyconapp@(TyConApp _ _) -> return tyconapp
+          otherwise -> return $ Wrong $ "The impossible happened: Typed application was expecting a type constructor or an applied type constructor, but got: " ++ show otherwise
       _ -> evalExpI exp env "Typed application "
 
   eval (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = 
@@ -419,16 +424,18 @@ apply (Fun f d) id env = do
     
 -- Applies a (possibly applied) type constructor that expects appliedValue of type ty.
 -- The type constructor that we are applying has |vals| applied values
-apply (TyConApp tycon addresses) id env =  do 
+apply (TyConApp tycon@(MkDataCon _ (t:ts)) addresses) id env =  do 
     addr <- getPointer id env
     case addr of
-      Pointer p -> return $ TyConApp tycon (addresses ++ [p])
+      Pointer p -> return $ TyConApp tycon { tyConExpectedTys = ts } (addresses ++ [p])
       e@(Wrong s) -> return e
-      
-apply (TypeConstructor tycon _) id env = do
+
+--apply tca@(TyConApp tycon@(MkDataCon _ ts) addresses) id env = return . Wrong $ "Applying " ++ (show . length) ts ++ " with argument " ++ show id
+            
+apply (TypeConstructor tycon@(MkDataCon _ (t:ts)) _) id env = do
   addr <- getPointer id env
   case addr of
-    Pointer p -> return $ TyConApp tycon ([p])
+    Pointer p -> return $ TyConApp (tycon { tyConExpectedTys = ts }) ([p])
     e@(Wrong s) -> return e
       
 apply w@(Wrong _) _ _ = return w
