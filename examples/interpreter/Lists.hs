@@ -35,15 +35,15 @@ thousand = listHead myList
 twoThousand = listHead . listTail $ myList
 
 -- does not work
-first15Fibs = fib 1
+first15Fibs = map fib [1..15]
   where
     fib :: Int -> Int
     fib 0 = 0
     fib 1 = 1
     fib n = fib (n-2) + fib (n-1)
     
-first5nats = take 5 naturals
-first3nats = take 1 first5nats
+first5nats = take 5 [0..]
+first3nats = take 1 [1..]
 
 first5nats_length = length first5nats
 
@@ -70,7 +70,7 @@ takeTest4 = take (5-5) [1,2,3]
 takeTest5 = take 1 [1]
 takeTest6 = take 2 [1,2,3]
 
-sumFirstFifty = sum [1..2]
+sumFirstFifty = sum [1..10]
   
 false1 :: Bool
 false1 = (takeTest2 :: [Int]) == (takeTest1 :: [Int])

@@ -233,8 +233,7 @@ instance Evaluable Exp where
           Pointer ptr -> evalExpI exp ((var_name,ptr_address ptr):env) "Evaluating Lambda body (exp)"
           w@(Wrong _)  -> return w
         
-  -- lambda abstraction over variables
-  -- ignores the type argument, evaluating the expression
+  -- lambda abstraction over a type variable
   eval e@(Lam (Tb (var_name,_)) exp) env = do
     whenFlag show_subexpressions $ indentExp e >>= \e -> debugM $ "Evaluating subexpression " ++ e
     watchReductionM $ "Saving type "   ++ var_name ++ " as a free type var"
@@ -246,7 +245,7 @@ instance Evaluable Exp where
     maybePtr <- mkPointer (zDecodeQualified qvar) env
     case maybePtr of
       Just ptr ->   eval ptr env
-      Nothing -> return $ Wrong $ "Could not find var in env " ++ zDecodeQualified qvar  
+      Nothing -> return $ Wrong $ "Could not find var in env " ++ zDecodeQualified qvar ++ ".."
   
   eval (Dcon qcon) env = getPointer (zDecodeQualified qcon) env >>= flip eval env
 
@@ -267,7 +266,7 @@ instance Evaluable Exp where
             -- bind those free variables contained in the matched alternative pattern
             watchReductionM $ "Binding free variables contained in the matched pattern"
             free_vars_env <- mkAltEnv exp_value matched_pattern
-            eval (patternExpression matched_pattern) (free_vars_env ++ env)    
+            eval (patternExpression matched_pattern) (exp_ref:(free_vars_env ++ env))    
 
   eval (Lit lit) _ = eval lit []
 
