@@ -106,7 +106,7 @@ fetchDataCons :: Id -> Env -> IM [DataCon]
 fetchDataCons id env = do
   -- look for the data type
   msumtype <- lookupId id env
-  io $ putStrLn $ "fetchDataCons  " ++ show msumtype
+  --io $ putStrLn $ "fetchDataCons  " ++ show msumtype
   return $ case msumtype of
     (Right (SumType datacons)) -> datacons
     (Right (TypeConstructor datacons _)) -> [datacons]

@@ -11,6 +11,7 @@ import qualified Data.List as Data.List
 
 all :: [(Id, Either Thunk Value)]
 all = [ equals
+      , notEquals
         -- Bools
       , conjunction -- (&&) :: Bool -> Bool -> Bool
       , lt, leq        
@@ -39,6 +40,24 @@ equals = (id, Right $ Fun (monomophy_2 "(==)" valEq) "polymorphic(==)") where
      mapM (uncurry valEq) (ps_vals `zip` ps2_vals) >>= return . Boolean . Data.List.all ((==) $ Boolean $ True) 
                                               | otherwise = return . Boolean $ False
    valEq v w = return . Boolean $ (==) v w
+
+-- | (/=) defined in terms of (==)
+notEquals :: (Id, Either Thunk Value)
+notEquals = (id, Right $ Fun (monomophy_2 "(/=)" notEQ) "polymorphic(/=)") where
+  id = "ghc-prim:GHC.Classes./="
+  notEQ :: Value -> Value -> IM Value
+  notEQ v@(Wrong _) _ = return v
+  notEQ _ w@(Wrong _) = return w      
+  notEQ (TypeConstructor datacon id) (TypeConstructor datacon2 id2) = do return $ Boolean $ datacon /= datacon2 || id /= id2
+  notEQ(TyConApp dc1 ps) (TyConApp dc2 ps2) | dc1 == dc2 && length ps == length ps2 = do
+     -- get the value of every pointer
+     ps_vals <- mapM (flip eval []) ps
+     ps2_vals <- mapM (flip eval []) ps2
+     
+     -- compare every corresponding pointer value, they must be all equal
+     mapM (uncurry notEQ) (ps_vals `zip` ps2_vals) >>= return . Boolean . Data.List.any ((/=) $ Boolean $ True) 
+                                            | otherwise = return . Boolean $ False
+  notEQ v w = return . Boolean $ (/=) v w
 
 -- | (&&)
 conjunction :: (Id, Either Thunk Value)
