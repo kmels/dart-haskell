@@ -25,9 +25,9 @@ import Text.Encoding.Z(zEncodeString)
 
 -- | When we test a vdefg, we want to have the function tested more than once
 -- in case the value definition is not testable, it's represented as NoTest
-data FunTest = FunTest TestedFun | NoFunTest
-data TestedFun = TestedFun Vdef [TestResult]
-data VdefgTest = VdefgTest Vdefg [TestedFun] | NoVdefgTest
+data FunTest = FunTest TestedFun | NoFunTest { m :: String } -- a wrapper over TestedFun, NoFunTest contains a message describing why the function has no test results
+data TestedFun = TestedFun Vdef [TestResult] -- a function test suite that holds test results
+data VdefgTest = VdefgTest Vdefg [TestedFun] | NoVdefgTest String -- a value definition can contain more than one function test
 
 -- | A test result comprehends the result of feeding a function with 
 -- random values and checking whether it flows normally or not
@@ -46,10 +46,10 @@ isSuccessfulTest _ = True
   
 -- | We'd like to filter the value definitions that were tested
 isTestedFun :: FunTest -> Bool
-isTestedFun NoFunTest = False
+isTestedFun NoFunTest{} = False
 isTestedFun _ = True
 
 -- | We'd like to filter the actual test results for a value definition
 isTestedVdefg :: VdefgTest -> Bool
-isTestedVdefg NoVdefgTest = False
+isTestedVdefg (NoVdefgTest _) = False
 isTestedVdefg _ = True

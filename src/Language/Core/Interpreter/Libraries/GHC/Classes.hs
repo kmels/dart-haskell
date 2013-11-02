@@ -18,8 +18,7 @@ all = [ equals
         , mkMonomophier "ghc-prim:GHC.Classes.$p1Ord"
         , mkMonomophier "ghc-prim:GHC.Classes.$fOrdInt"
         , mkMonomophier "ghc-prim:GHC.Classes.$fEq[]"
-        , mkMonomophier "ghc-prim:GHC.Classes.$fEqInt"
-        
+        , mkMonomophier "ghc-prim:GHC.Classes.$fEqInt"        
         , mkMonomophier "integer-gmp:GHC.Integer.Type.$fOrdInteger"
         ]
 

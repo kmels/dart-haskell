@@ -9,7 +9,7 @@ data DARTSettings = InterpreterMode {
   , test_function :: String -- some function to test, defined in `file`
   , debug :: Bool -- debug flags
   , verbose :: Bool -- prints messages when loading, reading and acknowledging modules
-  , timeout_seconds :: Integer
+  , do_timeout_after_seconds :: Integer
   , show_heap :: Bool
 --, show_time :: Bool
   , show_expressions :: Bool
@@ -41,7 +41,7 @@ interpret = InterpreterMode {
   , debug = def &= groupname "DEBUG" &= help "Prints messages about the interpretation and testing of module definitions"
   , verbose = def &= groupname "DEBUG" &= help "Prints messages when loading, reading and acknowledging modules or definitions"
   
-  , timeout_seconds = 2
+  , do_timeout_after_seconds = 2
   
   , show_heap = def &= groupname "DEBUG" &= help "Shows binded values in the heap"
   , show_expressions = def &= groupname "DEBUG" &= help "Shows the external core expression for every value being evaluated"

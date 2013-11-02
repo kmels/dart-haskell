@@ -25,5 +25,5 @@ main :: IO ()
 main = do
   cmdArgs <- cmdArgs interpret -- arguments from the command line
   configArgs <- configSettings -- settings from ~/.dart-haskell config file
-  settings <- cmdArgs `mergeConfigSettings` configArgs
-  initDART settings >>= evalStateT runDART 
+  settings <- cmdArgs `mergeConfigSettings` configArgs -- merge settings and arguments
+  initDART settings >>= evalStateT runDART  -- run DART

@@ -294,7 +294,7 @@ isTimeout :: IM Bool
 isTimeout = do
   st <- gets start_time
   now <- io getCurrentTime
-  max_timeout <- getSetting timeout_seconds
+  max_timeout <- getSetting do_timeout_after_seconds
   let dayTime = now `diffUTCTime` st
   return $ (now `diffUTCTime` st > fromInteger max_timeout)
   

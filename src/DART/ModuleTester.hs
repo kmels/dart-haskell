@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 ----------------------------------------------------------------------------
 -- |
 -- Module      :  DART.ModuleTester
@@ -64,7 +65,7 @@ testVdefg vdefg@(Nonrec vdef) env = do
   fun_test <- testFun vdef env
   
   return $ case fun_test of 
-    NoFunTest -> NoVdefgTest -- we have no test result
+    NoFunTest{m} -> NoVdefgTest m -- we have no test result
     FunTest tested_fun -> VdefgTest vdefg [tested_fun]
     
 testVdefg vdefg@(Rec vdefs) env = do
@@ -74,7 +75,7 @@ testVdefg vdefg@(Rec vdefs) env = do
     tested_funs = [tested_fun | FunTest tested_fun <- filter isTestedFun fun_tests]
     
   return $ case tested_funs of
-    [] -> NoVdefgTest -- we have no test results!
+    [] -> NoVdefgTest "We have no test results for recursive definition" -- we have no test results!
     tested_funs -> VdefgTest vdefg tested_funs
 
 -- | Tests a value definition more than once, gathers the results and returns them
@@ -87,8 +88,9 @@ testFun def@(Vdef (qvar,ty,vdef_exp)) env =
   -- is the type a function type? i.e. at least of arity 1
   case funTyArgs ty of
     Nothing -> do
-      debugM $ "Will not test " ++ zDecodeQualified qvar ++ ", not a function type"
-      return NoFunTest
+      let m = "Will not test " ++ zDecodeQualified qvar ++ ", it is not a function type"
+      debugM $ m
+      return $ NoFunTest m
     Just fun_signature_types -> do
       let
         -- if the function has type Int -> Int -> Bool
@@ -163,8 +165,9 @@ testHaskellExpression m@(Module mname tdefs vdefgs) id env =
         
 --      return $ maybeResult >>= Just . (,) expression_string
     Nothing -> do
-      debugMStep ("Could not test " ++ id)
-      return NoFunTest --TODO (JIT..)
+      let m = "Couldn't find definition of " ++ id ++ " in module " ++ show mname
+      debugMStep m
+      return $ NoFunTest m --TODO (JIT..)
 
 showTestedFun :: TestedFun -> IM String
 showTestedFun (TestedFun vdef test_results) =
@@ -187,5 +190,5 @@ showTestResult (FailedTest arg_vals message) = do
   return $ message ++ ", with arguments: \n" ++ separateWithNewLines arg_strs
 
 showFunTest :: FunTest -> IM String
-showFunTest NoFunTest = return $ "Function is not testable"
+showFunTest (NoFunTest m) = return $ "Function not tested: " ++ m
 showFunTest (FunTest tested_fun) = showTestedFun tested_fun

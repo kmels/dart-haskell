@@ -134,7 +134,7 @@ instance Evaluable Thunk where
     case reached_timeout of
       False -> eval exp (env ++ e) -- (!) passing (e ++ env) instead produces an infinite loop
       True -> do
-        max_secs <- gets settings >>= return . show . timeout_seconds
+        max_secs <- gets settings >>= return . show . do_timeout_after_seconds
         clearTimeout
         return . Wrong $ "Reached timeout of " ++ max_secs ++ " seconds"
 

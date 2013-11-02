@@ -52,14 +52,55 @@ mkRandomVal env (Tcon qual_tcon)  = case zDecodeQualified qual_tcon of
   id -> do
     type_constructors <- fetchDataCons id env
     sumTypeMkRandom type_constructors env
+
+-- application of a type constructor qtycon1 to qtycon2
+mkRandomVal env (Tapp (Tcon zqtycon1) (Tcon zqtycon2)) = do
+  let
+    qtycon_1 = zDecodeQualified zqtycon1
+    qtycon_2 = zDecodeQualified zqtycon2
+    
+    -- fetch the type constructor, it should only be one.
+  (TypeConstructor tycon1@(MkDataCon _ expected_types@(ty:tys)) built_type_id) <- fetchTyCon qtycon_1 env
+    
+  -- check how many types tycon1 is expecting. In case it is expecting only one
+  -- then we have built our final type (it is being applied to tycon2).
+  case (length expected_types) of
+    1 -> do
+      -- what type does tycon1 build and what are its constructors? 
+      tycons <- fetchDataCons built_type_id env
+      --let
+      --type_bind = TypeInstantiation (ty,tycon2_id)
         
-mkRandomVal env (Tapp (Tcon qual_tcon1) (Tcon qual_tcon2)) = do
-  type_constructors <- fetchDataCons (zDecodeQualified qual_tcon1) env
-  io $ putStrLn $ "Type constructors of " ++ (zDecodeQualified qual_tcon1) ++ " are: " ++ show type_constructors
-  return $ Wrong "TODO"
+      -- fabricateValue tycons [type_bind]
+      
+      io $ putStrLn $ "We have " ++ (show . length $ tycons) ++ " constructors" ++ ": " ++ show tycons
+      
+      io $ putStrLn $ show ty ++ " is really a " ++ qtycon_2
+      
+      return $ Wrong $ ", " ++ show tycons
+    -- OTHERWISE, TODO2
+    n -> do
+      io $ putStrLn $ "Type constructors of " ++ qtycon_1 ++ " are: " ++ show n
+      
+      return $ Wrong "TODO2"
   
 mkRandomVal env ty = return . Wrong $ " mkRandomVal: I don't know how to make a random val for the type " ++ showExtCoreTypeVerbose ty
   
+
+-- | Given a list of type constructors, and an environment of type bindings, fabricate a value.
+newtype FreeTypeBind = FreeTypeBind { typeInstantiation :: (Ty,Id) } 
+
+fabricateValue :: [DataCon] -> [FreeTypeBind] -> IM Value
+fabricateValue xs ys = return $ Wrong $ "TODO fabricateVal"
+
+-- | Given a qualified type constructor name – e.g, (:) – seek the data constructor and also the qualified type it builds – e.g., [] for cons 
+fetchTyCon :: Id -> Env -> IM Value
+fetchTyCon id env = do
+  tycon <- lookupId id env
+  return $ case tycon of
+    (Right tycon@(TypeConstructor datacons ty_id)) -> tycon
+    v -> Wrong $ "The impossible happened @fetchTyCon looking upon " ++ id ++ ", got: " ++ show v
+
 -- | Looks up a definition of a sum type by a qualified identifier and returns a list of its constructors.
 fetchDataCons :: Id -> Env -> IM [DataCon]
 fetchDataCons id env = do
