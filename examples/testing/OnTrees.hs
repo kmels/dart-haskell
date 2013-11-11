@@ -40,7 +40,9 @@ sumTreeI (Branch t r) = sumTreeI t + sumTreeI r
 
 -- | Function that fails if a tree sum is even, otherwise returns the sum
 failOnEvenSumI :: IntTree -> Int
-failOnEvenSumI tree = let sum = sumTreeI tree in if (sum `mod` 2 /= 0) then sum else error $ "Sum is even: " ++ show sum
+failOnEvenSumI tree = let 
+  sum = sumTreeI tree 
+  in if (sum `mod` 2 /= 0) then sum else error $ "Sum is even: " ++ show sum
 
 -- | Function that fails if a tree sum is odd, otherwise returns the sum
 failOnOddSumI :: IntTree -> Int

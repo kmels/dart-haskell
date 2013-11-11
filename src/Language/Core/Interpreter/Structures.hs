@@ -83,7 +83,9 @@ data DARTState = DState {
  
  -- state of testing
  , test_name :: Maybe (Qual Var) 
- 
+-- , generator :: GenM Value
+ , gen_val :: Maybe Value
+ , gen_val_size :: Int
 }
 
 type Heap = H.CuckooHashTable HeapAddress (Either Thunk Value)

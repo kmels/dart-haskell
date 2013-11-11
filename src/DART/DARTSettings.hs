@@ -27,6 +27,10 @@ data DARTSettings = InterpreterMode {
   -- primitive types
   , max_int_bound :: Int
   , min_int_bound :: Int
+  -- data types
+  , data_min_size :: Int
+  , data_max_size :: Int
+  , data_target_size :: Int
   } deriving (Show, Data, Typeable)
 
 -- | We'll use the package cmdargs to identify flags, parameters, etc.,  from the command line
@@ -59,6 +63,11 @@ interpret = InterpreterMode {
   -- primitives
   , min_int_bound = def &= help "Minimum random integer to be generated"
   , max_int_bound = def &= help "Maximum random integer to be generated"
+  
+  -- data types
+  , data_min_size = def &= help "The minimum size to consider when generating a value for a data type"
+  , data_max_size = def &= help "The maximum size to consider when generating a value for a data type"
+  , data_target_size = def &= help "The target size to consider when generating a value for a data type (Takes precedente over min_data_size and max_data_size)"
   } &= summary "Reads a .hcr file and evaluates its declarations. "
 
 

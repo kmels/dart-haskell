@@ -220,6 +220,9 @@ mergeConfigSettings st cp = do
      -- primitives
      , min_int_bound = mergeInt "primitive types" "min_int_bound" (min_int_bound st)
      , max_int_bound = mergeInt "primitive types" "max_int_bound" (max_int_bound st)     
+     , data_min_size = mergeInt "data structures" "data_min_size" (data_min_size st)
+     , data_max_size = mergeInt "data structures" "data_max_size" (data_max_size st)
+     , data_target_size = mergeInt "data structures" "data_target_size" (data_target_size st)
   }
   where
     -- merge a string setting
@@ -230,11 +233,11 @@ mergeConfigSettings st cp = do
     mergeStr _ _ cmd_val = cmd_val
     
     -- merge an int setting
-    mergeInt :: Conf.SectionSpec -> Conf.OptionSpec -> Int -> Int
-    mergeInt sec opt 0 = case Conf.get cp sec opt of
+    mergeInt :: Conf.SectionSpec -> Conf.OptionSpec -> Int -> Int    
+    mergeInt sec opt 0 = case Conf.get cp sec opt of -- we have no cmdline val
        Left _ -> error $ "Missing settings field '" ++ opt ++ "' in section '" ++ sec ++ "'"
        Right val -> val
-    mergeInt _ _ cmd_val = cmd_val
+    mergeInt _ _ cmd_val = cmd_val -- we have a cmdline val 
     
 -- | Reads the configuration file, if it doesn't exist, it is created
 -- on Unix-like systems: ~/.dart-haskell

@@ -85,6 +85,7 @@ library
                     -- control
                       , transformers >= 0.3
                       , mtl >= 2.1.1
+                      , MonadRandom >= 0.1.9
                     -- text
                       , utf8-string >= 0.3.7
 
