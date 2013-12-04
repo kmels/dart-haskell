@@ -18,7 +18,7 @@ module Language.Core.Interpreter.Structures(
   io
   , increase_number_of_reductions
   -- heap operations
-  , store, newAddress, memorize, memorizeVal, memorizeThunk, mkVal, mkThunk, mkHeapReference
+  , store, newAddress, memorize, memorizeVal, memorizeThunk, mkVal, mkThunk, mkHeapReference, mkValuePointer
   , allocate
   -- timeouting
   , isTimeout, clearTimeout
@@ -32,6 +32,7 @@ module Language.Core.Interpreter.Structures(
   , Thunk (..), DataCon(..) , Value(..), Pointer(..), PredicateBranch(..)
 --  , ModuleFunction(..)
   , HaskellExpression(..)
+  , BoltzmannSamplerStatus(..)
   , module Control.Monad.State
   , module Language.Core.Core
   , module Language.Core.Util
@@ -84,9 +85,11 @@ data DARTState = DState {
  -- state of testing
  , test_name :: Maybe (Qual Var) 
 -- , generator :: GenM Value
- , gen_val :: Maybe Value
- , gen_val_size :: Int
+ , boltzmannSamplerStatus :: BoltzmannSamplerStatus
+ , boltzmannSamplerSize   :: Int
 }
+
+data BoltzmannSamplerStatus = InitializedSampler | UnitializedSampler deriving Show
 
 type Heap = H.CuckooHashTable HeapAddress (Either Thunk Value)
 type HeapAddress = Int
@@ -185,9 +188,14 @@ store address val id  = do
   --watchReductionM $ "Memorized " ++ id ++ " in " ++ show address ++ " as " ++ show val
   return (id,address)
 
+
 -- | Stores a value or a thunk in a new address
 memorize :: Either Thunk Value -> Id -> IM HeapReference
 memorize val id = newAddress >>= \adr -> store adr val id 
+
+-- | Makes a Pointer from
+mkValuePointer :: Value -> IM Pointer
+mkValuePointer val = memorizeVal val >>= \heap_ref@(_,addr) -> return . MkPointer $ addr
 
 memorizeVal :: Value -> IM HeapReference
 memorizeVal val = mkVarName >>= memorize (mkVal val)

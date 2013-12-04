@@ -66,7 +66,8 @@ initDART settings = do
     , settings = settings { include = (absolute_includes) }
     , start_time = now
     , test_name = Nothing
-    , gen_val = Nothing
+    , boltzmannSamplerStatus = UnitializedSampler
+    , boltzmannSamplerSize   = 0
   }
 
 -- | Returns a list of *relative* paths pointing to default included libraries e.g. base

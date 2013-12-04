@@ -129,7 +129,9 @@ testFun def@(Vdef (qvar,ty,vdef_exp)) env =
           
       ntests <- getSetting number_of_tests
       test_results <- replicateM ntests $ do
-        arg_vals <- mapM (mkNewRandomVal env) fun_type_args
+        arg_vals <- mapM (\targ -> do 
+                             io $ putStrLn "NEW TEST"
+                             mkRandomVal env targ) fun_type_args
         debugM $ "Did " ++ (show . length) arg_vals ++ " random values"
         testFunOnce fun arg_vals
                 
