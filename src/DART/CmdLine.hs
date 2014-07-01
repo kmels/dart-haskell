@@ -1,4 +1,5 @@
 {-# LANGUAGE ImplicitParams #-}
+{-# LANGUAGE CPP #-}
 
 module DART.CmdLine where
 
@@ -200,13 +201,14 @@ increase_indentation s = s { tab_indentation  = tab_indentation s + 1 }
 decrease_indentation :: DARTState -> DARTState
 decrease_indentation s = s { tab_indentation  = tab_indentation s - 1 }
 
-
+#if __GLASGOW_HASKELL__ > 782
 instance Foldable (Either e) where
   foldMap f (Left  _) = mempty
   foldMap f (Right r) = f r
 
   foldr _ z (Left  _) = z
   foldr f z (Right r) = f r z       
+#endif
   
 -- | Merges settings between the command line and the configuration file.
 -- the values from command line are more prioritary
