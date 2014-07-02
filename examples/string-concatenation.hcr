@@ -1,61 +1,59 @@
 %module main:ExamplesziStringConcatenation
-  main:ExamplesziStringConcatenation.myString :: (ghczmprim:GHCziTypes.ZMZN
-                                                  ghczmprim:GHCziTypes.Char)
-                                                 ->
-                                                 (ghczmprim:GHCziTypes.ZMZN
-                                                  ghczmprim:GHCziTypes.Char) =
-    \ (waad::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) ->
-        %case ((ghczmprim:GHCziTypes.ZMZN
-                ghczmprim:GHCziTypes.Char)) (ghczmprim:GHCziClasses.zgze
-                                             @ ghczmprim:GHCziTypes.Int
-                                             ghczmprim:GHCziClasses.zdfOrdInt
-                                             (base:GHCziList.length @ ghczmprim:GHCziTypes.Char
-                                              waad)
-                                             (ghczmprim:GHCziTypes.Izh
-                                              (2::ghczmprim:GHCziPrim.Intzh)))
-        %of (wildX4::ghczmprim:GHCziTypes.Bool)
-          {ghczmprim:GHCziTypes.False ->
-             base:GHCziErr.error
-             @ ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
-             (ghczmprim:GHCziCString.unpackCStringzh
-              ("word can\x27t be of length less than 2"::ghczmprim:GHCziPrim.Addrzh));
-           ghczmprim:GHCziTypes.True ->
-             base:GHCziBase.zpzp @ ghczmprim:GHCziTypes.Char
-             (ghczmprim:GHCziCString.unpackCStringzh
-              ("hello"::ghczmprim:GHCziPrim.Addrzh))
-             waad};
   main:ExamplesziStringConcatenation.myStringzq :: (ghczmprim:GHCziTypes.ZMZN
                                                     ghczmprim:GHCziTypes.Char)
                                                    ->
                                                    (ghczmprim:GHCziTypes.ZMZN
                                                     ghczmprim:GHCziTypes.Char)
                                                    ->
-                                                   (ghczmprim:GHCziTypes.ZMZN
-                                                    ghczmprim:GHCziTypes.Char) =
-    \ (wagl::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
-      (w2agm::(ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)) ->
-        %case ((ghczmprim:GHCziTypes.ZMZN
-                ghczmprim:GHCziTypes.Char)) (ghczmprim:GHCziClasses.zaza
-                                             (ghczmprim:GHCziClasses.zgze @ ghczmprim:GHCziTypes.Int
-                                              ghczmprim:GHCziClasses.zdfOrdInt
-                                              (base:GHCziList.length @ ghczmprim:GHCziTypes.Char
-                                               wagl)
-                                              (ghczmprim:GHCziTypes.Izh
-                                               (2::ghczmprim:GHCziPrim.Intzh)))
-                                             (ghczmprim:GHCziClasses.zgze @ ghczmprim:GHCziTypes.Int
-                                              ghczmprim:GHCziClasses.zdfOrdInt
-                                              (base:GHCziList.length @ ghczmprim:GHCziTypes.Char
-                                               w2agm)
-                                              (ghczmprim:GHCziTypes.Izh
-                                               (2::ghczmprim:GHCziPrim.Intzh))))
-        %of (wildX6::ghczmprim:GHCziTypes.Bool)
+                                                   ghczmprim:GHCziTypes.ZMZN
+                                                   ghczmprim:GHCziTypes.Char =
+    \ (waIO::ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+      (w2aIP::ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+        %case (ghczmprim:GHCziTypes.ZMZN
+               ghczmprim:GHCziTypes.Char) (ghczmprim:GHCziClasses.zaza
+                                           (ghczmprim:GHCziClasses.zgze @ ghczmprim:GHCziTypes.Int
+                                            ghczmprim:GHCziClasses.zdfOrdInt
+                                            (base:GHCziList.length @ ghczmprim:GHCziTypes.Char waIO)
+                                            (ghczmprim:GHCziTypes.Izh
+                                             (2::ghczmprim:GHCziPrim.Intzh)))
+                                           (ghczmprim:GHCziClasses.zgze @ ghczmprim:GHCziTypes.Int
+                                            ghczmprim:GHCziClasses.zdfOrdInt
+                                            (base:GHCziList.length @ ghczmprim:GHCziTypes.Char
+                                             w2aIP)
+                                            (ghczmprim:GHCziTypes.Izh
+                                             (2::ghczmprim:GHCziPrim.Intzh))))
+        %of (wildX5::ghczmprim:GHCziTypes.Bool)
           {ghczmprim:GHCziTypes.False ->
              base:GHCziErr.error
-             @ ((ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char))
+             @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
              (ghczmprim:GHCziCString.unpackCStringzh
               ("word can\x27t be of length less than 2"::ghczmprim:GHCziPrim.Addrzh));
            ghczmprim:GHCziTypes.True ->
              base:GHCziBase.zpzp @ ghczmprim:GHCziTypes.Char
              (ghczmprim:GHCziCString.unpackCStringzh
               ("hello"::ghczmprim:GHCziPrim.Addrzh))
-             (base:GHCziBase.zpzp @ ghczmprim:GHCziTypes.Char wagl w2agm)};
+             (base:GHCziBase.zpzp @ ghczmprim:GHCziTypes.Char waIO w2aIP)};
+  main:ExamplesziStringConcatenation.myString :: (ghczmprim:GHCziTypes.ZMZN
+                                                  ghczmprim:GHCziTypes.Char)
+                                                 ->
+                                                 ghczmprim:GHCziTypes.ZMZN
+                                                 ghczmprim:GHCziTypes.Char =
+    \ (wauD::ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+        %case (ghczmprim:GHCziTypes.ZMZN
+               ghczmprim:GHCziTypes.Char) (ghczmprim:GHCziClasses.zgze
+                                           @ ghczmprim:GHCziTypes.Int
+                                           ghczmprim:GHCziClasses.zdfOrdInt
+                                           (base:GHCziList.length @ ghczmprim:GHCziTypes.Char wauD)
+                                           (ghczmprim:GHCziTypes.Izh
+                                            (2::ghczmprim:GHCziPrim.Intzh)))
+        %of (wildX5::ghczmprim:GHCziTypes.Bool)
+          {ghczmprim:GHCziTypes.False ->
+             base:GHCziErr.error
+             @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
+             (ghczmprim:GHCziCString.unpackCStringzh
+              ("word can\x27t be of length less than 2"::ghczmprim:GHCziPrim.Addrzh));
+           ghczmprim:GHCziTypes.True ->
+             base:GHCziBase.zpzp @ ghczmprim:GHCziTypes.Char
+             (ghczmprim:GHCziCString.unpackCStringzh
+              ("hello"::ghczmprim:GHCziPrim.Addrzh))
+             wauD};

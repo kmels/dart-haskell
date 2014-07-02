@@ -25,8 +25,10 @@ import Text.Encoding.Z(zEncodeString)
 
 -- | When we test a vdefg, we want to have the function tested more than once
 -- in case the value definition is not testable, it's represented as NoTest
-data FunTest = FunTest TestedFun | NoFunTest { m :: String } -- a wrapper over TestedFun, NoFunTest contains a message describing why the function has no test results
-data TestedFun = TestedFun Vdef [TestResult] -- a function test suite that holds test results
+data FunTest = FunTest TestedFun -- wrap success
+             | NoFunTest { m :: String } -- report failure
+             
+data TestedFun = TestedFun Vdef [TestResult] -- holds definition with test results
 data VdefgTest = VdefgTest Vdefg [TestedFun] | NoVdefgTest String -- a value definition can contain more than one function test
 
 -- | A test result comprehends the result of feeding a function with 

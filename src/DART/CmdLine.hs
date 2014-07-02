@@ -95,6 +95,8 @@ prependStars = do
 prependNewLn :: String -> String
 prependNewLn = flip (++) "\n"
 
+debugMessage = debugM 
+
 -- | Prints a debug message with a new line at the end
 debugM :: String -> IM ()
 debugM msg = do 

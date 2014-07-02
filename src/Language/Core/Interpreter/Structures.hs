@@ -14,6 +14,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ImplicitParams #-}
 
+-- TODO: Move to Language.Core
 module Language.Core.Interpreter.Structures(
   io
   , increase_number_of_reductions
@@ -146,8 +147,8 @@ instance Show Thunk where
 -- provided file(s)
 data HaskellExpression = HaskellExpression String Module
 
--- | A data type constructor that has normally a qualified name and a list of
--- types that it expects. 
+-- | The type of a type constructor with qualified name and the list 
+-- of types it expects. 
 data DataCon = MkDataCon {
   tyConId :: Id,
   tyConExpectedTys :: [Ty]
@@ -271,9 +272,11 @@ instance Show Value where
   show (TypeConstructor tycon ty_name) | show tycon == "[]" = "[]"
     | otherwise = "TypeConstructor " ++ show tycon ++ " of " ++ ty_name
 
+-- Pretty print data constructors
 instance Show DataCon where
+  -- list?
   show (MkDataCon "ghc-prim:GHC.Types.[]" []) = "[]"
-  show (MkDataCon "ghc-prim:GHC.Types.[]" ty) = "[] expecting " ++ show ty
+  show (MkDataCon "ghc-prim:GHC.Types.[]" ty) = show ty
   show (MkDataCon id []) = idName id
   show (MkDataCon id types) = idName id ++ " :: " ++ types' where
     types' :: String

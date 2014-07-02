@@ -20,7 +20,7 @@ module DART.ModuleTester(
   , module DART.ModuleTester.Testable
 ) where
 
-import DART.CmdLine(debugMStep,debugM,beVerboseM,watchTestM)
+import DART.CmdLine(debugMStep,debugMessage,beVerboseM,watchTestM)
 import DART.MkRandom
 import DART.ModuleTester.Testable
 import Data.Maybe
@@ -30,7 +30,7 @@ import Language.Core.Interpreter.Acknowledge(acknowledgeModule)
 import Language.Core.Interpreter.Structures
 import Language.Core.Interpreter.Util(showValue)
 import Language.Core.Module(moduleFindVdefByName)
-import Language.Core.Ty(funTyArgs,typeSignature)
+import Language.Core.Ty(funTyArgs,printSignature)
 import Language.Core.Vdefg(findVdefByName,vdefId)
 --------------------------------------------------------------------------------
 -- Prelude
@@ -61,7 +61,7 @@ testModule m@(Module mname tdefs vdefgs) libs = do
 -- Only one test is performed
 testVdefg :: Vdefg -> Env -> IM VdefgTest
 testVdefg vdefg@(Nonrec vdef) env = do
-  debugMStep $ "Testing definition " ++ vdefId vdef
+  debugMStep $ "Testing " ++ vdefId vdef
   fun_test <- testFun vdef env
   
   return $ case fun_test of 
@@ -89,23 +89,21 @@ testFun def@(Vdef (qvar,ty,vdef_exp)) env =
   case funTyArgs ty of
     Nothing -> do
       let m = "Will not test " ++ zDecodeQualified qvar ++ ", it is not a function type"
-      debugM $ m
+      debugMessage m
       return $ NoFunTest m
-    Just fun_signature_types -> do
+    Just fun_signature -> do
       let
-        -- if the function has type Int -> Int -> Bool
-        -- we want to generate two random ints, drop the last type in the signature
-        fun_type_args = init fun_signature_types
+        -- if the function has type e.g. Int -> Int -> Bool
+        -- we want to generate feed two ints only
+        fun_arg_tys = init fun_signature
 
-        -- Test a function once, that is, feed the given random values
-        -- to the given function
-        testFunOnce :: Value -> [Value] -> IM TestResult
-        testFunOnce fun args = do
-          -- make heap refs
-          heap_refs <- mapM memorizeVal args
-          
-          applied_fun_result <- feedFun fun heap_refs
+        -- Tests function with random values
+        testOnce :: Value -> [Value] -> IM TestResult
+        testOnce fun args = do
+          heap_refs <- mapM memorizeVal args  -- allocate args          
+          applied_fun_result <- feedFun fun heap_refs -- apply          
           arg_strs <- mapM showValue args
+          
           watchTestM $ " Applying args: " ++ show arg_strs
           applied_fun_result_str <- showValue applied_fun_result
           watchTestM $ " Got result: " ++ applied_fun_result_str
@@ -118,8 +116,8 @@ testFun def@(Vdef (qvar,ty,vdef_exp)) env =
               test_argument_values = args
               , test_result_value = val }
               
-      typ_sig <- typeSignature fun_signature_types
-      debugM $ "Detected function with type signature: " ++ typ_sig
+      typ_sig_str <- printSignature fun_signature
+      debugMessage $ "Detected function with type signature: " ++ typ_sig_str
       
       -- eval the expression (it should have the function type)
       fun <- eval vdef_exp env >>= \probably_fun -> 
@@ -129,14 +127,36 @@ testFun def@(Vdef (qvar,ty,vdef_exp)) env =
           
       ntests <- getSetting number_of_tests
       test_results <- replicateM ntests $ do
-        arg_vals <- mapM (\targ -> do 
-                             io $ putStrLn "NEW TEST"
-                             mkRandomVal env targ) fun_type_args
-        debugM $ "Did " ++ (show . length) arg_vals ++ " random values"
-        testFunOnce fun arg_vals
+                -- mapM :: Monad m => (a -> m b) -> [a] -> m [b]
+          -- mkRandomVal env :: Ty -> IM Value
+          -- fun_arg_tys :: [Ty]
+          
+          -- collectM :: (a -> m b) -> [a] -> m [b]
+          --  foldM :: Monad m => (a -> b -> m a) -> a -> [b] -> m a
+        --args <- mapM (mkRandomVal env) fun_arg_tys
+        args_maybe <- mkArgVals fun_arg_tys env
+        
+        case args_maybe of
+          Left (Wrong err_val) -> return $ FailedTest [] err_val
+          Right args -> do
+            debugMessage $ "Did " ++ (show . length) args ++ " random args"        
+            testOnce fun args
                 
       return . FunTest $ TestedFun def test_results
   where
+    mkArgVals :: [Ty] -> Env -> IM (Either Value [Value])
+    mkArgVals [] _ = return . Right $ []
+    mkArgVals (t:ts) env = do
+      val_maybe <- mkRandomVal env t
+      case val_maybe of
+        Wrong e -> return . Left . Wrong $ "Generator shortcoming. Couldn't generate value for type " ++ showType t
+        val -> do
+          -- make further vals
+          ts_vals_maybe <- mkArgVals ts env 
+          case ts_vals_maybe of
+            err@(Left _) -> return err
+            Right ts_vals -> return . Right $ val:ts_vals
+    
     -- | Given a value and a list of argument heap references, feed the value
     -- if the value is a function until the list of arguments
     -- is exhausted
@@ -144,14 +164,18 @@ testFun def@(Vdef (qvar,ty,vdef_exp)) env =
     -- the case where we have a function and no arguments, error
     feedFun (Fun _ fdesc) []  = return . Wrong $ "The impossible happened at feedFun, there is not enough arguments to feed function: "++ fdesc
     -- the case where we have a function and at least one argument, feed
-    feedFun fun@(Fun _ _) (arg_heapref@(arg_id,_):other_heaprefs) = do
-      argument_value <- eval arg_id (arg_heapref:env)
-      argument_str <- showValue argument_value
-      watchTestM $ "Feeding function with random argument: " ++ argument_str
-      result_value <- apply fun arg_id (arg_heapref:env)
+    feedFun fun@(Fun _ _) (frst_ref@(frst,_):other_args) = do
+      first_arg_maybe <- eval frst (frst_ref:env) -- might be an eval error!
+      arg_str <- showValue first_arg_maybe
       
-      feedFun result_value other_heaprefs
-      -- the case where we have a value that is no function, and no arguments
+      case first_arg_maybe of
+        eval_err@(Wrong _) -> return . Wrong $ "Can't apply argument value: " ++ arg_str
+        first_arg -> do          
+          watchTestM $ "Feeding function with random argument: " ++ arg_str
+          result <- apply fun frst (frst_ref:env)      
+          feedFun result other_args
+    
+    -- the case where we have a value that is no function, and no arguments
     feedFun val [] = return val
     feedFun e@(Wrong _) _ = return e
     feedFun val args = return . Wrong $ "The impossible happened at feedFun, val= "++ show val ++ " and args = " ++ show args ++ " with |args| " ++ (show . length) args
@@ -177,7 +201,9 @@ showTestedFun (TestedFun vdef test_results) =
     [] -> return $ id ++ " passed all (" ++ (show . length $ test_successes) ++ ") tests"
     (test_fail:_) ->
       let 
-        failed_str = id ++ " failed in " ++ (show . length $ test_fails) ++ " tests\n" 
+        tst 1 = "1 test"
+        tst n = show n ++ " tests"
+        failed_str = id ++ " failed in " ++ (tst . length $ test_fails) ++ " \n" 
       in do
         failed_test_strs <- mapM showTestResult test_fails
         return $ failed_str ++ separateWithNewLines failed_test_strs

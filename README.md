@@ -1,6 +1,8 @@
 Description
 ------
-Automated testing for Haskell programs. We take a program, simulate it against likely runs and report inputs that make it crash.
+Automated testing for Haskell programs. We take a program, simulate it against likely runs and report inputs that make it crash. 
+
+The idea is motivated by [Godefroid, Patrice and Klarlund, Nils and Sen, Koushik, DART: Directed Automated Random Testing}, PLDI2005, 2005](http://doi.acm.org/10.1145/1065010.1065036)
 
 Roadmap
 ------
@@ -8,7 +10,6 @@ Roadmap
  - Find paths that were not run using an SMT solver -- TODO
  - Simulate further -- TODO
 
-The idea is motivated by [Godefroid, Patrice and Klarlund, Nils and Sen, Koushik, DART: Directed Automated Random Testing}, PLDI2005, 2005](http://doi.acm.org/10.1145/1065010.1065036)
 
 It reports
 ------
@@ -26,7 +27,7 @@ Install
     > cd dart-haskell
     > cabal install
 
-Usage examples  
+Usage examples
 -------
     > dart-haskell -f examples/interpreter/GHC.Num.hs -e numberTen
     > 10

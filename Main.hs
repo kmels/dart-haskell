@@ -23,7 +23,7 @@ import System.Console.CmdArgs
 
 main :: IO () 
 main = do
-  cmdArgs <- cmdArgs interpret -- arguments from the command line
-  configArgs <- configSettings -- settings from ~/.dart-haskell config file
-  settings <- cmdArgs `mergeConfigSettings` configArgs -- merge settings and arguments
+  args <- cmdArgs interpret -- arguments from the command line
+  config <- configSettings -- settings from ~/.dart-haskell config file
+  settings <- args `mergeConfigSettings` config -- add config to arguments
   initDART settings >>= evalStateT runDART  -- run DART

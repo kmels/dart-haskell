@@ -50,10 +50,12 @@ isPrimitive _ = False
 --isLambdaArrow (Tapp ty _)  = isLambdaArrow ty
 --isLambdaArrow _ = False
 
--- | Given a function type of any arity, return all its types
--- e.g. a function whose signature is `Tree->Int->Maybe Int` returns
+-- | Given a type application of any arity, conform a list of its types
+-- i.e. 
+-- Nothing is returned if the given type is not a function type.
+-- A function of type `Tree -> Int -> Maybe Int` returns
 -- Just [Tcon("Tree"),Tcon("Int"),(TApp (Tcon "Maybe") (Tcon "Int"))]
--- Nothing is returned if the given type is not a function type
+
 funTyArgs :: Ty -> Maybe [Ty]
 funTyArgs (Tapp i r) = funArgTy i >>= return . append (extractArrowReturnTy r)
   where
@@ -77,9 +79,9 @@ funArgTy :: Ty -> Maybe Ty
 funArgTy (Tapp (Tcon ((Just (M (P ("ghczmprim"),["GHC"],"Prim"))),"ZLzmzgZR")) ty) = Just ty
 funArgTy _ = Nothing
 
--- | Given a list of types, this function pretty prints the list as a type signature
-typeSignature :: [Ty] -> IM String
-typeSignature (t:tys) = liftM2 (++) (typeName t) (mapM typeName tys >>= return . prependArrows)
+-- | Pretty prints a list of types as a type signature
+printSignature :: [Ty] -> IM String
+printSignature (t:tys) = liftM2 (++) (typeName t) (mapM typeName tys >>= return . prependArrows)
 
 --lifttypeName t ++ prependArrows (map typeName ty)
 -- (String -> String -> String) -> IM String -> IM String -> IM String

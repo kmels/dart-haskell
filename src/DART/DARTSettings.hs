@@ -3,8 +3,9 @@ module DART.DARTSettings where
 
 import System.Console.CmdArgs
 
-data DARTSettings = InterpreterMode { 
-  file :: FilePath -- The file we will read information from, it can be either .hs, .lhs or .hcr
+data DARTSettings = MkSettings { 
+  dir :: FilePath -- The directory in which we will find file sources with extension .hs, .lhs or .hcr
+  , file :: FilePath -- The file we will read information from, it can be either .hs, .lhs or .hcr
   , evaluate_function :: String -- the interpreter evaluates some function, defined in `file`
   , test_function :: String -- some function to test, defined in `file`
   , debug :: Bool -- debug flags
@@ -36,12 +37,13 @@ data DARTSettings = InterpreterMode {
 -- | We'll use the package cmdargs to identify flags, parameters, etc.,  from the command line
 -- The interpreter mode reads an external core file and evaluates the declarations of its module.
              
-interpret = InterpreterMode {
-  benchmark = def &= groupname "USAGE" &= help "Benchmark"
-  , file = def &= typFile &= groupname "USAGE"
+interpret = MkSettings {
+  benchmark = def &= groupname "PLUS" &= help "Benchmark"
+  , dir = def &= typ "DIR" &= groupname "USE" &= help "A directory that contains files to test."
+  , file = def &= typ "FILE" &= groupname "USE" &= help "A file that contains functions to test."
   
-  , evaluate_function = def &= groupname "USAGE" &= help "The function to evaluate (if not provided, all function declarations will be evaluated)"
-  , test_function = def &= groupname "USAGE" &= help "The function to test (if not provided, all functions will be tested)"
+  , evaluate_function = def &= typ "FUN" &= groupname "USE" &= help "The function to evaluate in FILE (if not provided, all function declarations will be evaluated in FILE or files in DIRECTORY)"
+  , test_function = def &= groupname "USE" &= help "The function to test (if not provided, all functions will be tested)"
   , debug = def &= groupname "DEBUG" &= help "Prints messages about the interpretation and testing of module definitions"
   , verbose = def &= groupname "DEBUG" &= help "Prints messages when loading, reading and acknowledging modules or definitions"
   
