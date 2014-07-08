@@ -40,11 +40,10 @@ false = (id, Right $ TyConApp tc []) -- has no applied values
          id = "ghc-prim:GHC.Types.False"
          tc = MkDataCon id [] -- awaits no types
          
--- | GHC.Types.Char is a type constructor that has no types applied upon, i.e., a type
+-- | GHC.Types.Char is a type constructor that receives no further types
 char :: (Id, Either Thunk Value)
-char = (id, Right $ TyCon (MkDataCon id []) id)
-       where
-         id = "ghc-prim:GHC.Types.Char"
+char = let id = "ghc-prim:GHC.Types.Char"
+       in (id, Right $ TyCon (MkDataCon id []) id)
        
 all :: [(Id, Either Thunk Value)]
 all = [ --cons

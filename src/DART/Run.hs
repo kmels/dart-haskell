@@ -67,7 +67,7 @@ initDART settings = do
     , start_time = now
     , test_name = Nothing
     , boltzmannSamplerStatus = UnitializedSampler
-    , boltzmannSamplerSize   = 0
+    , samplerDataSize   = 0
   }
 
 -- | Returns a list of *relative* paths pointing to default included libraries e.g. base

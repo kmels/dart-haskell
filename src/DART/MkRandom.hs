@@ -24,7 +24,7 @@ import Control.Monad.Reader
 -- Random
 import System.Random
 --------------------------------------------------------------------------------
--- Language
+-- Language Core
 import Language.Core.Interpreter.Structures
 import Language.Core.Interpreter
 import Language.Core.Interpreter.Util(showValue)
@@ -35,21 +35,35 @@ import Language.Core.Ty(printSignature)
 
 --------------------------------------------------------------------------------
 -- Prelude
-import Data.Maybe(catMaybes)
-
+import Data.Char(chr)
 import Data.List((!!), findIndices)
+import Data.Maybe(catMaybes)
           
--- | When a TypeConstructor is applied to another TypeConstructor, we get another TypeConstructor. This function reduces the argument type constructor to a type to form a DataCon
-applyTyCon :: Value -> Value -> IM Value
-applyTyCon (TyCon dc tycon1)  (TyCon dc2 tycon2) = return $ Wrong "TODO"
+-- | When a TypeConstructor is applied to another TypeConstructor we get another TypeConstructor. 
+-- This function reduces the argument type constructor to a type to form a DataCon
+applyTyCon :: Value -> Value -> IM [DataCon]
+applyTyCon (TyCon dc ty1)  (TyCon dc2 ty2) = case dc of
+  MkDataCon dc_id expected@(ty:[]) -> do
+    io . putStrLn . show $ dc_id
+    io $ putStrLn $ show ty2
+    --if we don't know ty.. we safely replace it with ty2
+    return $ [dc { tyConExpectedTys = [Tvar(ty2)]}]
+  _ -> return $ error "TODO"
 
 -- | Given a type in external core, randomly produce a value of its type. An environment might be needed in case there is a reference to the heap as an identifier in e.g. a data type may contain its type constructors.
 mkRandomVal :: Env -> Ty -> IM Value
+mkRandomVal env ty@(Tvar tyname) = do
+  case tyname of
+    "ghc-prim:GHC.Types.Char" -> rndChar >>= return . Char
+    _ -> return . Wrong $ "mkRandomVal: I don't know how to make a random val for the type " ++ showExtCoreTypeVerbose ty
+
+
 mkRandomVal env (Tcon qual_tcon)  = do
   io $ putStr "mkRandomVal .. "
   case zDecodeQualified qual_tcon of
-    "ghc-prim:GHC.Types.Int" -> do -- a random integer
+    "ghc-prim:GHC.Types.Int" ->  -- a random integer
       rndInt >>= return . Num . toInteger
+    
     -- found an identifier, fetch type constructors
     id -> do
       type_constructors <- fetchDataCons id env
@@ -69,44 +83,8 @@ mkRandomVal env (Tapp (Tcon zqtycon1) (Tcon zqtycon2)) = do
   tycon2 <- fetchTyCon qtycon_2 env
   
   datacons <- applyTyCon tycon1 tycon2
-  
-  (TyCon tycon1@(MkDataCon tycon1_id expected_types@(ty:tys)) built_type_id) <- fetchTyCon qtycon_1 env
-  
-  io $ putStrLn $ (show tycon1)
-  io $ putStrLn $ (show tycon2)
---  io $ putStrLn $ (show tys)
-  --io $ putStrLn $ " print  " ++ show expected_types
-  tycon_ty <- printSignature expected_types
-  io $ putStrLn $ " Making a value of type " ++ built_type_id ++ " from tycon :: " ++ show tycon_ty
-    
-  -- check how many types tycon1 is expecting. In case it is expecting only one
-  -- then we have built our final type (it is being applied to tycon2).
-  case (length expected_types) of
-    1 -> do
-      -- what type does tycon1 build and what are its constructors? 
-      --tycons <- fetchDataCons built_type_id env
-      let
-        fetchSumType :: Id -> Env -> IM Value
-        fetchSumType id env = lookupId id env >>= \v -> case v of
-          Right (SumType cns) -> return $ SumType cns
-          w -> error $ "Expecting " ++ id ++ " to be a sum type, but found: " ++ show w
-          --w -> return . Wrong $ "Expecting " ++ id ++ " to be a sum type, but found: " ++ show w
-      
-      SumType tycons <- fetchSumType built_type_id env
+  genBoltzmann datacons env
 
-      --type_bind = TypeInstantiation (ty,tycon2_id)
-            
-      io $ putStrLn $ "We have a sum type with " ++ (show . length $ tycons) ++ " constructors" ++ ": " ++ show tycons
-      
-      io $ putStrLn $ show ty ++ " is really a " ++ qtycon_2
-      
-      return $ Wrong $ ", " ++ show tycons
-    -- OTHERWISE, TODO2
-    n -> do
-      io $ putStrLn $ "Type constructors of " ++ qtycon_1 ++ " are: " ++ show n
-      
-      return $ Wrong "TODO2"
-  
 mkRandomVal env ty = return . Wrong $ " mkRandomVal: I don't know how to make a random val for the type " ++ showExtCoreTypeVerbose ty
   
 
@@ -148,11 +126,16 @@ genBoltzmann tcs env = do
   status <- gets boltzmannSamplerStatus
   case status of
     UnitializedSampler -> do
+      -- get the lower and upper bounds for size
+      -- set the current size & change status      
       io $ putStrLn $ "\tgenerating new ..."
-      initializeBoltzmann
-      value' <- genBoltzmann tcs env      
-      valSize <- gets boltzmannSamplerSize
-      minSize <- getSetting data_min_size  
+      
+      modify (\st -> st { boltzmannSamplerStatus = InitializedSampler })
+      modify (\st -> st { samplerDataSize = 0 })
+      
+      value' <- genBoltzmann tcs env 
+      valSize <- gets samplerDataSize
+      minSize <- getSetting data_min_size
            
       io $ putStr $ "Generated boltzmann of size " ++ (show valSize)
 --      io $ putStr $ "Checking on min size " ++ (show valSize) ++ " >= " ++ (show minSize) ++ "? ..." 
@@ -173,19 +156,13 @@ genBoltzmann tcs env = do
       case sample of
         SampleOK -> gen
         SampleTooBig -> boltzmannFail >> genBoltzmann tcs env
- where
-   initializeBoltzmann = do
---     io $ putStr $ "Intializing sample ... "
-     modify (\st -> st { boltzmannSamplerStatus = InitializedSampler })
-     modify (\st -> st { boltzmannSamplerSize = 0 })
---     io $ putStrLn $ "done"
-     
+ where     
    -- failed to generate a value, reset the sampler
    boltzmannStop :: IM ()
    boltzmannStop = do
      io $ putStr $ "\tStopping Boltzmann ... "
      modify (\st -> st { boltzmannSamplerStatus = UnitializedSampler })
-     modify (\st -> st { boltzmannSamplerSize = 0 })
+     modify (\st -> st { samplerDataSize = 0 })
      io $ putStrLn $ "done"
    
    boltzmannFail = boltzmannStop
@@ -202,7 +179,7 @@ genBoltzmann tcs env = do
      let pp id = drop (1 + (last $ findIndices (== '.') id))  id -- get lastname
      io $ putStrLn $ pp tycon_id -- print tycon
      
-     valSize <- gets boltzmannSamplerSize
+     valSize <- gets samplerDataSize
      
      -- 2. we might have already failed – in that case we'll report the impossible.
 
@@ -222,9 +199,13 @@ genBoltzmann tcs env = do
                InitializedSampler -> do
                  io $ putStrLn $ " Making new pointer for size " ++ (show valSize)
                  io $ putStrLn $ " tyRndValPtr of " ++ (show ty)
-                 val <- mkRandomVal env ty 
-                 (showValue val) >>= \sv -> io $ putStrLn $ "\ttyConMkRandom for size " ++ (show valSize) ++ " => " ++ sv
-                 return . Just $ val
+                 maybeVal <- mkRandomVal env ty 
+                 case maybeVal of
+                   Wrong e -> 
+                     error e
+                   val -> do
+                     (showValue val) >>= \sv -> io $ putStrLn $ "\ttyConMkRandom for size " ++ (show valSize) ++ " => " ++ sv
+                     return . Just $ val
                      
        randomVals <- mapM mkRandomCheckBoltzmann expected_types
        
@@ -238,7 +219,7 @@ genBoltzmann tcs env = do
 markSample :: IM BoltzmannSample
 markSample = do  
   maxSize <- getSetting data_max_size
-  currentSize <- gets boltzmannSamplerSize
+  currentSize <- gets samplerDataSize
 --  io $ putStrLn $ "Updating boltzmann, size= " ++ show (currentSize)
   
   -- if the size is greater, don't generate further
@@ -247,7 +228,7 @@ markSample = do
       io $ putStrLn "TooBig"
       return $ SampleTooBig
     False -> do 
-      modify $ \st -> st {boltzmannSamplerSize = currentSize + 1}
+      modify $ \st -> st {samplerDataSize = currentSize + 1}
       --io $ putStrLn $ "Increased size (OKBoltzmannStep)"
       io $ putStr $ " OK, size = " ++ (show currentSize) ++ " ... "
       return $ SampleOK
@@ -327,3 +308,16 @@ rndInt = do
 -- | And use the instances provided by the random package
 rndBool :: IO Bool
 rndBool = getStdRandom (randomR (minBound, maxBound))
+
+-- | Generates a random char
+-- From Data.Char's documentation: The character type Char is an enumeration whose values represent Unicode (or equivalently ISO/IEC 10646) characters (see http://www.unicode.org/ for details). This set extends the ISO 8859-1 (Latin-1) character set (the first 256 characters), which is itself an extension of the ASCII character set (the first 128 characters). A character literal in Haskell has type Char.
+-- To convert a Char to or from the corresponding Int value defined by Unicode, use toEnum and fromEnum from the Enum class respectively (or equivalently ord and chr).
+
+rndChar :: IM Char
+rndChar = 
+  let
+    min_int_bound = 1
+    max_int_bound = 1112064
+  in do
+    int <- io $ getStdRandom (randomR (min_int_bound, max_int_bound))
+    return . chr $ int

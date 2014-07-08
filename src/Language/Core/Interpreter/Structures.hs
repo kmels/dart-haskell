@@ -87,7 +87,7 @@ data DARTState = DState {
  , test_name :: Maybe (Qual Var) 
 -- , generator :: GenM Value
  , boltzmannSamplerStatus :: BoltzmannSamplerStatus
- , boltzmannSamplerSize   :: Int
+ , samplerDataSize   :: Int
 }
 
 data BoltzmannSamplerStatus = InitializedSampler | UnitializedSampler deriving Show
