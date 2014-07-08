@@ -115,153 +115,8 @@ pickTypeConstructor :: [DataCon] -> IM DataCon
 pickTypeConstructor tcs = do
   typecons_idx <- io . getStdRandom $ randomR (0,length tcs - 1)
   let typecons = tcs !! typecons_idx -- tcs[typecons_idx]
-  return typecons
-  
--- -- | Given a list of type constructors for a data type, generate a 
--- -- new value using a boltzmann sampler around a size 
--- -- For an example of this technique, see Brent Yorgey's post, which inspired this smapler: http://byorgey.wordpress.com/2013/04/25/random-binary-trees-with-a-size-limited-critical-boltzmann-sampler-2/
-genBoltzmann :: [DataCon] -> Env -> IM Value
-genBoltzmann tcs env = do
-  io $ putStr "Called boltzman ..." 
-  status <- gets boltzmannSamplerStatus
-  case status of
-    UnitializedSampler -> do
-      -- get the lower and upper bounds for size
-      -- set the current size & change status      
-      io $ putStrLn $ "\tgenerating new ..."
-      
-      modify (\st -> st { boltzmannSamplerStatus = InitializedSampler })
-      modify (\st -> st { samplerDataSize = 0 })
-      
-      value' <- genBoltzmann tcs env 
-      valSize <- gets samplerDataSize
-      minSize <- getSetting data_min_size
-           
-      io $ putStr $ "Generated boltzmann of size " ++ (show valSize)
---      io $ putStr $ "Checking on min size " ++ (show valSize) ++ " >= " ++ (show minSize) ++ "? ..." 
-  
-      case (valSize >= minSize) of
-        True -> do
-          io $ putStrLn $ " ... good, of size = " ++ (show valSize)
-          (showValue value') >>= \v -> io $ putStrLn $ "VALUE = "  ++ v
---          resetBoltzmann
-          boltzmannSucess
-          return value'
-        _ -> do
-          io $ putStrLn " ... bad" 
-          boltzmannFail >> genBoltzmann tcs env
-    InitializedSampler -> do
-      io $ putStr $ "\tdoing step ... "
-      sample <- markSample
-      case sample of
-        SampleOK -> gen
-        SampleTooBig -> boltzmannFail >> genBoltzmann tcs env
- where     
-   -- failed to generate a value, reset the sampler
-   boltzmannStop :: IM ()
-   boltzmannStop = do
-     io $ putStr $ "\tStopping Boltzmann ... "
-     modify (\st -> st { boltzmannSamplerStatus = UnitializedSampler })
-     modify (\st -> st { samplerDataSize = 0 })
-     io $ putStrLn $ "done"
-   
-   boltzmannFail = boltzmannStop
-   boltzmannSucess = boltzmannStop
-     
-   gen :: IM Value 
-   gen = do
-     -- 1. Pick a type constructor `tc` between the list of type constructors `tcs`
-     -- The type picked might have a list of type parameters expected_types or not. 
-     -- 2. Generate random values for every expected type
-     
-     tycon@(MkDataCon tycon_id expected_types) <- pickTypeConstructor tcs          
-     
-     let pp id = drop (1 + (last $ findIndices (== '.') id))  id -- get lastname
-     io $ putStrLn $ pp tycon_id -- print tycon
-     
-     valSize <- gets samplerDataSize
-     
-     -- 2. we might have already failed – in that case we'll report the impossible.
+  return typecons     
 
-     io $ putStrLn $ "tyConMkRandom for size " ++ (show valSize)
-     status <- gets boltzmannSamplerStatus
-     case status of 
-       UnitializedSampler -> return . Wrong $ "The impossible happened: BoltzmannSampler is not initialized"
-       _ -> do         
-       io $ putStrLn $ " Found " ++ (show status)
-
-       -- mkRandomCheckBoltzmann :: Ty -> IM (Maybe Value)
-       let mkRandomCheckBoltzmann ty = do
-             status <- gets boltzmannSamplerStatus
-             io $ putStrLn $ "Making pointer, found " ++ (show status)
-             case status of
-               UnitializedSampler -> return Nothing
-               InitializedSampler -> do
-                 io $ putStrLn $ " Making new pointer for size " ++ (show valSize)
-                 io $ putStrLn $ " tyRndValPtr of " ++ (show ty)
-                 maybeVal <- mkRandomVal env ty 
-                 case maybeVal of
-                   Wrong e -> 
-                     error e
-                   val -> do
-                     (showValue val) >>= \sv -> io $ putStrLn $ "\ttyConMkRandom for size " ++ (show valSize) ++ " => " ++ sv
-                     return . Just $ val
-                     
-       randomVals <- mapM mkRandomCheckBoltzmann expected_types
-       
-       let 
-         checkedRandomVals = catMaybes randomVals
-         shouldProceed = (length expected_types) == (length checkedRandomVals)
-       case shouldProceed of
-         False -> return . Wrong $ "The impossible happened: BoltzmannSampler is not initialized"
-         True -> mapM mkValuePointer checkedRandomVals >>= return . TyConApp tycon 
-     
-markSample :: IM BoltzmannSample
-markSample = do  
-  maxSize <- getSetting data_max_size
-  currentSize <- gets samplerDataSize
---  io $ putStrLn $ "Updating boltzmann, size= " ++ show (currentSize)
-  
-  -- if the size is greater, don't generate further
-  case (currentSize >= maxSize) of
-    True -> do
-      io $ putStrLn "TooBig"
-      return $ SampleTooBig
-    False -> do 
-      modify $ \st -> st {samplerDataSize = currentSize + 1}
-      --io $ putStrLn $ "Increased size (OKBoltzmannStep)"
-      io $ putStr $ " OK, size = " ++ (show currentSize) ++ " ... "
-      return $ SampleOK
-      
-data BoltzmannSample = SampleOK | SampleTooBig
-   
- -- guar
-    
---   siz <- gets gen_val_size  
---   maybeGenVal <- (genBoltzmannLB tcs env) --gets gen_val
--- --  maybeGenVal <- gets gen_val
---   io $ putStr $ "Evaluating genBoltzmann at size= " ++ (show siz) ++ " ..."
---   case maybeGenVal of
---     Nothing -> do
---       io $ putStrLn "Got nothing, will reset .."
---       resetSize 
---       genBoltzmann tcs env
---     (Just (Wrong "Too big")) ->  do
---       io $ putStrLn $ "We're settling again."
---       resetSize
---       genBoltzmann tcs env
---     (Just v) -> do
---       size' <- gets gen_val_size
---       io $ putStrLn $ "Got something of size " ++ (show size')
---       return v
---       --genBoltzmann tcs env 
--- --- (genBoltzmannLB tcs env) `mplus` (genBoltzmann tcs env)
---   where
---     resetSize :: IM ()
---     resetSize = do
---       io $ putStrLn "Resetting size to 0"
--- --      modify (\st -> st { gen_val = Just (Wrong "")})
---       modify (\st -> st { gen_val_size = 0 })
   
 -- | Creates a value using a type constructor, exhausting every type argument
 -- an environment might be needed in case the types in the type constructors
@@ -321,3 +176,124 @@ rndChar =
   in do
     int <- io $ getStdRandom (randomR (min_int_bound, max_int_bound))
     return . chr $ int
+
+data BoltzmannSample = SampleOK | SampleTooBig
+
+-- | Given a list of type constructors for a data type, generate a 
+-- new value using a boltzmann sampler around a size 
+-- For an example of this technique, see Brent Yorgey's post, which inspired this smapler: http://byorgey.wordpress.com/2013/04/25/random-binary-trees-with-a-size-limited-critical-boltzmann-sampler-2/
+
+genBoltzmann :: [DataCon] -> Env -> IM Value
+genBoltzmann tcs env = do
+  io $ putStr "Called boltzman ..." 
+  status <- gets boltzmannSamplerStatus
+  case status of
+    -- initializes sampler, fails if sample is too small
+    UnitializedSampler -> do
+      -- initialize
+      --io $ putStrLn $ "\tgenerating new ..."      
+      modify (\st -> st { boltzmannSamplerStatus = InitializedSampler })
+      modify (\st -> st { samplerDataSize = 0 })
+      
+      value' <- genBoltzmann tcs env
+      
+      valSize <- gets samplerDataSize
+      minSize <- getSetting data_min_size
+           
+      io $ putStr $ "Generated boltzmann of size " ++ (show valSize)
+  
+      case (valSize >= minSize) of
+        True -> do
+          io $ putStrLn $ " ... good, of size = " ++ (show valSize)
+          (showValue value') >>= \v -> io $ putStrLn $ "VALUE = "  ++ v
+          
+          --boltzmannSucess
+          return value'
+        _ -> do
+          io $ putStrLn " ... failed, too small" 
+          boltzmannFail >> genBoltzmann tcs env
+          
+    -- fails if sample size is too big
+    InitializedSampler -> do
+      io $ putStr $ "\tdoing step ... "
+      sample <- markSample
+      case sample of
+        SampleOK -> mkSample tcs env
+        SampleTooBig -> boltzmannFail >> genBoltzmann tcs env
+ where     
+   -- failed to generate a value, reset the sampler
+   boltzmannStop :: IM ()
+   boltzmannStop = do
+     io $ putStr $ "\tStopping Boltzmann ... "
+     modify (\st -> st { boltzmannSamplerStatus = UnitializedSampler })
+     modify (\st -> st { samplerDataSize = 0 })
+     io $ putStrLn $ "done"
+   
+   boltzmannFail = modify (\st -> st { boltzmannSamplerStatus = UnitializedSampler })
+     
+   boltzmannSucess = boltzmannStop
+     
+  
+mkRandomCheckBoltzmann :: Env -> Ty -> IM (Maybe Value)
+mkRandomCheckBoltzmann env ty = do
+  status <- gets boltzmannSamplerStatus
+  valSize <- gets samplerDataSize
+  
+  io $ putStrLn $ "Making pointer, found " ++ (show status)
+  case status of
+    UnitializedSampler -> return Nothing
+    InitializedSampler -> do
+      io $ putStrLn $ " Making new pointer for size " ++ (show valSize)
+      -- io $ putStrLn $ " tyRndValPtr of " ++ (show ty)
+      maybeVal <- mkRandomVal env ty 
+      case maybeVal of
+        Wrong e -> error e
+        val -> do
+          -- (showValue val) >>= \sv -> io $ putStrLn $ "\ttyConMkRandom for size " ++ (show valSize) ++ " => " ++ sv
+          return . Just $ val      
+
+-- | 1. Pick a type constructor `tc` between the list of type constructors `tcs` 
+-- 2. The type constructor `tc` expects a list of types, for which we generate random values
+mkSample :: [DataCon] -> Env -> IM Value 
+mkSample tcs env = do     
+     tycon@(MkDataCon tycon_id expected_types) <- pickTypeConstructor tcs     
+     let pp id = drop (1 + (last $ findIndices (== '.') id))  id -- get lastname     
+     io $ putStrLn $ pp tycon_id -- print tycon     
+     
+     -- 2. we might have already failed – in that case we'll report the impossible.
+     --io $ putStrLn $ "tyConMkRandom for size " ++ (show valSize)
+     
+     status <- gets boltzmannSamplerStatus
+     case status of 
+       UnitializedSampler -> return . Wrong $ "The impossible happened: BoltzmannSampler is not initialized"
+       _ -> do
+       
+       -- io $ putStrLn $ " Found " ++ (show status)
+                 
+       io $ putStrLn $ "Making values for " ++ (show . length $ expected_types) ++ " expected types"
+       randomVals <- mapM (mkRandomCheckBoltzmann env) expected_types
+       
+       let 
+         checkedRandomVals = catMaybes randomVals
+         shouldProceed = (length expected_types) == (length checkedRandomVals)
+       case shouldProceed of
+         False -> return . Wrong $ "The impossible happened: BoltzmannSampler is not initialized"
+         True -> mapM mkValuePointer checkedRandomVals >>= return . TyConApp tycon 
+     
+markSample :: IM BoltzmannSample
+markSample = do  
+  maxSize <- getSetting data_max_size
+  currentSize <- gets samplerDataSize
+
+  -- if the size is greater, don't generate further
+  case (currentSize >= maxSize) of
+    True -> do
+      io $ putStrLn "TooBig"
+      return $ SampleTooBig
+    False -> do 
+      modify $ \st -> st {samplerDataSize = currentSize + 1}
+      --io $ putStrLn $ "Increased size (OKBoltzmannStep)"
+      io $ putStr $ " OK, size = " ++ (show currentSize) ++ " ... "
+      return $ SampleOK
+      
+
