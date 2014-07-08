@@ -190,7 +190,8 @@ instance Evaluable Exp where
       (Dcon qvar) -> do
         v <- evalExpI exp env $ "Typed Dcon application  " ++ zDecodeQualified qvar ++ ", to type " ++ show ty
         case v of
-          tyconv@(TypeConstructor tycon@(MkDataCon id (t:ts)) tyname) -> return $ TypeConstructor (tycon { tyConExpectedTys = ts}) tyname
+          tyconv@(TyCon tycon@(MkDataCon id (t:ts)) tyname) -> return $ TyCon (tycon { tyConExpectedTys = ts}) tyname
+          
           tyconapp@(TyConApp _ _) -> return tyconapp
           otherwise -> return $ Wrong $ "The impossible happened: Typed application was expecting a type constructor or an applied type constructor, but got: " ++ show otherwise
       _ -> evalExpI exp env "Typed application "
@@ -350,7 +351,7 @@ matches :: Value -> Alt -> IM Bool
 
 -- data
 matches (TyConApp (MkDataCon n _) _) (Acon qual_dcon _ _ _) = return $ zDecodeQualified qual_dcon == n
-matches (TypeConstructor (MkDataCon n _) _) (Acon qual_dcon _ _ _) = return $ zDecodeQualified qual_dcon == n
+matches (TyCon (MkDataCon n _) _) (Acon qual_dcon _ _ _) = return $ zDecodeQualified qual_dcon == n
 --matches val (Alit lit exp) = return False --TODO
 
 matches val (Adefault _) = return True -- this is the default case, i.e. "_ -> exp " 
@@ -431,7 +432,7 @@ apply (TyConApp tycon@(MkDataCon _ (t:ts)) addresses) id env =  do
 
 --apply tca@(TyConApp tycon@(MkDataCon _ ts) addresses) id env = return . Wrong $ "Applying " ++ (show . length) ts ++ " with argument " ++ show id
             
-apply (TypeConstructor tycon@(MkDataCon _ (t:ts)) _) id env = do
+apply (TyCon tycon@(MkDataCon _ (t:ts)) _) id env = do
   addr <- getPointer id env
   case addr of
     Pointer p -> return $ TyConApp (tycon { tyConExpectedTys = ts }) ([p])

@@ -123,14 +123,13 @@ data Value = Wrong String
            | Char Char
            | String String
            | Fun (Id -> Env -> IM Value) Description
-           -- |  List [Value]
            | Pair Pointer Pointer --HERE, heap addresses
            | TyConApp DataCon [Pointer] -- a data constructor applicated to some values, possible expecting some more types
            | Pointer Pointer
            | FreeTypeVariable String -- useful when converting a to SomeClass a (we ignore parameters, and it's useful to save them)
            | MkListOfValues [(String,Value)] -- When a value definition is recursive, depends on other values
            | SumType [DataCon] -- A data type with reference to its constructors, created only from type constructors when reading modules (see Interpreter/Acknowledge).
-           | TypeConstructor DataCon Id -- A single data constructor that withholds, apart of its data constructor value, the qualified name of the type it builds. For example (:) is a type constructor for the list type, "[a]". 
+           | TyCon DataCon Id -- A single data constructor that withholds, apart of its data constructor value, the qualified name of the type it builds. For example (:) is a type constructor for the list type, "[a]". 
            
 newtype Pointer = MkPointer { ptr_address :: HeapAddress } deriving Show
 
@@ -269,14 +268,14 @@ instance Show Value where
     where
       myIntersperse sep = foldr ((++) . (++) sep) []
       constructor_names = map (\(MkDataCon id _) -> id) cons
-  show (TypeConstructor tycon ty_name) | show tycon == "[]" = "[]"
+  show (TyCon tycon ty_name) | show tycon == "[]" = "[]"
     | otherwise = "TypeConstructor " ++ show tycon ++ " of " ++ ty_name
 
 -- Pretty print data constructors
 instance Show DataCon where
   -- list?
   show (MkDataCon "ghc-prim:GHC.Types.[]" []) = "[]"
-  show (MkDataCon "ghc-prim:GHC.Types.[]" ty) = show ty
+  show (MkDataCon "ghc-prim:GHC.Types.[]" ty) = "[] :: " ++ show ty
   show (MkDataCon id []) = idName id
   show (MkDataCon id types) = idName id ++ " :: " ++ types' where
     types' :: String

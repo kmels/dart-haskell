@@ -30,7 +30,7 @@ equals = (id, Right $ Fun (monomophy_2 "(==)" valEq) "polymorphic(==)") where
    valEq :: Value -> Value -> IM Value
    valEq v@(Wrong _) _ = return v
    valEq _ w@(Wrong _) = return w      
-   valEq (TypeConstructor datacon id) (TypeConstructor datacon2 id2) = do return $ Boolean $ datacon == datacon2 && id == id2
+   valEq (TyCon datacon id) (TyCon datacon2 id2) = do return $ Boolean $ datacon == datacon2 && id == id2
    valEq (TyConApp dc1 ps) (TyConApp dc2 ps2) | dc1 == dc2 && length ps == length ps2 = do
      -- get the value of every pointer
      ps_vals <- mapM (flip eval []) ps
@@ -48,7 +48,7 @@ notEquals = (id, Right $ Fun (monomophy_2 "(/=)" notEQ) "polymorphic(/=)") where
   notEQ :: Value -> Value -> IM Value
   notEQ v@(Wrong _) _ = return v
   notEQ _ w@(Wrong _) = return w      
-  notEQ (TypeConstructor datacon id) (TypeConstructor datacon2 id2) = do return $ Boolean $ datacon /= datacon2 || id /= id2
+  notEQ (TyCon datacon id) (TyCon datacon2 id2) = do return $ Boolean $ datacon /= datacon2 || id /= id2
   notEQ(TyConApp dc1 ps) (TyConApp dc2 ps2) | dc1 == dc2 && length ps == length ps2 = do
      -- get the value of every pointer
      ps_vals <- mapM (flip eval []) ps

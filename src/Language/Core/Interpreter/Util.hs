@@ -83,7 +83,7 @@ showList ptrs = do
     showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) = return ""
     showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) ty) = return $ "[] to " ++ show ty
     showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ptrs) = mapM showPtr ptrs >>= return . separateWithSpaces
-    showValue' t@(TypeConstructor (MkDataCon "ghc-prim:GHC.Types.[]" []) "ghc-prim:GHC.Types.[]")= return ""
+    showValue' t@(TyCon (MkDataCon "ghc-prim:GHC.Types.[]" []) "ghc-prim:GHC.Types.[]")= return ""
     showValue' v = showValue v
     
 wrapInParenthesis s = "(" ++ s ++ ")"
@@ -93,11 +93,16 @@ idName :: Id -> String
 idName id = let 
   name = drop (lastDotIndex id + 1) id -- name with a possible parenthesis at the end  
   in case name of 
-    ":" -> "(:)"
+    [] -> id
+    ":" -> "(:)"    
     _ -> if (last name == ')')
          then init name
          else name
   where
     isDot = ((==) '.')
     dotIndexes = findIndices isDot
-    lastDotIndex = last . dotIndexes
+    lastDotIndex s = 
+      case dotIndexes s of
+        [] -> 0
+        idxs -> last idxs
+--    last . dotIndexes

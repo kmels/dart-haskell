@@ -8,14 +8,14 @@ import Language.Core.Interpreter(evalId)
 -- | Evaluates definitions found in ghc-prim:GHC.Types  
 
 cons :: (Id,Either Thunk Value) -- (:) :: a -> [a] -> [a]
-cons = (cons_name, Right $ TypeConstructor tycon ty_name) where
+cons = (cons_name, Right $ TyCon tycon ty_name) where
   cons_name = "ghc-prim:GHC.Types.:"
   ty_name = "ghc-prim:GHC.Types.[]"  
   tycon_args = [Tvar "aXX", Tvar "[a]YY", Tvar "XXXX"]
   tycon = MkDataCon cons_name tycon_args
   
 listConstructor :: (Id,Either Thunk Value) -- ([]) :: [a], kind * -> *
-listConstructor = (cons_name, Right $ TypeConstructor tycon ty_name) where
+listConstructor = (cons_name, Right $ TyCon tycon ty_name) where
   cons_name = "ghc-prim:GHC.Types.[]"
   ty_name = "ghc-prim:GHC.Types.[]"
   tycon_args = [Tvar "a"]
@@ -40,10 +40,17 @@ false = (id, Right $ TyConApp tc []) -- has no applied values
          id = "ghc-prim:GHC.Types.False"
          tc = MkDataCon id [] -- awaits no types
          
+-- | GHC.Types.Char is a type constructor that has no types applied upon, i.e., a type
+char :: (Id, Either Thunk Value)
+char = (id, Right $ TyCon (MkDataCon id []) id)
+       where
+         id = "ghc-prim:GHC.Types.Char"
+       
 all :: [(Id, Either Thunk Value)]
-all = [ cons
-        , listConstructor
+all = [ --cons
+        listConstructor
         , intConstructor
         , true
         , false
+        , char
       ]

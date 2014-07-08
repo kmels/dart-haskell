@@ -81,6 +81,8 @@ funArgTy _ = Nothing
 
 -- | Pretty prints a list of types as a type signature
 printSignature :: [Ty] -> IM String
+printSignature [] = return ""
+printSignature (t:[]) = typeName t
 printSignature (t:tys) = liftM2 (++) (typeName t) (mapM typeName tys >>= return . prependArrows)
 
 --lifttypeName t ++ prependArrows (map typeName ty)

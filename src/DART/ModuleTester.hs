@@ -127,13 +127,6 @@ testFun def@(Vdef (qvar,ty,vdef_exp)) env =
           
       ntests <- getSetting number_of_tests
       test_results <- replicateM ntests $ do
-                -- mapM :: Monad m => (a -> m b) -> [a] -> m [b]
-          -- mkRandomVal env :: Ty -> IM Value
-          -- fun_arg_tys :: [Ty]
-          
-          -- collectM :: (a -> m b) -> [a] -> m [b]
-          --  foldM :: Monad m => (a -> b -> m a) -> a -> [b] -> m a
-        --args <- mapM (mkRandomVal env) fun_arg_tys
         args_maybe <- mkArgVals fun_arg_tys env
         
         case args_maybe of

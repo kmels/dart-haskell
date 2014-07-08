@@ -30,11 +30,19 @@ import Language.Core.Interpreter
 import Language.Core.Interpreter.Util(showValue)
 
 --------------------------------------------------------------------------------
+-- DART
+import Language.Core.Ty(printSignature)
+
+--------------------------------------------------------------------------------
 -- Prelude
 import Data.Maybe(catMaybes)
 
 import Data.List((!!), findIndices)
-                  
+          
+-- | When a TypeConstructor is applied to another TypeConstructor, we get another TypeConstructor. This function reduces the argument type constructor to a type to form a DataCon
+applyTyCon :: Value -> Value -> IM Value
+applyTyCon (TyCon dc tycon1)  (TyCon dc2 tycon2) = return $ Wrong "TODO"
+
 -- | Given a type in external core, randomly produce a value of its type. An environment might be needed in case there is a reference to the heap as an identifier in e.g. a data type may contain its type constructors.
 mkRandomVal :: Env -> Ty -> IM Value
 mkRandomVal env (Tcon qual_tcon)  = do
@@ -53,21 +61,42 @@ mkRandomVal env (Tapp (Tcon zqtycon1) (Tcon zqtycon2)) = do
     qtycon_1 = zDecodeQualified zqtycon1
     qtycon_2 = zDecodeQualified zqtycon2
     
-    -- fetch the type constructor, it should only be one.
-  (TypeConstructor tycon1@(MkDataCon _ expected_types@(ty:tys)) built_type_id) <- fetchTyCon qtycon_1 env
+  io $ putStrLn $ " applying  " ++ show qtycon_1
+  io $ putStrLn $ " to  " ++ show qtycon_2
+  
+  -- we should have info about `qtycon1`
+  tycon1 <- fetchTyCon qtycon_1 env
+  tycon2 <- fetchTyCon qtycon_2 env
+  
+  datacons <- applyTyCon tycon1 tycon2
+  
+  (TyCon tycon1@(MkDataCon tycon1_id expected_types@(ty:tys)) built_type_id) <- fetchTyCon qtycon_1 env
+  
+  io $ putStrLn $ (show tycon1)
+  io $ putStrLn $ (show tycon2)
+--  io $ putStrLn $ (show tys)
+  --io $ putStrLn $ " print  " ++ show expected_types
+  tycon_ty <- printSignature expected_types
+  io $ putStrLn $ " Making a value of type " ++ built_type_id ++ " from tycon :: " ++ show tycon_ty
     
   -- check how many types tycon1 is expecting. In case it is expecting only one
   -- then we have built our final type (it is being applied to tycon2).
   case (length expected_types) of
     1 -> do
       -- what type does tycon1 build and what are its constructors? 
-      tycons <- fetchDataCons built_type_id env
-      --let
-      --type_bind = TypeInstantiation (ty,tycon2_id)
-        
-      -- fabricateValue tycons [type_bind]
+      --tycons <- fetchDataCons built_type_id env
+      let
+        fetchSumType :: Id -> Env -> IM Value
+        fetchSumType id env = lookupId id env >>= \v -> case v of
+          Right (SumType cns) -> return $ SumType cns
+          w -> error $ "Expecting " ++ id ++ " to be a sum type, but found: " ++ show w
+          --w -> return . Wrong $ "Expecting " ++ id ++ " to be a sum type, but found: " ++ show w
       
-      io $ putStrLn $ "We have " ++ (show . length $ tycons) ++ " constructors" ++ ": " ++ show tycons
+      SumType tycons <- fetchSumType built_type_id env
+
+      --type_bind = TypeInstantiation (ty,tycon2_id)
+            
+      io $ putStrLn $ "We have a sum type with " ++ (show . length $ tycons) ++ " constructors" ++ ": " ++ show tycons
       
       io $ putStrLn $ show ty ++ " is really a " ++ qtycon_2
       
@@ -89,7 +118,8 @@ fetchTyCon :: Id -> Env -> IM Value
 fetchTyCon id env = do
   tycon <- lookupId id env
   return $ case tycon of
-    (Right tycon@(TypeConstructor datacons ty_id)) -> tycon
+    (Right tycon@(TyCon datacons ty_id)) -> tycon
+    (Right e@(Wrong _)) -> e
     v -> Wrong $ "The impossible happened @fetchTyCon looking upon " ++ id ++ ", got: " ++ show v
 
 -- | Looks up a definition of a sum type by a qualified identifier and returns a list of its constructors.
@@ -100,7 +130,7 @@ fetchDataCons id env = do
   --io $ putStrLn $ "fetchDataCons  " ++ show msumtype
   return $ case msumtype of
     (Right (SumType datacons)) -> datacons
-    (Right (TypeConstructor datacons _)) -> [datacons]
+    (Right (TyCon datacons _)) -> [datacons]
     _ -> []
 
 pickTypeConstructor :: [DataCon] -> IM DataCon

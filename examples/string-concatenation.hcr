@@ -1,52 +1,18 @@
 %module main:ExamplesziStringConcatenation
-  main:ExamplesziStringConcatenation.myStringzq :: (ghczmprim:GHCziTypes.ZMZN
-                                                    ghczmprim:GHCziTypes.Char)
-                                                   ->
-                                                   (ghczmprim:GHCziTypes.ZMZN
-                                                    ghczmprim:GHCziTypes.Char)
-                                                   ->
-                                                   ghczmprim:GHCziTypes.ZMZN
-                                                   ghczmprim:GHCziTypes.Char =
-    \ (waIO::ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
-      (w2aIP::ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
-        %case (ghczmprim:GHCziTypes.ZMZN
-               ghczmprim:GHCziTypes.Char) (ghczmprim:GHCziClasses.zaza
-                                           (ghczmprim:GHCziClasses.zgze @ ghczmprim:GHCziTypes.Int
-                                            ghczmprim:GHCziClasses.zdfOrdInt
-                                            (base:GHCziList.length @ ghczmprim:GHCziTypes.Char waIO)
-                                            (ghczmprim:GHCziTypes.Izh
-                                             (2::ghczmprim:GHCziPrim.Intzh)))
-                                           (ghczmprim:GHCziClasses.zgze @ ghczmprim:GHCziTypes.Int
-                                            ghczmprim:GHCziClasses.zdfOrdInt
-                                            (base:GHCziList.length @ ghczmprim:GHCziTypes.Char
-                                             w2aIP)
-                                            (ghczmprim:GHCziTypes.Izh
-                                             (2::ghczmprim:GHCziPrim.Intzh))))
-        %of (wildX5::ghczmprim:GHCziTypes.Bool)
-          {ghczmprim:GHCziTypes.False ->
-             base:GHCziErr.error
-             @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
-             (ghczmprim:GHCziCString.unpackCStringzh
-              ("word can\x27t be of length less than 2"::ghczmprim:GHCziPrim.Addrzh));
-           ghczmprim:GHCziTypes.True ->
-             base:GHCziBase.zpzp @ ghczmprim:GHCziTypes.Char
-             (ghczmprim:GHCziCString.unpackCStringzh
-              ("hello"::ghczmprim:GHCziPrim.Addrzh))
-             (base:GHCziBase.zpzp @ ghczmprim:GHCziTypes.Char waIO w2aIP)};
   main:ExamplesziStringConcatenation.myString :: (ghczmprim:GHCziTypes.ZMZN
                                                   ghczmprim:GHCziTypes.Char)
                                                  ->
                                                  ghczmprim:GHCziTypes.ZMZN
                                                  ghczmprim:GHCziTypes.Char =
-    \ (wauD::ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
+    \ (wahY::ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char) ->
         %case (ghczmprim:GHCziTypes.ZMZN
                ghczmprim:GHCziTypes.Char) (ghczmprim:GHCziClasses.zgze
                                            @ ghczmprim:GHCziTypes.Int
                                            ghczmprim:GHCziClasses.zdfOrdInt
-                                           (base:GHCziList.length @ ghczmprim:GHCziTypes.Char wauD)
+                                           (base:GHCziList.length @ ghczmprim:GHCziTypes.Char wahY)
                                            (ghczmprim:GHCziTypes.Izh
                                             (2::ghczmprim:GHCziPrim.Intzh)))
-        %of (wildX5::ghczmprim:GHCziTypes.Bool)
+        %of (wildX3::ghczmprim:GHCziTypes.Bool)
           {ghczmprim:GHCziTypes.False ->
              base:GHCziErr.error
              @ (ghczmprim:GHCziTypes.ZMZN ghczmprim:GHCziTypes.Char)
@@ -56,4 +22,4 @@
              base:GHCziBase.zpzp @ ghczmprim:GHCziTypes.Char
              (ghczmprim:GHCziCString.unpackCStringzh
               ("hello"::ghczmprim:GHCziPrim.Addrzh))
-             wauD};
+             wahY};
