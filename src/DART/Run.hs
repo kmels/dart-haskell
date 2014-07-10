@@ -66,7 +66,7 @@ initDART settings = do
     , settings = settings { include = (absolute_includes) }
     , start_time = now
     , test_name = Nothing
-    , boltzmannSamplerStatus = UnitializedSampler
+    , samplerStatus = UnitializedSampler
     , samplerDataSize   = 0
   }
 

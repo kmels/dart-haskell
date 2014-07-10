@@ -142,7 +142,7 @@ testFun def@(Vdef (qvar,ty,vdef_exp)) env =
     mkArgVals (t:ts) env = do
       val_maybe <- mkRandomVal env t
       case val_maybe of
-        Wrong e -> return . Left . Wrong $ "Generator shortcoming. Couldn't generate value for type " ++ showType t
+        Wrong e -> return . Left . Wrong $ "Generator shortcoming. Couldn't generate value for type " ++ showType t ++ " (" ++ e ++ " )"
         val -> do
           -- make further vals
           ts_vals_maybe <- mkArgVals ts env 

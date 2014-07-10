@@ -34,7 +34,7 @@ module Language.Core.Interpreter.Structures(
 --  , ModuleFunction(..)
   , HaskellExpression(..)
   , BoltzmannSamplerStatus(..)
-  , module Control.Monad.State
+  , module Control.Monad.State.Lazy
   , module Language.Core.Core
   , module Language.Core.Util
 ) where
@@ -42,7 +42,7 @@ module Language.Core.Interpreter.Structures(
 --------------------------------------------------------------------------------
 -- control
 import           Control.Monad.Primitive
-import           Control.Monad.State
+import           Control.Monad.State.Lazy
 --------------------------------------------------------------------------------
 -- base type funs
 import           Data.Either(partitionEithers,rights)
@@ -86,9 +86,15 @@ data DARTState = DState {
  -- state of testing
  , test_name :: Maybe (Qual Var) 
 -- , generator :: GenM Value
- , boltzmannSamplerStatus :: BoltzmannSamplerStatus
+ , samplerStatus :: BoltzmannSamplerStatus
  , samplerDataSize   :: Int
+ , samplerValue   :: Value
+-- , runSampler :: Boltzmann Value
 }
+
+--newtype Boltzmann a {
+--  runBoltzmann :: DARTState -> IM (a, DARTState)
+--}
 
 data BoltzmannSamplerStatus = InitializedSampler | UnitializedSampler deriving Show
 
