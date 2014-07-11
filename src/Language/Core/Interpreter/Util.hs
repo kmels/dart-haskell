@@ -23,7 +23,7 @@ import           Data.List(findIndices,intersperse)
 import           Prelude hiding (showList)
 --------------------------------------------------------------------------------
 import DART.CmdLine(debugM)
-import DART.Util.StringUtils(separateWithSpaces)
+import DART.Util.StringUtils(separateWithSpaces,separateWithCommas)
 import Language.Core.Interpreter
 import Language.Core.Interpreter.Apply
   
@@ -71,8 +71,9 @@ evalPtr = flip eval []
 -- | Function in charge of showing the application of the type constructor "ghc-prim:GHC.Types.:"
 showList :: [Pointer] -> IM String
 showList ptrs = do
-  elem_strs <- mapM showPtr ptrs  
-  return $ "[" ++ separateWithSpaces elem_strs ++ "]"
+  io $ putStrLn $ "Showing list with " ++ (show . length $ ptrs)  ++ " pointers"
+  elem_strs <- mapM showPtr ptrs
+  return $ "[" ++ separateWithCommas elem_strs ++ "]"
   where
     showPtr :: Pointer -> IM String
     showPtr ptr = evalPtr ptr >>= showValue'

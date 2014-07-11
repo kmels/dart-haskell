@@ -12,7 +12,8 @@
 -----------------------------------------------------------------------------
 
 module DART.Util.StringUtils(separateWithSpaces,
-                            separateWithNewLines) where
+                             separateWithCommas,
+                             separateWithNewLines) where
 
 --------------------------------------------------------------------------------
 -- prelude
@@ -29,5 +30,13 @@ separateWithSpaces :: [String] -> String
 separateWithSpaces = intercalate space . filter (not . (==) empty_str) 
   where
     empty_str = ""
+    
+separateWithCommas :: [String] -> String
+separateWithCommas = separateWith comma
+
+comma = ","
+
+separateWith :: String -> [String] -> String
+separateWith c = intercalate c . filter (not . (==) "")
 
 separateWithNewLines = intercalate newLine

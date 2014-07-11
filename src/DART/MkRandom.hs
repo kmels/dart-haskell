@@ -31,6 +31,7 @@ import Language.Core.Interpreter.Util(showValue)
 
 --------------------------------------------------------------------------------
 -- DART
+import DART.CmdLine(debugM)
 import Language.Core.Ty(printSignature)
 
 --------------------------------------------------------------------------------
@@ -41,14 +42,30 @@ import Data.Maybe(catMaybes)
           
 -- | When a TypeConstructor is applied to another TypeConstructor we get another TypeConstructor. 
 -- This function reduces the argument type constructor to a type to form a DataCon
-applyTyCon :: Value -> Value -> IM [DataCon]
-applyTyCon (TyCon dc ty1)  (TyCon dc2 ty2) = case dc of
-  MkDataCon dc_id expected@(ty:[]) -> do
-    io . putStrLn . show $ dc_id
-    io $ putStrLn $ show ty2
-    --if we don't know ty.. we safely replace it with ty2
-    return $ [dc { tyConExpectedTys = [Tvar(ty2)]}]
-  _ -> return $ error "TODO"
+applyTyCon :: Value -> Value -> Ty -> IM [DataCon]
+applyTyCon (TyCon dc1 ty1)  (TyCon dc2 ty2) this_type = 
+  case dc1 of
+    MkDataCon "ghc-prim:GHC.Types.[]" _ -> do
+      debugM "Found list" 
+      
+      let 
+        cons_name = "ghc-prim:GHC.Types.:"
+        type_of_the_list = Tvar $ ty2
+        dcc = [
+            dc1 { tyConExpectedTys = [type_of_the_list]}, -- nil
+            MkDataCon cons_name [type_of_the_list, this_type]   
+            ]
+      return dcc
+      
+    MkDataCon dc1_id expected@(ty:[]) -> do
+      io . putStrLn . show $ dc1_id
+      io $ putStrLn $ show ty2
+      --if we don't know ty.. we safely replace it with ty2
+      let dcc = [dc1 { tyConExpectedTys = [Tvar(ty2)]}]
+      
+      io $ putStrLn $ show dcc
+      return dcc
+    --_ -> return $ error "TODO"
 
 -- | Given a type in external core, randomly produce a value of its type. An environment might be needed in case there is a reference to the heap as an identifier in e.g. a data type may contain its type constructors.
 mkRandomVal :: Env -> Ty -> IM Value
@@ -70,7 +87,7 @@ mkRandomVal env (Tcon qual_tcon)  = do
       genBoltzmann type_constructors env -- get a value using our boltzmann sampler
 
 -- application of a type constructor qtycon1 to qtycon2
-mkRandomVal env (Tapp (Tcon zqtycon1) (Tcon zqtycon2)) = do
+mkRandomVal env this_type@(Tapp (Tcon zqtycon1) (Tcon zqtycon2)) = do
   let
     qtycon_1 = zDecodeQualified zqtycon1
     qtycon_2 = zDecodeQualified zqtycon2
@@ -82,7 +99,7 @@ mkRandomVal env (Tapp (Tcon zqtycon1) (Tcon zqtycon2)) = do
   tycon1 <- fetchTyCon qtycon_1 env
   tycon2 <- fetchTyCon qtycon_2 env
   
-  datacons <- applyTyCon tycon1 tycon2
+  datacons <- applyTyCon tycon1 tycon2 this_type
   genBoltzmann datacons env
 
 mkRandomVal env ty = return . Wrong $ " mkRandomVal: I don't know how to make a random val for the type " ++ showExtCoreTypeVerbose ty
@@ -171,8 +188,8 @@ rndBool = getStdRandom (randomR (minBound, maxBound))
 rndChar :: IM Char
 rndChar = 
   let
-    min_int_bound = 1
-    max_int_bound = 1112064
+    min_int_bound = 32 -- 1
+    max_int_bound = 126 -- 1112064
   in do
     int <- io $ getStdRandom (randomR (min_int_bound, max_int_bound))
     return . chr $ int
@@ -185,7 +202,7 @@ data BoltzmannSample = SampleOK | SampleTooBig
 
 genBoltzmann :: [DataCon] -> Env -> IM Value
 genBoltzmann tcs env = do
-  io $ putStr "Called boltzman ..." 
+  debugM $ "Sampling with " ++ (show . length $ tcs) ++ " type constructors; " ++ (show tcs)
   status <- gets samplerStatus
   case status of
     -- initializes sampler, fails if sample is too small
@@ -197,37 +214,40 @@ genBoltzmann tcs env = do
       
       value' <- genBoltzmann tcs env
       
-      valSize <- gets samplerDataSize
+      sampleSize <- gets samplerDataSize
       minSize <- getSetting data_min_size
            
-      io $ putStr $ "Generated boltzmann of size " ++ (show valSize)
+      debugM $ "Sampler generated value of size " ++ (show sampleSize)
   
-      case (valSize >= minSize) of
+      case (sampleSize >= minSize) of
         True -> do
-          io $ putStrLn $ " ... good, of size = " ++ (show valSize)
           (showValue value') >>= \v -> io $ putStrLn $ "VALUE = "  ++ v
           
           boltzmannStop -- don't make more data
           gets samplerValue >>= return
---          return value'
         _ -> do
-          io $ putStrLn " ... failed, too small" 
+          debugM $ " Sample too small, size = " ++ (show sampleSize)
           boltzmannFail >> genBoltzmann tcs env
           
     -- fails if sample size is too big
     InitializedSampler -> do
-      io $ putStr $ "\tdoing step ... "
+      --io $ putStr $ "\tdoing step ... "
       sample <- markSample
+      sampleSize <- gets samplerDataSize
       case sample of
-        SampleOK -> mkSample tcs env >> gets samplerValue
-        SampleTooBig -> boltzmannFail >> genBoltzmann tcs env
+        SampleOK -> do
+          debugM $ " OK, size = " ++ (show sampleSize)
+          mkSample tcs env >> gets samplerValue
+        SampleTooBig -> do
+          debugM $ " Sample too big, size = " ++ (show sampleSize)
+          boltzmannFail >> genBoltzmann tcs env
  where     
    -- failed to generate a value, reset the sampler
    boltzmannStop :: IM ()
    boltzmannStop = do
-     io $ putStr $ "\tStopping Boltzmann ... "
+     --io $ putStr $ "\tStopping Boltzmann ... "
      modify (\st -> st { samplerStatus = UnitializedSampler })
-     io $ putStrLn $ "done"
+     --io $ putStrLn $ "done"
    
    boltzmannFail = modify (\st -> st { samplerStatus = UnitializedSampler })
      
@@ -237,25 +257,18 @@ genBoltzmann tcs env = do
 mkSample :: [DataCon] -> Env -> IM ()
 mkSample tcs env = do
      tycon@(MkDataCon tycon_id expected_types) <- pickTypeConstructor tcs     
-     let pp id = drop (1 + (last $ findIndices (== '.') id))  id -- get lastname     
-     io $ putStrLn $ pp tycon_id -- chosen tycon
+     let prettyPrint id = drop (1 + (last $ findIndices (== '.') id))  id -- get lastname
+     debugM $ "Sampler chose type constructor: " ++ (prettyPrint tycon_id)
+     debugM $ "Sampler chose type constructor: " ++ (tycon_id)     
+     debugM $ "Making values for " ++ (show . length $ expected_types) ++ " expected types"
      
-     -- 2. we might have already failed – in that case we'll report the impossible.
-     --io $ putStrLn $ "tyConMkRandom for size " ++ (show valSize)
-     
-     st <- gets samplerStatus
-     case st of 
-       UnitializedSampler -> error $ "The impossible happened: BoltzmannSampler is not initialized"
-       _ -> do
-       io $ putStrLn $ "Making values for " ++ (show . length $ expected_types) ++ " expected types"
-       randomVals <- mkSampleData env expected_types
+     randomVals <- mkSampleData env expected_types
 
-       case (length randomVals == length expected_types) of
-         True -> do
-           io $ putStrLn $ "Did " ++ (show . length $ expected_types) ++ " data values"
-           sampleVal <- mapM mkValuePointer randomVals >>= return . TyConApp tycon
-           modify (\st -> st { samplerValue = sampleVal })
-         False -> return () -- extra calls... 
+     case (length randomVals == length expected_types) of
+       True -> do         
+         sampleVal <- mapM mkValuePointer randomVals >>= return . TyConApp tycon
+         modify (\st -> st { samplerValue = sampleVal })
+       False -> return () -- extra calls... 
 
 mkSampleData :: Env -> [Ty] -> IM [Value]
 mkSampleData env [] = return []
@@ -293,16 +306,12 @@ markSample :: IM BoltzmannSample
 markSample = do  
   maxSize <- getSetting data_max_size
   currentSize <- gets samplerDataSize
-
-  -- if the size is greater, don't gen      -- io $ putStrLn $ " tyRndValPtr of " ++ (show ty)erate further
+  -- if the size is greater, don't generate further
   case (currentSize >= maxSize) of
     True -> do
-      io $ putStrLn "TooBig"
       return $ SampleTooBig
     False -> do 
       modify $ \st -> st {samplerDataSize = currentSize + 1}
-      --io $ putStrLn $ "Increased size (OKBoltzmannStep)"
-      io $ putStr $ " OK, size = " ++ (show currentSize) ++ " ... "
       return $ SampleOK
       
 

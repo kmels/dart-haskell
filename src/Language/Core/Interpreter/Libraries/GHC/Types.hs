@@ -11,7 +11,7 @@ cons :: (Id,Either Thunk Value) -- (:) :: a -> [a] -> [a]
 cons = (cons_name, Right $ TyCon tycon ty_name) where
   cons_name = "ghc-prim:GHC.Types.:"
   ty_name = "ghc-prim:GHC.Types.[]"  
-  tycon_args = [Tvar "aXX", Tvar "[a]YY", Tvar "XXXX"]
+  tycon_args = [Tvar "a", Tvar "[a]"]
   tycon = MkDataCon cons_name tycon_args
   
 listConstructor :: (Id,Either Thunk Value) -- ([]) :: [a], kind * -> *
@@ -46,8 +46,8 @@ char = let id = "ghc-prim:GHC.Types.Char"
        in (id, Right $ TyCon (MkDataCon id []) id)
        
 all :: [(Id, Either Thunk Value)]
-all = [ --cons
-        listConstructor
+all = [ cons
+        , listConstructor
         , intConstructor
         , true
         , false

@@ -29,12 +29,16 @@ import           DART.Compiler.JIT(jitCompile)
 import           DART.Util.StringUtils(separateWithNewLines)
 import qualified Data.HashTable.IO as H
 import           Data.List(find,inits)
+
+--------------------------------------------------------------------------------
+-- Language Core
 import           Language.Core.Interpreter.Acknowledge
 import           Language.Core.Interpreter.Apply
 import           Language.Core.Interpreter.CaseAnalysis
 import           Language.Core.Interpreter.Structures
 import           Language.Core.Module
 import           Language.Core.Vdefg (findVdefByName,vdefgNames,vdefName)
+
 class Evaluable a where
   eval :: a -> Env -> IM Value
   
@@ -298,20 +302,25 @@ analyzeCase case_exp (var_to_bind,_) env alts = do
     }
     
 -- | Given an alternative and a value that matches the alternative,
--- binds the free variables in memory and returns a list of references (an environment)
+-- binds the free variables in memory and returns them in an environment
 mkAltEnv :: Value -> Alt -> IM Env
 mkAltEnv v@(Num _) (Acon (_,"Izh") _ [(vbind_var,vbind_ty)] _) = 
-  do
-    -- bind a single number
+  do -- bind a single number    
     beVerboseM $ "Binding " ++ vbind_var ++ " to val " ++ show v
     heap_ref <- memorize (Right v) vbind_var
     return [heap_ref]
   
-mkAltEnv (Num n) (Acon q tbinds vbinds exp) = (debugM  $ " !!! WTF" ++ show q) >> return []
+mkAltEnv (Num n) (Acon q tbinds vbinds exp) = (debugM  $ "what is this number @mkAltEnv???" ++ show q) >> return []
   
 mkAltEnv (TyConApp (MkDataCon id _) pointers) (Acon _ _ vbinds _) = do
   if (length pointers /= length vbinds)
-  then error $ "The impossible happened @mkAltEnv, length vals /= length vbinds," ++ id
+  then do
+   let
+     evalPtr = flip eval []
+     vbindss = show vbinds
+     showLength = show . length
+   vals <- mapM evalPtr pointers
+   error $ "The impossible happened @mkAltEnv, length vals (" ++ (show . length $ pointers) ++ ") /= length vbinds (" ++ (show . length $ vbinds) ++ ") " ++ ", for type constructor" ++ id ++ "\n\tvals: " ++ (show vals) ++ "\n\tvbinds: " ++ vbindss
   else do
      -- get vals and memorize that
      let ids = (map fst vbinds)
@@ -438,8 +447,11 @@ apply (TyCon tycon@(MkDataCon _ (t:ts)) _) id env = do
     Pointer p -> return $ TyConApp (tycon { tyConExpectedTys = ts }) ([p])
     e@(Wrong s) -> return e
       
-apply w@(Wrong _) _ _ = return w
-apply f x _ = return . Wrong $ "Applying " ++ show f ++ " with argument " ++ show x
+apply w@(Wrong _) _ env = return w
+
+apply f x env = do
+  xstr <- evalId x env
+  return . Wrong $ "Applying " ++ show f ++ " with argument " ++ (show xstr)
 
 -- evalVdefgBenchmark :: Vdefg -> Env -> IM [HeapReference]
 -- evalVdefgBenchmark vdefg env = do

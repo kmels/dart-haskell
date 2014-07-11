@@ -9,10 +9,11 @@ main = do
   putStrLn $ myString arg
 --  putStrLn $ myString' arg arg
 
-myString w = if (length w >= 2) 
-             then "hello" ++ w
-             else error "word can't be of length less than 2"
+myString w = if (length w > 20) 
+             then hi ++ w
+             else error $ "word can't be of length less than 2, it is " ++ (show . length $ w) ++ " characters long!"
              
+hi = 'h' : 'i' : []
 
 --myString' w w2 = if (length w >= 2 && length w2 >= 2)
 --             then "hello" ++ w ++ w2
