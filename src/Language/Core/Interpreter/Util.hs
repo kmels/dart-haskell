@@ -44,7 +44,7 @@ showValue val = return $ show val
 -- As we know from the semantics, the showing forces the evaluation of the arguments of the data constructor
 showTyConApp :: DataCon-> [Pointer] -> IM String
 showTyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) [] = return "[]" -- empty list
-showTyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ptrs = showList ptrs -- lists
+showTyConApp (MkDataCon "ghc-prim:GHC.Types.:" (ty:_)) ptrs = showList ty ptrs  
 showTyConApp (MkDataCon "ghc-prim:GHC.Tuple.Z2T" _) [x,y] = do
   x_str <- evalPtr x >>= showValue
   y_str <- evalPtr y >>= showValue
@@ -69,11 +69,13 @@ evalPtr :: Pointer -> IM Value
 evalPtr = flip eval []
 
 -- | Function in charge of showing the application of the type constructor "ghc-prim:GHC.Types.:"
-showList :: [Pointer] -> IM String
-showList ptrs = do
+showList :: Ty -> [Pointer] -> IM String
+showList ty ptrs = do
   io $ putStrLn $ "Showing list with " ++ (show . length $ ptrs)  ++ " pointers"
   elem_strs <- mapM showPtr ptrs
-  return $ "[" ++ separateWithCommas elem_strs ++ "]"
+  case ty of
+    Tvar("ghc-prim:GHC.Types.Char") -> return $ "\"" ++ map (!! 1) elem_strs ++ "\""
+    _ -> return $ "[" ++ separateWithCommas elem_strs ++ "]"
   where
     showPtr :: Pointer -> IM String
     showPtr ptr = evalPtr ptr >>= showValue'
@@ -82,7 +84,7 @@ showList ptrs = do
     -- If we find another list, don't show the []
     showValue' :: Value -> IM String
     showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) []) = return ""
-    showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) ty) = return $ "[] to " ++ show ty
+    showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _) [ptr]) = showPtr ptr       
     showValue' t@(TyConApp (MkDataCon "ghc-prim:GHC.Types.:" _) ptrs) = mapM showPtr ptrs >>= return . separateWithSpaces
     showValue' t@(TyCon (MkDataCon "ghc-prim:GHC.Types.[]" []) "ghc-prim:GHC.Types.[]")= return ""
     showValue' v = showValue v

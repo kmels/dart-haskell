@@ -433,10 +433,12 @@ apply (Fun f d) id env = do
     
 -- Applies a (possibly applied) type constructor that expects appliedValue of type ty.
 -- The type constructor that we are applying has |vals| applied values
-apply (TyConApp tycon@(MkDataCon _ (t:ts)) addresses) id env =  do 
+apply (TyConApp tycon@(MkDataCon _ exp_tys) addresses) id env = do 
     addr <- getPointer id env
     case addr of
-      Pointer p -> return $ TyConApp tycon { tyConExpectedTys = ts } (addresses ++ [p])
+      Pointer p -> case exp_tys of
+        (t:ts) -> return $ TyConApp tycon { tyConExpectedTys = ts } (addresses ++ [p])
+        [] -> return $ TyConApp tycon { tyConExpectedTys = [] } (addresses ++ [p])
       e@(Wrong s) -> return e
 
 --apply tca@(TyConApp tycon@(MkDataCon _ ts) addresses) id env = return . Wrong $ "Applying " ++ (show . length) ts ++ " with argument " ++ show id
