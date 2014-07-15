@@ -135,7 +135,7 @@ data Value = Wrong String
            | FreeTypeVariable String -- useful when converting a to SomeClass a (we ignore parameters, and it's useful to save them)
            | MkListOfValues [(String,Value)] -- When a value definition is recursive, depends on other values
            | SumType [DataCon] -- A data type with reference to its constructors, created only from type constructors when reading modules (see Interpreter/Acknowledge).
-           | TyCon DataCon Id -- A single data constructor that withholds, apart of its data constructor value, the qualified name of the type it builds. For example (:) is a type constructor for the list type, "[a]". 
+           | TyCon DataCon Id -- data constructor that has the qualified name of the type it builds. For example (:) is a type constructor for the list type, "[a]". 
            
 newtype Pointer = MkPointer { ptr_address :: HeapAddress } deriving Show
 
@@ -155,8 +155,9 @@ data HaskellExpression = HaskellExpression String Module
 -- | The type of a type constructor with qualified name and the list 
 -- of types it expects. 
 data DataCon = MkDataCon {
-  tyConId :: Id,
-  tyConExpectedTys :: [Ty]
+  datacon_name :: Id,
+  signature :: [Ty], 
+  applied_types :: [Ty] -- #TODO make it Stack Ty, last type to be applied should come first
   } deriving Eq
 
 type Description = String
@@ -273,20 +274,20 @@ instance Show Value where
   show (SumType cons) = "SumType of " ++ myIntersperse "|" constructor_names
     where
       myIntersperse sep = foldr ((++) . (++) sep) []
-      constructor_names = map (\(MkDataCon id _) -> id) cons
+      constructor_names = map (\(MkDataCon id _ _) -> id) cons
   show (TyCon tycon ty_name) | show tycon == "[]" = "[]"
     | otherwise = "TypeConstructor " ++ show tycon ++ " of " ++ ty_name
 
 -- Pretty print data constructors
 instance Show DataCon where
   -- list?
-  show (MkDataCon "ghc-prim:GHC.Types.[]" []) = "[]"
-  show (MkDataCon "ghc-prim:GHC.Types.[]" ty) = "[] :: " ++ show ty
-  show (MkDataCon id []) = idName id
-  show (MkDataCon id types) = idName id ++ " :: " ++ types' where
-    types' :: String
-    types' | length types == 1 = show types 
-           | otherwise = concatMap (\t -> show t ++ " -> ") types
+  show (MkDataCon "ghc-prim:GHC.Types.[]" [] _) = "[]"
+  show (MkDataCon "ghc-prim:GHC.Types.[]" ty _) = "[] :: " ++ show ty
+  show (MkDataCon id [] _) = idName id
+  show (MkDataCon id signature' applied_types') = idName id ++ ", signature = " ++ (show signature'') ++ ", applied types = " ++ show (applied_types') where
+    signature'' :: String
+    signature'' | length signature' == 1 = show signature' 
+           | otherwise = concatMap (\t -> show t ++ " -> ") signature'
            
 
 -- | Take a qualified name and return only its last name. E.g. idName "main.Module.A" = "A"

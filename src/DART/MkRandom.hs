@@ -45,23 +45,21 @@ import Data.Maybe(catMaybes)
 applyTyCon :: Value -> Value -> Ty -> IM [DataCon]
 applyTyCon (TyCon dc1 ty1)  (TyCon dc2 ty2) this_type = 
   case dc1 of
-    MkDataCon "ghc-prim:GHC.Types.[]" _ -> do
-      debugM "Found list" 
-      
+    MkDataCon "ghc-prim:GHC.Types.[]" _ tys -> do
       let 
         cons_name = "ghc-prim:GHC.Types.:"
         type_of_the_list = Tvar $ ty2
         dcc = [
-            dc1 { tyConExpectedTys = [type_of_the_list]}, -- nil
-            MkDataCon cons_name [type_of_the_list, this_type]   
+            dc1 { signature = [type_of_the_list], applied_types = (this_type:tys)}, -- nil
+            MkDataCon cons_name [type_of_the_list, this_type] (this_type:tys) 
             ]
       return dcc
       
-    MkDataCon dc1_id expected@(ty:[]) -> do
+    MkDataCon dc1_id expected@(ty:[]) tys -> do
       io . putStrLn . show $ dc1_id
       io $ putStrLn $ show ty2
       --if we don't know ty.. we safely replace it with ty2
-      let dcc = [dc1 { tyConExpectedTys = [Tvar(ty2)]}]
+      let dcc = [dc1 { signature = [Tvar(ty2)], applied_types = (this_type:tys)}]
       
       io $ putStrLn $ show dcc
       return dcc
@@ -90,10 +88,7 @@ mkRandomVal env (Tcon qual_tcon)  = do
 mkRandomVal env this_type@(Tapp (Tcon zqtycon1) (Tcon zqtycon2)) = do
   let
     qtycon_1 = zDecodeQualified zqtycon1
-    qtycon_2 = zDecodeQualified zqtycon2
-    
-  io $ putStrLn $ " applying  " ++ show qtycon_1
-  io $ putStrLn $ " to  " ++ show qtycon_2
+    qtycon_2 = zDecodeQualified zqtycon2    
   
   -- we should have info about `qtycon1`
   tycon1 <- fetchTyCon qtycon_1 env
@@ -140,8 +135,8 @@ pickTypeConstructor tcs = do
 -- contain references to some data type in the heap as an identifier
 -- TODO: MkDataCon should contain a list of ConcreteType and no Ty's
 tyConMkRandomX :: DataCon -> Env -> IM Value
-tyConMkRandomX dc@(MkDataCon id []) env = return $ TyConApp dc []
-tyConMkRandomX dc@(MkDataCon id tys) env = do
+tyConMkRandomX dc@(MkDataCon id [] _) env = return $ TyConApp dc []
+tyConMkRandomX dc@(MkDataCon id tys _) env = do
   io $ putStrLn $ "tyConMkRandom"
   --ptrs <- mapM (flip tyRndValPtr env) tys -- :: [Pointer] where the generated random vals are
   ptrs <- mapM (\ty -> do
@@ -256,7 +251,7 @@ genBoltzmann tcs env = do
 -- 2. The type constructor `tc` expects a list of types, for which we generate random values
 mkSample :: [DataCon] -> Env -> IM ()
 mkSample tcs env = do
-     tycon@(MkDataCon tycon_id expected_types) <- pickTypeConstructor tcs     
+     tycon@(MkDataCon tycon_id expected_types _) <- pickTypeConstructor tcs     
      let prettyPrint id = drop (1 + (last $ findIndices (== '.') id))  id -- get lastname
      debugM $ "Sampler chose type constructor: " ++ (prettyPrint tycon_id)
      debugM $ "Sampler chose type constructor: " ++ (tycon_id)     

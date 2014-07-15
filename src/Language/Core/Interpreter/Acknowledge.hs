@@ -62,7 +62,7 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) =
   where
     printTypesCons :: [DataCon] -> IM ()
     printTypesCons [] = return ()
-    printTypesCons ((MkDataCon id tys):ds) = do
+    printTypesCons ((MkDataCon id tys _):ds) = do
       io . putStrLn  $ id ++ " expects " ++ show tys 
       printTypesCons ds
     
@@ -70,10 +70,14 @@ acknowledgeType tdef@(Data qdname@(_,dname) tbinds cdefs) =
     mkDataTypeRef cons tname = memorize (mkVal . SumType $ cons) tname
     
     mkDataCon :: Cdef -> DataCon
-    mkDataCon tcon@(Constr qcname tbinds' types) = MkDataCon (zDecodeQualified qcname) types
+    mkDataCon tcon@(Constr qcname tbinds' datacon_signature) = 
+      let
+        no_types_applied = []
+      in
+       MkDataCon (zDecodeQualified qcname) datacon_signature no_types_applied
       
     insertTyCon :: DataCon -> IM HeapReference
-    insertTyCon tyCon@(MkDataCon tyConName tys) = memorize (mkVal $ TyConApp tyCon []) (tyConName)
+    insertTyCon tyCon@(MkDataCon tyConName tys _) = memorize (mkVal $ TyConApp tyCon []) (tyConName)
     
 -- | Given a module, recognize all of its value definitions, functions, and put them in the heap so that we can evaluate them when required. 
 acknowledgeVdefgs :: [Vdefg] -> IM Env

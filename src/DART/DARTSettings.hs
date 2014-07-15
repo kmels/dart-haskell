@@ -47,7 +47,7 @@ interpret = MkSettings {
   , debug = def &= groupname "DEBUG" &= help "Prints messages about the interpretation and testing of module definitions"
   , verbose = def &= groupname "DEBUG" &= help "Prints messages when loading, reading and acknowledging modules or definitions"
   
-  , do_timeout_after_seconds = 2
+  , do_timeout_after_seconds = 5
   
   , show_heap = def &= groupname "DEBUG" &= help "Shows binded values in the heap"
   , show_expressions = def &= groupname "DEBUG" &= help "Shows the external core expression for every value being evaluated"

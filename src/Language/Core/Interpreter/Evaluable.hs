@@ -152,7 +152,7 @@ instance Evaluable Pointer where
   eval (MkPointer address) env = eval address env
 
 instance Evaluable Exp where
-  -- Integer,Char construction
+  -- Integer,Char construction -- match against Qual for the benefit of speed
   eval (App (Dcon ((Just (M (P ("ghczmprim"),["GHC"],"Types"))),constr)) (Lit lit)) env = case constr of
     "Izh" -> eval lit []
     "Czh" -> eval lit []
@@ -162,9 +162,9 @@ instance Evaluable Exp where
     ti <- gets tab_indentation
     let ?tab_indentation = ti
             
-    f <- evalExpI function_exp env ("Evaluating function_exp " ++ showExp function_exp)
+    f <- evalExpI function_exp env ("Reducing lambda " ++ showExp function_exp)
   
-    -- if the argument is a variable that is already in the env, don't make a new reference  
+    -- if the argument is already in env, don't make another reference
     case argument_exp of
       (Var qvar) -> do
         qvar_val <- zDecodeQualified qvar `lookupId` env
@@ -178,9 +178,9 @@ instance Evaluable Exp where
     where
     mkRefAndApply :: Value -> Exp -> IM Value
     mkRefAndApply f arg_exp = do
-      watchReductionM "Making a reference from/to the function argument "
-      heap_reference@(id,arg_address) <- mkHeapReference arg_exp env
-      watchReductionM $ "Argument to function has reference: " ++ show heap_reference
+      beVerboseM "Making a reference from/to the function argument "
+      heap_reference@(id,_) <- mkHeapReference arg_exp env
+      watchReductionM $ "Argument saved as " ++ id
   
       res <- apply f id (heap_reference:env) -- Note1: the address is paassed 
       return res
@@ -194,9 +194,12 @@ instance Evaluable Exp where
       (Dcon qvar) -> do
         v <- evalExpI exp env $ "Typed Dcon application  " ++ zDecodeQualified qvar ++ ", to type " ++ show ty
         case v of
-          tyconv@(TyCon tycon@(MkDataCon id (t:ts)) tyname) -> return $ TyCon (tycon { tyConExpectedTys = ts}) tyname
+          tyconv@(TyCon tycon@(MkDataCon id (t:ts) applied_types') tyname) -> do
+            watchReductionM $ "Creating annotated type constructor to " ++ (tyname)
+            return $ TyCon (tycon { signature = ts, applied_types = (t:applied_types')}) tyname
           
-          tyconapp@(TyConApp _ _) -> return tyconapp
+          --tyconapp@(TyConApp _ _) -> return tyconapp
+          
           otherwise -> return $ Wrong $ "The impossible happened: Typed application was expecting a type constructor or an applied type constructor, but got: " ++ show otherwise
       _ -> evalExpI exp env "Typed application "
 
@@ -312,8 +315,8 @@ mkAltEnv v@(Num _) (Acon (_,"Izh") _ [(vbind_var,vbind_ty)] _) =
   
 mkAltEnv (Num n) (Acon q tbinds vbinds exp) = (debugM  $ "what is this number @mkAltEnv???" ++ show q) >> return []
   
-mkAltEnv (TyConApp (MkDataCon id _) pointers) (Acon _ _ vbinds _) = do
-  if (length pointers /= length vbinds)
+mkAltEnv (TyConApp (MkDataCon id _ _) pointers) (Acon _ _ vbinds _) = do
+  if (length pointers < length vbinds)
   then do
    let
      evalPtr = flip eval []
@@ -359,8 +362,8 @@ findMatch val (a:alts) = do
 matches :: Value -> Alt -> IM Bool
 
 -- data
-matches (TyConApp (MkDataCon n _) _) (Acon qual_dcon _ _ _) = return $ zDecodeQualified qual_dcon == n
-matches (TyCon (MkDataCon n _) _) (Acon qual_dcon _ _ _) = return $ zDecodeQualified qual_dcon == n
+matches (TyConApp (MkDataCon n _ _) _) (Acon qual_dcon _ _ _) = return $ zDecodeQualified qual_dcon == n
+matches (TyCon (MkDataCon n _ _) _) (Acon qual_dcon _ _ _) = return $ zDecodeQualified qual_dcon == n
 --matches val (Alit lit exp) = return False --TODO
 
 matches val (Adefault _) = return True -- this is the default case, i.e. "_ -> exp " 
@@ -433,20 +436,24 @@ apply (Fun f d) id env = do
     
 -- Applies a (possibly applied) type constructor that expects appliedValue of type ty.
 -- The type constructor that we are applying has |vals| applied values
-apply (TyConApp tycon@(MkDataCon _ exp_tys) addresses) id env = do 
+apply (TyConApp tycon@(MkDataCon datacon_name' signature' applied_types') addresses ) id env = do 
     addr <- getPointer id env
     case addr of
-      Pointer p -> case exp_tys of
-        (t:ts) -> return $ TyConApp tycon { tyConExpectedTys = ts } (addresses ++ [p])
-        [] -> return $ TyConApp tycon { tyConExpectedTys = [] } (addresses ++ [p])
+      Pointer p -> case signature' of
+        (sig_head:sig_tail) -> do
+          watchReductionM $ "Reducing type constructor by " ++ show (sig_head)
+          return $ TyConApp tycon { signature = sig_tail } (addresses ++ [p])
+        [] -> do
+          watchReductionM $ "Type constructor's signature has no types left that require reduction." 
+          return $ TyConApp tycon { signature = [] } (addresses ++ [p])
       e@(Wrong s) -> return e
 
 --apply tca@(TyConApp tycon@(MkDataCon _ ts) addresses) id env = return . Wrong $ "Applying " ++ (show . length) ts ++ " with argument " ++ show id
             
-apply (TyCon tycon@(MkDataCon _ (t:ts)) _) id env = do
+apply (TyCon tycon@(MkDataCon _ (t:ts) applied_types') _) id env = do
   addr <- getPointer id env
   case addr of
-    Pointer p -> return $ TyConApp (tycon { tyConExpectedTys = ts }) ([p])
+    Pointer p -> return $ TyConApp (tycon { signature = ts }) ([p])
     e@(Wrong s) -> return e
       
 apply w@(Wrong _) _ env = return w

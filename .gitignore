@@ -1,8 +1,7 @@
-*.chi
-*.chs.h
-.virthualenv
-virthualenv.log
-*#
+.#*
+#*
+
+*.hcr
 src/*.hcr
 examples/interpreter/*.hcr
 examples/testing/*.hcr
@@ -24,3 +23,6 @@ cabal-dev
 .dist-buildwrapper
 .project
 report.org
+
+.virthualenv
+virthualenv.log
