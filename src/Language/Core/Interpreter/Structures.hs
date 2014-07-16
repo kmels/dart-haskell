@@ -8,7 +8,7 @@
 -- Stability   :  stable
 --
 --
--- Defines fundamental structures and functions on them intendeted for Language.Core.Interpreter
+-- Defines fundamental structures and functions for Language.Core.Interpreter
 -----------------------------------------------------------------------------
 
 {-# LANGUAGE FlexibleInstances #-}
@@ -54,6 +54,7 @@ import           Data.List(findIndices)
 import           DART.DARTSettings
 -- Language.Core
 import           Language.Core.Core
+import           Language.Core.Ty(showTySig)
 import           Language.Core.Util --(showType,showExtCoreType,showExp,wrapName)
 import           System.IO.Unsafe(unsafePerformIO)
 --------------------------------------------------------------------------------
@@ -135,7 +136,7 @@ data Value = Wrong String
            | FreeTypeVariable String -- useful when converting a to SomeClass a (we ignore parameters, and it's useful to save them)
            | MkListOfValues [(String,Value)] -- When a value definition is recursive, depends on other values
            | SumType [DataCon] -- A data type with reference to its constructors, created only from type constructors when reading modules (see Interpreter/Acknowledge).
-           | TyCon DataCon Id -- data constructor that has the qualified name of the type it builds. For example (:) is a type constructor for the list type, "[a]". 
+           | TyCon DataCon Id -- data constructor annotated with the qualified name of the type it builds. For example (:) is a type constructor for the list type, "[]".
            
 newtype Pointer = MkPointer { ptr_address :: HeapAddress } deriving Show
 
@@ -276,7 +277,10 @@ instance Show Value where
       myIntersperse sep = foldr ((++) . (++) sep) []
       constructor_names = map (\(MkDataCon id _ _) -> id) cons
   show (TyCon tycon ty_name) | show tycon == "[]" = "[]"
-    | otherwise = "TypeConstructor " ++ show tycon ++ " of " ++ ty_name
+  show (TyCon (MkDataCon datacon_name' datacon_signature' []) ty_name) = (idName datacon_name') ++ " :: " ++ (showTySig datacon_signature') ++ " ::=> " ++ (idName ty_name)
+  show (TyCon (MkDataCon datacon_name' datacon_signature' applied_types') ty_name) = (idName datacon_name') ++ " :: " ++ (showTySig datacon_signature') ++ " ::=> " ++ (idName ty_name) ++ ", applied types: " ++ (concatMap showType applied_types') 
+  
+--    | otherwise = "TypeConstructor " ++ show tycon ++ " of " ++ ty_name
 
 -- Pretty print data constructors
 instance Show DataCon where

@@ -50,28 +50,26 @@ import           Data.List(intersectBy)
 {-Given a module which contains a list of value definitions, *vd*, evaluate every *vd* and return a heap with their interpreted values.
 
 Value definition to mapped values
------------------------------------------------------
-| Value definition type              | mapped to    |
-| Concrete type e.g. Int             | Num val      |
-| Concrete type e.g. Int - Int      | ?            |
------------------------------------------------------
+-----------------------------------------------------------------------
+| Value definition type              | mapped to                       |
+| Concrete type e.g. Int             | Num val                         |
+| Concrete type e.g. Int -> Int      | Fun (Id -> Env -> IM Value)     |
+----------------------------------------------------------------------
 -}
 
+-- | Evaluates definitions in a module
 evalModule :: Module -> Env -> IM [(Id, Value)]
 evalModule m@(Module mname tdefs vdefgs) env = do
   debugMStep $ "Evaluating module " ++ show mname
-  -- recognize type and value definitions
-  --module_env <- acknowledgeModule m
     
-  -- time to evaluate, set an environment and evaluate only those defs that are not temp
+  -- evaluate only definitionss that are not temporal in env
   let 
-    --env = libs_env --module_env ++ libs_env    
     qual_vars = map vdefgQualVars vdefgs -- [[Qual Var]]
     exposed_vdefgs = concat $ filter (not . all qualIsTmp) qual_vars     --[Qual Var]
     vdefg_names = map zDecodeQualified exposed_vdefgs -- exposed vdefs, [Qual Var]
     
-  vals <- mapM evalModuleDef vdefg_names -- [Value]  
-  return $ zip vdefg_names vals
+  vals <- mapM evalModuleDef vdefg_names -- [Value]
+  return $ zip vdefg_names vals  
   where
     evalModuleDef :: Id -> IM Value
     evalModuleDef id = do
@@ -81,13 +79,6 @@ evalModule m@(Module mname tdefs vdefgs) env = do
 -- | Given a module and a function name, we evaluate the function in that module and return the heap. 
 evalHaskellExpression :: Module -> String -> Env -> IM Value
 evalHaskellExpression m expression_string env = eval (HaskellExpression expression_string m) env
-  
---bindAltVars val@(Num n) (Acon _ _ [(var,_)] _) = var `bindTo` val
---bindAltVars t v = io . putStrLn $ " Don't know how to bind values " ++ show t ++ " to " ++ show v
-
-isAcon :: Alt -> Bool
-isAcon (Acon _ _ _ _) = True
-isAcon _ = False
 
 -- | Loads nothing ATM, but it'll be useful
 loadLibrary :: [(Id, Either Thunk Value)] -> IM Env

@@ -21,9 +21,16 @@ import           DART.DARTSettings
 import           DART.FileIO
 import           DART.FunctionFeeder
 import           DART.MkRandomValue
+import           DART.CmdLine
 import qualified DART.ModuleTester as T
+
+--------------------------------------------------------------------------------
+-- Data structures
 import qualified Data.HashTable.IO as H
 import           Data.Maybe
+
+--------------------------------------------------------------------------------
+-- Core
 import           Language.Core.Core
 import           Language.Core.Interp
 import qualified Language.Core.Interpreter as I
@@ -33,10 +40,16 @@ import           Language.Core.Interpreter.Structures
 import           Language.Core.Interpreter.Util(showValue)
 import           Language.Core.Util(showType)
 import           Language.Core.Vdefg
+
+--------------------------------------------------------------------------------
+-- Prelude
 import           System.Directory(getCurrentDirectory)
 import           System.Environment
+
+--------------------------------------------------------------------------------
+-- 
 import           Text.Encoding.Z
-import           DART.CmdLine
+
 
 --------------------------------------------------------------------------------
 -- system
@@ -47,10 +60,12 @@ import Data.Time.Clock(getCurrentTime)
 initDART :: DARTSettings -> IO DARTState
 initDART settings = do
   h <- io H.new -- create a fresh new heap
+  
   current_dir <- getCurrentDirectory 
   
-  let prependCurrentDir = (++) (current_dir ++ "/")    
-  let absolute_includes = map prependCurrentDir $ default_includes ++ (include settings)
+  let prependCurrentDir = (++) (current_dir ++ "/")
+  let user_includes = include settings
+  let absolute_includes = map prependCurrentDir $ prelude_files ++ user_includes
                          
   now <- io getCurrentTime
   
@@ -73,8 +88,8 @@ initDART settings = do
 -- | Returns a list of *relative* paths pointing to default included libraries e.g. base
 -- Use case: if we always want the function split to be in scope for programs that we are testing, then we should load Data.List in the base package
 -- The file paths are path to .hcr files, since these modules sometimes need different arguments to be compiled with -fext-core
-default_includes :: [FilePath]
-default_includes = [
+prelude_files :: [FilePath]
+prelude_files = [
     "/lib/base/GHC/Base.hcr"
   , "/lib/base/GHC/Base.hcr"
   , "/lib/base/Data/Tuple.hcr"

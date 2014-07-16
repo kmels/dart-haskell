@@ -13,19 +13,22 @@
 
 module Language.Core.Ty where
 
-import Language.Core.Core
-import Language.Core.Util(showExtCoreType,showExtCoreTypeVerbose,zDecodeQualified)
-import Text.Encoding.Z(zDecodeString)
-import Data.Maybe(isJust,fromJust)
-
 --------------------------------------------------------------------------------
 -- DART
-import Language.Core.Interpreter.Structures
-import Language.Core.Interpreter.Util(idName)
+-- External core
+import Language.Core.Core
+import Language.Core.Util(showExtCoreType,showExtCoreTypeVerbose,zDecodeQualified)
+--------------------------------------------------------------------------------
+-- base 
+import           Data.List(findIndices)
+
+import Text.Encoding.Z(zDecodeString)
+import Data.Maybe(isJust,fromJust)
 
 -- | Z-Decodes a Tvar or otherwise shows the type
 qualTypeName :: Ty -> String
 qualTypeName (Tvar ty) = zDecodeString ty
+qualTypeName (Tcon qual_tcon) = zDecodeQualified qual_tcon
 qualTypeName ty = showExtCoreType ty
 
 -- | Returns true if the given type is primitive
@@ -80,20 +83,36 @@ funArgTy (Tapp (Tcon ((Just (M (P ("ghczmprim"),["GHC"],"Prim"))),"ZLzmzgZR")) t
 funArgTy _ = Nothing
 
 -- | Pretty prints a list of types as a type signature
-printSignature :: [Ty] -> IM String
-printSignature [] = return ""
-printSignature (t:[]) = typeName t
-printSignature (t:tys) = liftM2 (++) (typeName t) (mapM typeName tys >>= return . prependArrows)
+showTySig :: [Ty] -> String
+showTySig [] = ""
+showTySig (t:[]) = typeName t
+showTySig (t:tys) = (++) (typeName t) (prependArrows $ map typeName tys)
 
 --lifttypeName t ++ prependArrows (map typeName ty)
 -- (String -> String -> String) -> IM String -> IM String -> IM String
 --liftM2 :: Monad m => (a1 -> a2 -> r) -> m a1 -> m a2 -> m r
 
 -- | Given a type, this function extracts its name as a string. 
-typeName :: Ty -> IM String
-typeName = return . idName . qualTypeName 
+typeName :: Ty -> String
+typeName t@(Tvar n) = idName $ qualTypeName $ t
+typeName t = idName . qualTypeName $ t
 
 prependArrows :: [String] -> String
 prependArrows [] = []
 prependArrows [[]] = []    
 prependArrows (y:ys) = " -> " ++ y ++ prependArrows ys
+
+-- | Take a qualified name and return only its last name. E.g. idName "main.Module.A" = "A"
+idName :: Id -> String
+idName id = 
+  let
+    ident = case dotIndexes id of
+      [] -> id -- no indexes
+      idx -> drop (last idx + 1) id
+  in case ident of
+    ":" -> "(:)"
+    _ -> ident
+  where
+    isDot = ((==) '.')
+    dotIndexes = findIndices isDot
+

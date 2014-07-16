@@ -111,7 +111,7 @@ instance Evaluable Vdefg where
 -- | Given an environment, looks for the address in the heap, evals a thunk using the given environment if necessary to return a value
 instance Evaluable HeapAddress where
   eval address env = do
-    beVerboseM $ "Evaluable HeapAddress: " ++ show address
+    beVerboseM $ "accessing address " ++ show address
     eTnkVal <- lookupMem address
     -- if it is a thunk, eval and memorize in heap
     either (evalThnk address) return eTnkVal
@@ -128,7 +128,7 @@ instance Evaluable HeapAddress where
 instance Evaluable Thunk where
   --eval :: Thunk -> Env -> IM Value
   eval (Thunk exp env) e = do -- TODO. To comment: Why we don't care about the second env?
-    ti <- gets tab_indentation
+    ti <- gets tab_indentation  
     let ?tab_indentation = ti
         
     watchReductionM $ "Evaluating thunk: " ++ showExp exp
@@ -158,31 +158,34 @@ instance Evaluable Exp where
     "Czh" -> eval lit []
     otherwise -> return . Wrong $ " Constructor " ++ constr ++ " is not yet implemented. Please submit a bug report"
 
-  eval e@(App function_exp argument_exp) env = do
-    ti <- gets tab_indentation
+  -- f :: a -> b
+  -- x :: a
+  -- => applied_types = [a,b]
+  eval e@(App f_exp arg_exp) env = do
+    ti <- gets tab_indentation  
     let ?tab_indentation = ti
-            
-    f <- evalExpI function_exp env ("Reducing lambda " ++ showExp function_exp)
+    
+    f_val <- evalExpI f_exp env ("Reducing lambda " ++ showExp f_exp)
   
     -- if the argument is already in env, don't make another reference
-    case argument_exp of
+    case arg_exp of
       (Var qvar) -> do
-        qvar_val <- zDecodeQualified qvar `lookupId` env
-        case qvar_val of
-          Right (Wrong _) -> mkRefAndApply f argument_exp -- not found, 
-          whnf -> do
-            watchReductionM $ "NOT Skipping the making of reference, " ++ (zDecodeQualified qvar) ++ " is already in env"
-            mkRefAndApply f argument_exp -- not found, 
+        arg_val <- zDecodeQualified qvar `lookupId` env
+        case arg_val of
+          Right (Wrong _) -> mkRefAndApply f_val arg_exp -- not found,           
+          whnf -> do 
+            beVerboseM $ "not making a new reference, " ++ (zDecodeQualified qvar) ++ " is already in env"
+            mkRefAndApply f_val arg_exp
             --apply f (qualifiedVar qvar) env --don't create thunk for variables in scope
-      _ -> mkRefAndApply f argument_exp
+      _ -> mkRefAndApply f_val arg_exp
     where
     mkRefAndApply :: Value -> Exp -> IM Value
     mkRefAndApply f arg_exp = do
       beVerboseM "Making a reference from/to the function argument "
       heap_reference@(id,_) <- mkHeapReference arg_exp env
       watchReductionM $ "Argument saved as " ++ id
-  
-      res <- apply f id (heap_reference:env) -- Note1: the address is paassed 
+      
+      res <- apply f id (heap_reference:env) -- the address is passed 
       return res
 
   -- | A typed function (or data) application
@@ -192,21 +195,44 @@ instance Evaluable Exp where
     case exp of
       (Var qvar) -> evalExpI exp env "Typed Var application "
       (Dcon qvar) -> do
-        v <- evalExpI exp env $ "Typed Dcon application  " ++ zDecodeQualified qvar ++ ", to type " ++ show ty
+      
+        v <- evalExpI exp env $ "Application of typed data constructor \"" ++ zDecodeQualified qvar ++ "\" with type = " ++ showType ty
+        
         case v of
+          -- if data constructor expects a polymorphic type, instance the type variable.
+          (TyCon 
+            tycon@(MkDataCon id 
+                   datacon_sig@(Tvar(poly_var):ts) 
+                   applied_types')
+            tyname) -> do
+            
+            watchReductionM $ "Instancing type \"" ++ poly_var ++ "\" to " ++ (showType ty)
+            let
+              -- convert `Tvar(poly_var)` to `ty`
+              mapSigTy :: Ty -> Ty
+              mapSigTy poly_ty@(Tvar poly_var')  | poly_var' == poly_var = ty
+                                                 | otherwise = poly_ty
+              mapSigTy sigty = sigty
+              
+            return $ TyCon (tycon { signature = map mapSigTy datacon_sig,
+                                    applied_types = (ty:applied_types')})
+                     tyname
+            
           tyconv@(TyCon tycon@(MkDataCon id (t:ts) applied_types') tyname) -> do
-            watchReductionM $ "Creating annotated type constructor to " ++ (tyname)
-            return $ TyCon (tycon { signature = ts, applied_types = (t:applied_types')}) tyname
+            watchReductionM $ "Applied types: " ++ (show applied_types')
+            watchReductionM $ "Creating annotated type constructor from " ++ (show t) ++ " to " ++ (tyname)
+            return $ TyCon (tycon { signature = ts, applied_types = (ty:applied_types')}) tyname
           
           --tyconapp@(TyConApp _ _) -> return tyconapp
           
           otherwise -> return $ Wrong $ "The impossible happened: Typed application was expecting a type constructor or an applied type constructor, but got: " ++ show otherwise
       _ -> evalExpI exp env "Typed application "
 
+  -- ($) :: (a -> b) -> a -> b
   eval (Var ((Just (M (P ("base"),["GHC"],"Base"))),"zd")) env = 
     let
       applyFun :: Value -> IM Value  
-      applyFun (Fun f dsc) = return $ Fun f ("($) " ++ dsc)
+      applyFun (Fun f dsc) = do return $ Fun f ("($) " ++ dsc)
       applyFun x = return . Wrong $ "($), Applying something that is not a function, namely: " ++ show x
       -- takes a function `f` and returns a function `g` that applies `f` to its argument 
       ap id e = evalId id e >>= applyFun  
@@ -415,12 +441,12 @@ evalExpI exp env desc = do
   ti <- gets tab_indentation
   let ?tab_indentation = ti
   
-  watchReductionM $ desc ++ " {"
+  watchReductionM $ desc ++ " => {"
   debugSubexpression exp 
   increaseIndentation  
   
   res <- eval exp env
-  watchReductionM $ "evalExpI#res: " ++ show res
+  watchReductionM $ "=> " ++ show res
   decreaseIndentation
   watchReductionM $ "}" -- debugMStepEnd
   
@@ -429,7 +455,7 @@ evalExpI exp env desc = do
 -- | Function application
 apply :: Value -> Id -> Env -> IM Value
 apply (Fun f d) id env = do
-  watchReductionM $ "applying " ++ d ++ " to " ++ id
+  watchReductionM $ "applying function " ++ d ++ " to " ++ id
   res <- f id env
   watchReductionM $ "apply " ++ d ++ " to " ++ id ++ " => " ++ show res   
   return res

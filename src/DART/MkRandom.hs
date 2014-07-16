@@ -32,7 +32,6 @@ import Language.Core.Interpreter.Util(showValue)
 --------------------------------------------------------------------------------
 -- DART
 import DART.CmdLine(debugM)
-import Language.Core.Ty(printSignature)
 
 --------------------------------------------------------------------------------
 -- Prelude

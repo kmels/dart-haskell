@@ -30,7 +30,7 @@ import Language.Core.Interpreter.Acknowledge(acknowledgeModule)
 import Language.Core.Interpreter.Structures
 import Language.Core.Interpreter.Util(showValue)
 import Language.Core.Module(moduleFindVdefByName)
-import Language.Core.Ty(funTyArgs,printSignature)
+import Language.Core.Ty(funTyArgs,showTySig)
 import Language.Core.Vdefg(findVdefByName,vdefId)
 --------------------------------------------------------------------------------
 -- Prelude
@@ -116,7 +116,7 @@ testFun def@(Vdef (qvar,ty,vdef_exp)) env =
               test_argument_values = args
               , test_result_value = val }
               
-      typ_sig_str <- printSignature fun_signature
+      let typ_sig_str = showTySig fun_signature
       debugMessage $ "Detected function with type signature: " ++ typ_sig_str
       
       -- eval the expression (it should have the function type)
