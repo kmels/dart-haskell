@@ -71,10 +71,10 @@ showTyConApp (MkDataCon "ghc-prim:GHC.Tuple.Z2T" _ _) [x,y] = do
   y_str <- evalPtr y >>= showValue
   return $ show (x_str,y_str) 
 showTyConApp tycon@(MkDataCon datacon_name' signature applied_types) ptrs = do
-  io $ putStrLn $ " Constructor " ++ (show datacon_name') ++ " , signature: " ++ (show signature) ++ ", applied: " ++ (show applied_types) ++ ", to pointers: " 
+  debugM $ " Constructor " ++ (show datacon_name') ++ " , signature: " ++ (show signature) ++ ", applied: " ++ (show applied_types) ++ ", to pointers: " 
   
   vals <- mapM evalPtr ptrs -- [Value]  
-  mapM (showValue) vals >>= io . putStrLn . show
+  mapM (showValue) vals >>= debugM . show
   whnf_strings <- mapM showValue' vals -- [String]
   
   return $ let
@@ -95,7 +95,6 @@ evalPtr = flip eval []
 -- | Function in charge of showing the application of the type constructor "ghc-prim:GHC.Types.:"
 showList :: Ty -> [Pointer] -> IM String
 showList ty ptrs = do
-  io $ putStrLn " Showing list"
   elem_strs <- mapM (showPtr ?? showValue) ptrs
   case ty of
     Tvar("ghc-prim:GHC.Types.Char") -> return $ "\"" ++ map (!! 1) elem_strs ++ "\""

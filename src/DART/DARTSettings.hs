@@ -10,7 +10,7 @@ data DARTSettings = MkSettings {
   , test_function :: String -- some function to test, defined in `file`
   , debug :: Bool -- debug flags
   , verbose :: Bool -- prints messages when loading, reading and acknowledging modules
-  , do_timeout_after_seconds :: Integer
+  , max_time_per_function :: Int
   , show_heap :: Bool
 --, show_time :: Bool
   , show_expressions :: Bool
@@ -23,7 +23,6 @@ data DARTSettings = MkSettings {
   , debug_tab_level :: Int
   , include :: [FilePath]
   , benchmark :: Bool
-
   , number_of_tests :: Int  
   -- primitive types
   , max_int_bound :: Int
@@ -38,17 +37,26 @@ data DARTSettings = MkSettings {
 -- The interpreter mode reads an external core file and evaluates the declarations of its module.
              
 interpret = MkSettings {
-  benchmark = def &= groupname "PLUS" &= help "Benchmark"
-  , dir = def &= typ "DIR" &= groupname "USE" &= help "A directory that contains files to test."
+  -- DART
+  dir = def &= typ "DIR" &= groupname "USE" &= help "A directory that contains files to test."
   , file = def &= typ "FILE" &= groupname "USE" &= help "A file that contains functions to test."
-  
   , evaluate_function = def &= typ "FUN" &= groupname "USE" &= help "The function to evaluate in FILE (if not provided, all function declarations will be evaluated in FILE or files in DIRECTORY)"
-  , test_function = def &= groupname "USE" &= help "The function to test (if not provided, all functions will be tested)"
+  , test_function = def &= groupname "USE" &= help "The function to test (if not provided, all functions will be tested)"              
+  , max_time_per_function = def &= groupname "USE" &= help "Time before we stop an evaluation of a definition"
+
+  -- SAMPLER
+  -- primitives
+  , min_int_bound = def &= groupname "SAMPLER" &= help "Minimum random integer to be generated "
+  , max_int_bound = def &= groupname "SAMPLER" &= help "Maximum random integer to be generated"  
+  -- data types
+  , data_min_size = def &= groupname "SAMPLER" &= help "The minimum size to consider when generating a value for a data type"
+  , data_max_size = def &= groupname "SAMPLER" &= help "The maximum size to consider when generating a value for a data type"
+  , data_target_size = def &= groupname "SAMPLER" &= help "The target size to consider when generating a value for a data type (Takes precedente over min_data_size and max_data_size)"
+  
+  -- DEBUG
   , debug = def &= groupname "DEBUG" &= help "Prints messages about the interpretation and testing of module definitions"
-  , verbose = def &= groupname "DEBUG" &= help "Prints messages when loading, reading and acknowledging modules or definitions"
-  
-  , do_timeout_after_seconds = 5
-  
+  , verbose = def &= groupname "DEBUG" &= help "Prints messages when loading, reading and acknowledging modules or definitions"  
+  -- 
   , show_heap = def &= groupname "DEBUG" &= help "Shows binded values in the heap"
   , show_expressions = def &= groupname "DEBUG" &= help "Shows the external core expression for every value being evaluated"
   , show_subexpressions = def &= groupname "DEBUG" &= help "Shows *every* (external core) expression being evaluated"
@@ -62,14 +70,9 @@ interpret = MkSettings {
   , include = def &= groupname "USAGE" &= help "List of source directories to include in the module namespace, the base package is included by default"  
   -- tests config
   , number_of_tests = def &= groupname "TESTING" &= help "Number of tests to do per test case i.e. per function definition"  
-  -- primitives
-  , min_int_bound = def &= help "Minimum random integer to be generated"
-  , max_int_bound = def &= help "Maximum random integer to be generated"
-  
-  -- data types
-  , data_min_size = def &= help "The minimum size to consider when generating a value for a data type"
-  , data_max_size = def &= help "The maximum size to consider when generating a value for a data type"
-  , data_target_size = def &= help "The target size to consider when generating a value for a data type (Takes precedente over min_data_size and max_data_size)"
+
+    -- PLUS
+  , benchmark = def &= groupname "PLUS" &= help "Benchmark"  
   } &= summary "Reads a .hcr file and evaluates its declarations. "
 
 

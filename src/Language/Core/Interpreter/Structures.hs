@@ -60,6 +60,7 @@ import           System.IO.Unsafe(unsafePerformIO)
 --------------------------------------------------------------------------------
 -- System
 import           Data.Time.Clock
+import           Unsafe.Coerce(unsafeCoerce)
 --------------------------------------------------------------------------------
 
 -- mutable hash tables; 
@@ -317,9 +318,11 @@ isTimeout :: IM Bool
 isTimeout = do
   st <- gets start_time
   now <- io getCurrentTime
-  max_timeout <- getSetting do_timeout_after_seconds
+  max_timeout <- getSetting max_time_per_function
   let dayTime = now `diffUTCTime` st
-  return $ (now `diffUTCTime` st > fromInteger max_timeout)
+      passed  = now `diffUTCTime` st
+      nominal_max = fromInteger $ (unsafeCoerce max_timeout :: Integer)
+  return $ (passed > nominal_max)
   
 getSetting :: (DARTSettings -> a) -> IM a 
 getSetting f = gets settings >>= return . f

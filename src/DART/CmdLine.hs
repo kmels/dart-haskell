@@ -217,7 +217,13 @@ instance Foldable (Either e) where
 mergeConfigSettings :: DARTSettings -> Conf.ConfigParser -> IO DARTSettings
 mergeConfigSettings st cp = do
   return $ st {
+    -- USE
      file = mergeStr "interpreter" "file" (file st)
+     
+     -- SAMPLER
+     , max_time_per_function = mergeInt "testing" "max_time_per_function" 
+                               (max_time_per_function st)
+
      -- testing
      , number_of_tests = mergeInt "testing" "number_of_tests" (number_of_tests st)
      
@@ -295,7 +301,7 @@ mkConfigFile = do
                ++ "verbose = off\n"
                ++ "\n"
                ++ "# Maximum amount of seconds permitted to a computation in order to finish (includes tests and evaluations)\n"
-               ++ "timeout_seconds = 5\n"
+               ++ "max_time_per_function = 5\n"
                ++ "\n"
                ++ "################################################################################\n"               
                ++ "# Debugging the interpreter\n"

@@ -10,7 +10,7 @@ import Prelude hiding (concat)
 main = do
   [arg] <- getArgs
   putStrLn $ myString arg
-  putStrLn $ myStringConcat
+  putStrLn $ myStringConcat arg
 --  putStrLn $ myString' arg arg
 
 myString w = let length_of_it = length w
@@ -33,6 +33,9 @@ concat :: [a] -> [a] -> [a]
 [] `concat` ys = ys
 (x:xs) `concat` ys = x:(xs `concat` ys)
 
-myStringConcat :: String
-myStringConcat = "a" `concat` "b"
+myStringConcat :: String -> String
+myStringConcat s | length s < 7 = error "Too small" 
+                 | otherwise = myError s -- s `concat` "b"
 
+
+myError s = error s
