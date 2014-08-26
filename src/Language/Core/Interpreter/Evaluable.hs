@@ -13,6 +13,7 @@
 
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE DoAndIfThenElse #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Language.Core.Interpreter.Evaluable where
 
@@ -188,44 +189,59 @@ instance Evaluable Exp where
       res <- apply f id (heap_reference:env) -- the address is passed 
       return res
 
-  -- | A typed function (or data) application
-  eval e@(Appt exp ty) env = do 
+  -- | Typed function (or data) application
+  eval e@(Appt exp typ) env = do 
     ti <- gets tab_indentation  
     let ?tab_indentation = ti
     case exp of
       (Var qvar) -> evalExpI exp env "Typed Var application "
       (Dcon qvar) -> do
       
-        v <- evalExpI exp env $ "Application of typed data constructor \"" ++ zDecodeQualified qvar ++ "\" with type = " ++ showType ty
+        v <- evalExpI exp env $ "Application of typed data constructor \"" ++ zDecodeQualified qvar ++ "\" with type = " ++ showType typ
         
+    
         case v of
-          -- if data constructor expects a polymorphic type, instance the type variable.
+          
+          -- if data constructor expects a polymorphic type, look for the variable and make a reference, i.e., instance the type variable.
           (TyCon 
-            tycon@(MkDataCon id 
-                   datacon_sig@(Tvar(poly_var):ts) 
-                   applied_types')
+            tycon@(MkDataCon _ 
+                   datacon_sig@(Tvar(poly_var):_) 
+                   ty_env)
             tyname) -> do
             
-            watchReductionM $ "Instancing type \"" ++ poly_var ++ "\" to " ++ (showType ty)
+            watchReductionM $ "Instancing type \"" ++ poly_var ++ "\" to " ++ (showType typ)
             let
-              -- convert `Tvar(poly_var)` to `ty`
-              mapSigTy :: Ty -> Ty
-              mapSigTy poly_ty@(Tvar poly_var')  | poly_var' == poly_var = ty
+              -- if polytype variable is found, give it the type
+              
+              mapSigTy :: Ty -> Ty --instance the Tvar to `typ`
+              mapSigTy poly_ty@(Tvar poly_var')  | poly_var' == poly_var = typ
                                                  | otherwise = poly_ty
               mapSigTy sigty = sigty
+            let
+              isPolytype :: Ty -> Bool
+              isPolytype (Tvar _) = True
+              isPolytype _ = False
+            let
+              polytype :: Maybe Ty
+              polytype = find isPolytype datacon_sig
               
+              new_type_env :: TypeEnv
+              new_type_env = case polytype of
+                Just polyvar@(Tvar var_name) -> (var_name,polyvar):ty_env
+                _ -> ty_env
+            
             return $ TyCon (tycon { signature = map mapSigTy datacon_sig,
-                                    applied_types = (ty:applied_types')})
+                                    context = new_type_env })
                      tyname
             
-          tyconv@(TyCon tycon@(MkDataCon id (t:ts) applied_types') tyname) -> do
+          TyCon tycon@(MkDataCon _ (t:ts) applied_types') tyname -> do
             watchReductionM $ "Applied types: " ++ (show applied_types')
             watchReductionM $ "Creating annotated type constructor from " ++ (show t) ++ " to " ++ (tyname)
-            return $ TyCon (tycon { signature = ts, applied_types = (ty:applied_types')}) tyname
+            return $ TyCon (tycon { signature = ts}) tyname
           
           --tyconapp@(TyConApp _ _) -> return tyconapp
           
-          otherwise -> return $ Wrong $ "The impossible happened: Typed application was expecting a type constructor or an applied type constructor, but got: " ++ show otherwise
+          otherwise' -> return $ Wrong $ "The impossible happened: Typed application was expecting a type constructor or an applied type constructor, but got: " ++ show otherwise'
       _ -> evalExpI exp env "Typed application "
 
   -- ($) :: (a -> b) -> a -> b

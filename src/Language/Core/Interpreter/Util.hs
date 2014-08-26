@@ -40,8 +40,8 @@ showValue (TyConApp tc ptrs) = do
   --io $ putStrLn "tyconapp.."
   showTyConApp tc ptrs
 showValue val = do
-  {-io $ putStrLn "not tyconapp?"
-  case val of 
+  io $ putStrLn "not tyconapp?"
+{-  case val of 
     tc@(TyCon tycon ty_name) -> do
       io . putStrLn $ "TyCon " ++ (show tycon) ++ ty_name
       io . putStrLn . show$ tc
@@ -56,7 +56,10 @@ showValue val = do
     Char _ -> io $ putStrLn "9"
     Boolean _ -> io $ putStrLn "10"
     Rat _ -> io $ putStrLn "11"
-    Wrong _ -> io $ putStrLn "41" -}
+    Wrong _ -> io $ putStrLn "41"
+    TyConApp _ b -> io $ putStrLn " ;)"
+    Num _ -> io $ putStrLn "12"
+    _ -> do io $ putStrLn "Otra cosa" -}
     
   return $ show val
 
@@ -66,13 +69,15 @@ showValue val = do
 showTyConApp :: DataCon-> [Pointer] -> IM String
 showTyConApp (MkDataCon "ghc-prim:GHC.Types.[]" _ _) [] = return "[]" -- empty list
 showTyConApp (MkDataCon "ghc-prim:GHC.Types.:" (ty:_) _) ptrs = showList ty ptrs
+showTyConApp (MkDataCon "ghc-prim:GHC.Types.:" [] ((_,tvar_ty):_)) ptrs = showList tvar_ty ptrs
 showTyConApp (MkDataCon "ghc-prim:GHC.Tuple.Z2T" _ _) [x,y] = do
   x_str <- evalPtr x >>= showValue
   y_str <- evalPtr y >>= showValue
   return $ show (x_str,y_str) 
 showTyConApp tycon@(MkDataCon datacon_name' signature applied_types) ptrs = do
-  debugM $ " Constructor " ++ (show datacon_name') ++ " , signature: " ++ (show signature) ++ ", applied: " ++ (show applied_types) ++ ", to pointers: " 
+  debugM $ " Constructor " ++ (show datacon_name') ++ " , signature: " ++ (show signature) ++ ", applied: " ++ (show applied_types) ++ ", to pointers: "  ++ show ptrs
   
+  io $ putStrLn " Now"
   vals <- mapM evalPtr ptrs -- [Value]  
   mapM (showValue) vals >>= debugM . show
   whnf_strings <- mapM showValue' vals -- [String]
@@ -95,6 +100,7 @@ evalPtr = flip eval []
 -- | Function in charge of showing the application of the type constructor "ghc-prim:GHC.Types.:"
 showList :: Ty -> [Pointer] -> IM String
 showList ty ptrs = do
+  io $ putStrLn " LIST"
   elem_strs <- mapM (showPtr ?? showValue) ptrs
   case ty of
     Tvar("ghc-prim:GHC.Types.Char") -> return $ "\"" ++ map (!! 1) elem_strs ++ "\""

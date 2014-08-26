@@ -114,7 +114,16 @@ Test-Suite test-dart-haskell
                 Language.Core.Interpreter.Libraries.GHC.TestNum
                 Language.Core.Ty
     build-depends: base, 
---                   dart-haskell == 0.1
+                   dart-haskell == 0.1
+                    -- common
+                 , array >= 0.4 
+                 , random >= 1.0
+                 , primitive >= 0.5.0
+                 , time >= 1.4
+                 , regex-posix 
+                 , ConfigFile >= 1.1
+                    -- control
+                 , transformers >= 0.3
                    -- Ideally, this wouldn't be needed, but listing `dart-haskell` as a dependency is not enough..
-                   filepath, process, directory, extcore, hashtables, zenc, cmdargs, mtl, primitive, transformers, utf8-string, bytestring, time, regex-posix, ConfigFile >= 1.1, MissingH, parsec, random
+--                   filepath, process, directory, extcore, hashtables, zenc, cmdargs, mtl, primitive, transformers, utf8-string, bytestring, time, regex-posix, ConfigFile >= 1.1, MissingH, parsec, random
                    , HUnit >= 1.2.5

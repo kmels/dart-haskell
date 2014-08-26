@@ -39,31 +39,6 @@ import Data.Char(chr)
 import Data.List((!!), findIndices)
 import Data.Maybe(catMaybes)
           
--- | When a TypeConstructor is applied to another TypeConstructor we get another TypeConstructor. 
--- This function reduces the argument type constructor to a type to form a DataCon
-applyTyCon :: Value -> Value -> Ty -> IM [DataCon]
-applyTyCon (TyCon dc1 ty1)  (TyCon dc2 ty2) this_type = 
-  case dc1 of
-    MkDataCon "ghc-prim:GHC.Types.[]" _ tys -> do
-      let 
-        cons_name = "ghc-prim:GHC.Types.:"
-        type_of_the_list = Tvar $ ty2
-        dcc = [
-            dc1 { signature = [type_of_the_list], applied_types = (this_type:tys)}, -- nil
-            MkDataCon cons_name [type_of_the_list, this_type] (this_type:tys) 
-            ]
-      return dcc
-      
-    MkDataCon dc1_id expected@(ty:[]) tys -> do
-      io . putStrLn . show $ dc1_id
-      io $ putStrLn $ show ty2
-      --if we don't know ty.. we safely replace it with ty2
-      let dcc = [dc1 { signature = [Tvar(ty2)], applied_types = (this_type:tys)}]
-      
-      io $ putStrLn $ show dcc
-      return dcc
-    --_ -> return $ error "TODO"
-
 -- | Given a type in external core, randomly produce a value of its type. An environment might be needed in case there is a reference to the heap as an identifier in e.g. a data type may contain its type constructors.
 mkRandomVal :: Env -> Ty -> IM Value
 mkRandomVal env ty@(Tvar tyname) = do
@@ -308,4 +283,29 @@ markSample = do
       modify $ \st -> st {samplerDataSize = currentSize + 1}
       return $ SampleOK
       
+
+-- | TODO: enhance documentation on the third parameter. When a TypeConstructor is applied to another TypeConstructor we get another TypeConstructor. 
+-- This function reduces the argument type constructor to a type to form a DataCon
+applyTyCon :: Value -> Value -> Ty -> IM [DataCon]
+applyTyCon (TyCon dc1 ty1)  (TyCon dc2 ty2) _ = 
+  case dc1 of
+    MkDataCon "ghc-prim:GHC.Types.[]" _ tys -> do
+      let 
+        cons_name = "ghc-prim:GHC.Types.:"
+        type_of_the_list = Tvar $ ty2
+        dcc = [
+            --dc1 { signature = [type_of_the_list], context = (this_type:tys)}, -- nil
+            MkDataCon cons_name [type_of_the_list] []
+            ]
+      return dcc
+      
+    MkDataCon dc1_id expected@(ty:[]) tys -> do
+      io . putStrLn . show $ dc1_id
+      io $ putStrLn $ show ty2
+      --if we don't know ty.. we safely replace it with ty2
+      let dcc = [dc1 { signature = [Tvar(ty2)]}]
+      
+      io $ putStrLn $ show dcc
+      return dcc
+    --_ -> return $ error "TODO"
 

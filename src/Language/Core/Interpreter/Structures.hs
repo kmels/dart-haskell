@@ -28,7 +28,7 @@ module Language.Core.Interpreter.Structures(
   , getSetting
   , DARTSettings(..)
   , DARTState(..)
-  , Heap, Env, HeapAddress, HeapReference
+  , Heap, Env, TypeEnv, HeapAddress, HeapReference
   , IM
   , Thunk (..), DataCon(..) , Value(..), Pointer(..), PredicateBranch(..)
 --  , ModuleFunction(..)
@@ -103,6 +103,7 @@ data BoltzmannSamplerStatus = InitializedSampler | UnitializedSampler deriving S
 type Heap = H.CuckooHashTable HeapAddress (Either Thunk Value)
 type HeapAddress = Int
 type Env = [(Id,HeapAddress)]
+type TypeEnv = [(Id,Ty)]
 type HeapReference = (Id,HeapAddress)
 
 -- | We'll record execution paths; every path node comes from a branching after a pattern match analysis is performed. See method recordBranch in Language.Core.Interpterer.Evaluable
@@ -154,20 +155,20 @@ instance Show Thunk where
 -- provided file(s)
 data HaskellExpression = HaskellExpression String Module
 
--- | The type of a type constructor with qualified name and the list 
--- of types it expects. 
+-- | A polykinded type constructor
 data DataCon = MkDataCon {
-  datacon_name :: Id,
-  signature :: [Ty], 
-  applied_types :: [Ty] -- #TODO make it Stack Ty, last type to be applied should come first
+  datacon_name :: Id, -- qualified name
+  signature :: [Ty], --types it expects
+  context :: TypeEnv --bounded types
   } deriving Eq
 
 type Description = String
 
+-- | Equality of values
 instance Eq Value where 
   (Wrong s) == Wrong s' = s == s'
   (Num i) == (Num i') = i == i'
-  (Fun _ _) == (Fun _ _) = False  -- too bad we are not intensional as in intensional type equality
+  (Fun _ _) == (Fun _ _) = False  -- equality of functions in dart is not intensional
   (Boolean b) == (Boolean b') = b == b'
   o == p = False
   
@@ -182,9 +183,11 @@ instance Eq Value where
 io :: MonadIO m => IO a -> m a
 io = liftIO
 
+-- | Make a thunk of an expression so it can be later evaluated
 mkThunk :: Exp -> Env -> Either Thunk Value
 mkThunk exp env = Left $ Thunk exp env
 
+-- | Lift a value to memory value
 mkVal :: Value -> Either Thunk Value
 mkVal = Right
 
@@ -279,7 +282,7 @@ instance Show Value where
       constructor_names = map (\(MkDataCon id _ _) -> id) cons
   show (TyCon tycon ty_name) | show tycon == "[]" = "[]"
   show (TyCon (MkDataCon datacon_name' datacon_signature' []) ty_name) = (idName datacon_name') ++ " :: " ++ (showTySig datacon_signature') ++ " ::=> " ++ (idName ty_name)
-  show (TyCon (MkDataCon datacon_name' datacon_signature' applied_types') ty_name) = (idName datacon_name') ++ " :: " ++ (showTySig datacon_signature') ++ " ::=> " ++ (idName ty_name) ++ ", applied types: " ++ (concatMap showType applied_types') 
+  show (TyCon (MkDataCon datacon_name' datacon_signature' ty_env) ty_name) = "... —" ++ (idName datacon_name') ++ " :: " ++ (showTySig datacon_signature') ++ " ::=> " ++ (idName ty_name) ++ ", –– applied types: " ++ (concatMap (\(i,t) -> show i ++ showType t) ty_env)
   
 --    | otherwise = "TypeConstructor " ++ show tycon ++ " of " ++ ty_name
 
