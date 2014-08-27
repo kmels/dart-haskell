@@ -58,13 +58,13 @@ import Data.Time.Clock(getCurrentTime)
 -- | Creates an initial state given the arguments given
 -- in the command line and parsed by CmdArgs
 initDART :: DARTSettings -> IO DARTState
-initDART settings = do
+initDART settings' = do
   h <- io H.new -- create a fresh new heap
   
   current_dir <- getCurrentDirectory 
   
   let prependCurrentDir = (++) (current_dir ++ "/")
-  let user_includes = include settings
+  let user_includes = include settings'
   let absolute_includes = map prependCurrentDir $ prelude_files ++ user_includes
                          
   now <- io getCurrentTime
@@ -78,7 +78,7 @@ initDART settings = do
     , number_of_reductions = 0
     , number_of_reductions_part = 0
     , tab_indentation = 1
-    , settings = settings { include = (absolute_includes) }
+    , settings = settings' { include = (absolute_includes) }
     , start_time = now
     , test_name = Nothing
     , samplerStatus = UnitializedSampler

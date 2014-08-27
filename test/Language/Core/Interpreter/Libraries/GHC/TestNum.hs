@@ -32,20 +32,20 @@ expected_nums = [ ("main:DART.Examples.GHC.Num.numberTen", Num 10)
 -- | This function loads the file located in examples/interpreter/GHC.Num.hs and verifies the expected results
 testIO :: IO Test 
 testIO = do
---  initial_state <- initDART interpreter 
   results <- evalFile "examples/interpreter/GHC.Num.hs"
   
-  let expected = expected_nums
   let prettyPrint :: (Id,Value) -> String
-      prettyPrint (id,val) = show id ++ " => " ++ show val
+      prettyPrint (id',val) = show id' ++ " => " ++ show val
           
-  mapM (putStrLn . prettyPrint) results
+  _ <- mapM (putStrLn . prettyPrint) results
   return $ checkExpected results expected_nums
-  --TestList $ map (checkExpected results) expected
 
 evalFile :: FilePath -> IO [(Id,Value)]
-evalFile filepath = initDART interpret >>= evalStateT evalFile'
+evalFile filepath = initDART testSettings >>= evalStateT evalFile'
   where
+  testSettings :: DARTSettings
+  testSettings = interpret { max_time_per_function = 25} -- seconds
+  
   evalFile' :: IM [(Id,Value)]
   evalFile' = do
     loadLibraries
@@ -54,5 +54,6 @@ evalFile filepath = initDART interpret >>= evalStateT evalFile'
     modul <- io . readModule $ filepath
     module_env <- acknowledgeModule modul    
     evalModule modul module_env
-    
+
+test :: Test
 test = unsafePerformIO testIO

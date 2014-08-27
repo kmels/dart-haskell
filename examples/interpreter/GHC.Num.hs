@@ -13,11 +13,11 @@ module DART.Examples.GHC.Num (
  , tautology1
  -- operations
  , sumPlusOne
- , example1
+-- , example1
 -- , five
  ) where
 
-import qualified Control.Exception as E
+--import qualified Control.Exception as E
 --import Prelude hiding (map)
 
 -- Operatinons on Num
@@ -77,8 +77,15 @@ myDiv1 :: Float -> Float -> Float
 myDiv1 x 0 = error "Division by zero"
 myDiv1 x y = x / y
 
--- from http://www.randomhacks.net/2007/03/10/haskell-8-ways-to-report-errors/
+{- from http://www.randomhacks.net/2007/03/10/haskell-8-ways-to-report-errors/
+-- TODO: IO
 example1 :: Float -> Float -> IO ()
-example1 x y =
-  E.catch (putStrLn (show (myDiv1 x y)))
+example1 x y =  
+  E.catch (putStrLn . show $ division)
           (\err -> putStrLn (show err))
+  where
+    division = myDiv1 x y
+
+-}
+
+
